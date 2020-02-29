@@ -130,17 +130,15 @@ function constraint_mc_gen_fault_voltage_drop(pm::AbstractPowerModel, i::Int; nw
         x = 0.1
     end   
 
-    # TODO: check if this will work for PowerModelsDistribution 
-    # OpenDSS doesn't include base case voltages in input file
-    
-    # vm = ref(pm, :bus, busid, "vm") 
-    # va = ref(pm, :bus, busid, "va")
-    vm = 1
-    va = [0, -2*pi/3, 2*pi/3]
-    v = vm*[exp(1im*pi*vi/180) for vi in va]
+    # Watch out! OpenDSS doesn't include base case voltages in input file
+    vm = ref(pm, :bus, busid, "vm") 
+    va = ref(pm, :bus, busid, "va")
 
-    vgr = real(v)
-    vgi = imag(v)    
+    # Watch out! Angles are in radians unlike in vanilla PowerModels
+    v = [vm[i]*exp(1im*va[i]) for i in 1:3]
+
+    vgr = [real(vk) for vk in v]
+    vgi = [imag(vk) for vk in v]
 
     constraint_mc_gen_fault_voltage_drop(pm, nw, i, busid, r, x, vgr, vgi)
 end
@@ -175,7 +173,7 @@ net["multinetwork"] = false
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
 net["fault"] = Dict()
-net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>13404, "gf"=>10)
+net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>1, "gf"=>100)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file("data/mc/case3_balanced.dss")
