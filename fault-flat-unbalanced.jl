@@ -62,10 +62,21 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractPowerModel, i::Int;
     bus_loads = PMs.ref(pm, nw, :bus_loads, i)
     bus_shunts = PMs.ref(pm, nw, :bus_shunts, i)
 
+    bus_faults = []
+
+    # TODO: replace with list comprehension
+    for (k,f) in ref(pm, :fault)
+        if f["bus"] == i
+            push!(bus_faults, k)
+        end
+    end    
+
     bus_gs = Dict(k => PMs.ref(pm, nw, :shunt, k, "gs") for k in bus_shunts)
     bus_bs = Dict(k => PMs.ref(pm, nw, :shunt, k, "bs") for k in bus_shunts)
 
-    constraint_mc_fault_current_balance(pm, nw, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
+    bus_gf =  Dict(k => ref(pm, nw, :fault, k, "gf") for k in bus_faults)
+
+    constraint_mc_fault_current_balance(pm, nw, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs, bus_gf)
 end
 
 
@@ -73,7 +84,7 @@ end
 Kirchhoff's current law applied to buses
 `sum(cr + im*ci) = 0`
 """
-function constraint_mc_fault_current_balance(pm::PMs.AbstractIVRModel, n::Int, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
+function constraint_mc_fault_current_balance(pm::PMs.AbstractIVRModel, n::Int, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs, bus_gf)
     vr = PMs.var(pm, n, :vr, i)
     vi = PMs.var(pm, n, :vi, i)
 
@@ -100,6 +111,7 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractIVRModel, n::Int, i
                                     ==
                                     sum(crg[g][c]        for g in bus_gens)
                                     - sum( Gt[c,d]*vr[d] for d in cnds) # shunts
+                                    - sum(gf for gf in values(bus_gf))*vr[c]
                                     )
         JuMP.@NLconstraint(pm.model, sum(ci[a][c] for a in bus_arcs)
                                     + sum(cisw[a_sw][c] for a_sw in bus_arcs_sw)
@@ -107,6 +119,7 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractIVRModel, n::Int, i
                                     ==
                                     sum(cig[g][c]        for g in bus_gens)
                                     - sum( Gt[c,d]*vi[d] for d in cnds) # shunts
+                                    - sum(gf for gf in values(bus_gf))*vi[c]
                                     )
     end
 end
@@ -173,7 +186,7 @@ net["multinetwork"] = false
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
 net["fault"] = Dict()
-net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>1, "gf"=>100)
+net["fault"]["1"] = Dict("bus"=>3, "gf"=>10)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file("data/mc/case3_balanced.dss")
