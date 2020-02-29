@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "..\\Repos\\PowerModels.jl"
+		},
+		{
+			"path": "..\\PowerModelsDistribution.jl"
+		}
+	],
+	"settings": {}
+}
