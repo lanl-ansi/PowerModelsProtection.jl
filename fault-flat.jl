@@ -52,34 +52,6 @@ function constraint_fault_current_balance(pm::AbstractPowerModel, i::Int; nw::In
             push!(bus_faults, k)
         end
     end
-
-    bus_rg = Dict()
-    bus_xg = Dict()
-
-    for i in bus_gens
-        gen = ref(pm, :gen, i)
-
-        if haskey(gen, "rg")
-            bus_rg[i] = gen["rg"]
-        else
-            bus_rg[i] = 0
-        end
-
-        if haskey(gen, "xg")
-            bus_xg[i] = gen["xg"]
-        else
-            bus_xg[i] = 0.1
-        end
-    end
-
-    # println("Bus $i constraints")
-    # println("-----------------------")
-    # print("bus_gg: ")    
-    # println(bus_rg)
-
-    # print("bus_bg: ")    
-    # println(bus_xg)
-    # println()
             
     bus_gs = Dict(k => ref(pm, nw, :shunt, k, "gs") for k in bus_shunts)
     bus_bs = Dict(k => ref(pm, nw, :shunt, k, "bs") for k in bus_shunts)

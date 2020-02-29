@@ -23,15 +23,20 @@ function build_mc_fault_study(pm::PMs.AbstractPowerModel)
     PMD.variable_mc_transformer_current(pm, bounded = false)
     PMD.variable_mc_generation(pm, bounded = false) 
 
+    # gens should be constrained before KCL, or Pd/Qd undefined
+    for id in PMs.ids(pm, :gen)
+        PMD.constraint_mc_generation(pm, id)
+    end
+
 
     for (i,bus) in PMs.ref(pm, :bus)
         # do need a new version to handle gmat
-        PMD.constraint_mc_fault_current_balance_load(pm, i)        
+        constraint_mc_fault_current_balance(pm, i)        
     end
 
     for (i,gen) in ref(pm, :gen)
         # do I need a new version for multiconductor
-        PMD.constraint_mc_gen_fault_voltage_drop(pm, i)
+        constraint_mc_gen_fault_voltage_drop(pm, i)
     end
 
     for i in PMs.ids(pm, :branch)
@@ -125,12 +130,15 @@ function constraint_mc_gen_fault_voltage_drop(pm::AbstractPowerModel, i::Int; nw
         x = 0.1
     end   
 
-    # TODO: check if this will work for PowerModelsDistribution - OpenDSS doesn't include base case voltages in input file
+    # TODO: check if this will work for PowerModelsDistribution 
+    # OpenDSS doesn't include base case voltages in input file
+    
     # vm = ref(pm, :bus, busid, "vm") 
     # va = ref(pm, :bus, busid, "va")
     vm = 1
-    va = 0
-    v = vm*exp(1im*pi*va/180)
+    va = [0, -2*pi/3, 2*pi/3]
+    v = vm*[exp(1im*pi*vi/180) for vi in va]
+
     vgr = real(v)
     vgi = imag(v)    
 
@@ -153,8 +161,8 @@ function constraint_mc_gen_fault_voltage_drop(pm::AbstractIVRModel, n::Int, i, b
     ncnds = length(cnds)
 
     for c in cnds
-        JuMP.@constraint(pm.model, vr_to == vr_fr - r*crg[c] + x*cig[c])
-        JuMP.@constraint(pm.model, vi_to == vi_fr - r*cig[c] - x*crg[c])
+        JuMP.@constraint(pm.model, vr_to[c] == vr_fr[c] - r*crg[c] + x*cig[c])
+        JuMP.@constraint(pm.model, vi_to[c] == vi_fr[c] - r*cig[c] - x*crg[c])
     end
 end
 
@@ -170,4 +178,6 @@ net["fault"] = Dict()
 net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>13404, "gf"=>10)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
+pmd = PMD.parse_file("data/mc/case3_balanced.dss")
+sol = PMD.run_mc_pf_iv(pmd, PMs.IVRPowerModel, solver)
 result = run_mc_fault_study(net, solver)
