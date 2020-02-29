@@ -1,12 +1,6 @@
 function parse_matpower(io::IO; validate=true)::Dict
     pm_data = _PMs.parse_matpower(io, validate=validate)
 
-    # if haskey(pm_data, "fault")
-    #     println(pm_data["fault"])
-    # else
-    #     # add all buses with default impedance
-    # end
-
     if haskey(pm_data, "gensub")
         for (i,gen) in pm_data["gensub"]
             pm_data["gen"][i]["rs"] = gen["rs"]
