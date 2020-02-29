@@ -27,12 +27,6 @@ git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
 uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 version = "0.5.1"
 
-[[Cbc]]
-deps = ["BinaryProvider", "Libdl", "MathOptInterface", "MathProgBase", "SparseArrays", "Test"]
-git-tree-sha1 = "0d51c2d66fc22e5e3fc64b6092ba0f0b3839c8c1"
-uuid = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
-version = "0.6.6"
-
 [[CodecBzip2]]
 deps = ["BinaryProvider", "Libdl", "TranscodingStreams"]
 git-tree-sha1 = "5db086e510c11b4c87d05067627eadb2dc079995"
@@ -140,12 +134,6 @@ git-tree-sha1 = "ba7f96010ed290d77d5c941c32e5df107ca688a4"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
 version = "0.20.1"
 
-[[Juniper]]
-deps = ["Distributed", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Random", "Statistics"]
-git-tree-sha1 = "b8210a931b15e6530ad2366a181f27d41789b51a"
-uuid = "2ddba703-00a4-53a7-87a5-e8b9971dde84"
-version = "0.5.3"
-
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
@@ -176,10 +164,10 @@ uuid = "fdba3010-5040-5b88-9595-932c9decdf73"
 version = "0.7.8"
 
 [[MbedTLS]]
-deps = ["BinaryProvider", "Dates", "Distributed", "Libdl", "Random", "Sockets", "Test"]
-git-tree-sha1 = "2d94286a9c2f52c63a16146bb86fd6cdfbf677c6"
+deps = ["BinaryProvider", "Dates", "Libdl", "Random", "Sockets"]
+git-tree-sha1 = "85f5947b53c8cfd53ccfa3f4abae31faa22c2181"
 uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
-version = "0.6.8"
+version = "0.7.0"
 
 [[Memento]]
 deps = ["Dates", "Distributed", "JSON", "Serialization", "Sockets", "Syslogs", "Test", "TimeZones", "UUIDs"]
@@ -230,10 +218,8 @@ uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.15.2"
 
 [[PowerModelsDistribution]]
-deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "PowerModels", "Statistics"]
-git-tree-sha1 = "f2c1464b1e12d606ee0b5d8027ef197dfaf10d91"
-repo-rev = "master"
-repo-url = "https://github.com/lanl-ansi/PowerModelsDistribution.jl.git"
+deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "PowerModels"]
+git-tree-sha1 = "1b4e4ed19abcdad89cdc229dd16d1e2a26992423"
 uuid = "d7431456-977f-11e9-2de3-97ff7677985e"
 version = "0.8.0"
 
@@ -248,12 +234,6 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 [[Random]]
 deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-
-[[SCS]]
-deps = ["BinaryProvider", "Libdl", "LinearAlgebra", "MathOptInterface", "MathProgBase", "SparseArrays"]
-git-tree-sha1 = "936d43feaceae3290472ddf800b496be094d727b"
-uuid = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
-version = "0.6.6"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
