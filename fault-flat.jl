@@ -94,16 +94,15 @@ function constraint_gen_fault_voltage_drop(pm::AbstractPowerModel, i::Int; nw::I
     busid = gen["gen_bus"]
     gen_bus = ref(pm, nw, :bus, busid)
 
-    if haskey(gen, "rg")
+    r = 0
+    x = 0.1
+   
+   if haskey(gen, "rg")
         r = gen["rg"]
-    else
-        r = 0
-    end
+   end
 
     if haskey(gen, "xg")
         x = gen["xg"]
-    else
-        x = 0.1
     end   
 
     vm = ref(pm, :bus, busid, "vm") 
@@ -133,9 +132,9 @@ end
 
 
 path = "data/b4fault.m"
-path = "data/case30fault.m"
-path = "data/case30.m"
-path = "data/case30.raw"
+    # path = "data/case30fault.m"
+    # path = "data/case30.m"
+    # path = "data/case30.raw"
 # path = "data/uiuc-150bus.RAW"
 # path = "data/GO500v2_perfect_0.raw"
 # path = "data/SDET700Bus.raw"
@@ -148,7 +147,20 @@ path = "data/case30.raw"
 net = PowerModels.parse_file(path)
 net["multinetwork"] = false
 net["fault"] = Dict()
-net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>13404, "gf"=>10)
+# net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>13404, "gf"=>10)
 
+function add_fault!(net, busid; resistance=0.1)
+    if !("fault" in keys(net))
+        net["fault"] = Dict()
+    end
+
+    gf = max(1/resistance, 1e-6)
+    n = length(keys(net["fault"]))
+    i = n + 1
+    fault = Dict("source_id"=>Any["fault", i], "bus"=>busid, "gf"=>gf)
+    net["fault"]["$i"] = fault
+end
+
+add_fault!(net, 3)
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 result = run_fault_study(net, solver)

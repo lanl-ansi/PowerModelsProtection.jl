@@ -58,8 +58,6 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractPowerModel, i::Int;
     bus_arcs_sw = PMs.ref(pm, nw, :bus_arcs_sw, i)
     bus_arcs_trans = PMs.ref(pm, nw, :bus_arcs_trans, i)
     bus_gens = PMs.ref(pm, nw, :bus_gens, i)
-    bus_storage = PMs.ref(pm, nw, :bus_storage, i)
-    bus_loads = PMs.ref(pm, nw, :bus_loads, i)
     bus_shunts = PMs.ref(pm, nw, :bus_shunts, i)
 
         bus_faults = []
@@ -180,18 +178,43 @@ end
 
 
 
-
+path = "data/b4fault.m"
 path = "data/mc/case3_balanced.dss"
 net = PMD.parse_file(path)
-net["multinetwork"] = false
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
-net["fault"] = Dict()
-gf = 10
-Gf = [[gf 0 0] [0 gf 0] [0 0 gf]]
-net["fault"]["1"] = Dict("bus"=>3, "gf"=>Gf)
+function add_mc_fault!(net, busid; resistance=0.1, type="three-phase", phases=[1, 2, 3])
+    if !("fault" in keys(net))
+        net["fault"] = Dict()
+    end
+
+    gf = max(1/resistance, 1e-6)
+    Gf = zeros(3,3)
+
+    if lowercase(type) == "lg"
+        i = phases[1]
+
+        Gf[i,i] = gf
+    elseif lowercase(type) == "ll"
+        i = phases[1]
+        j = phases[2]
+
+        Gf[i,j] = gf
+        Gf[j,i] = gf
+    else # three-phase
+        for i in 1:3
+            Gf[i,i] = gf
+        end
+    end
+        
+    n = length(keys(net["fault"]))
+    net["fault"]["$(n + 1)"] = Dict("bus"=>busid, "gf"=>Gf)
+end
+
+add_mc_fault!(net, 2)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
-pmd = PMD.parse_file("data/mc/case3_balanced.dss")
+pmd = PMD.parse_file(path)
 sol = PMD.run_mc_pf_iv(pmd, PMs.IVRPowerModel, solver)
+
 result = run_mc_fault_study(net, solver)
