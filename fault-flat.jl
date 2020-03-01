@@ -188,10 +188,28 @@ end
 update_base!(fault_net, base_result)
 add_fault!(fault_net, 3)
 
-function run_fault_study(file, solver; kwargs...)
+# Here's an attempt at a sequential formulation
+# It's a little messy with lots of copy n paste
+function run_fault_study(file, model_type, solver; kwargs...)
+    if typeof(file) <: AbstractString
+        file = PowerModels.parse_file(file)
+    end
+
+    base_result = run_opf(file, model_type, solver)
+    update_base!(file, base_result)
+    return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
+end
+
+function run_ac_fault_study(file, solver; kwargs...)
+    if typeof(file) <: AbstractString
+        file = PowerModels.parse_file(file)
+    end
+
+    base_result = run_ac_opf(file, solver)
+    update_base!(file, base_result)
     return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
 end
 
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
-result = run_fault_study(fault_net, solver)
+result = run_ac_fault_study(fault_net, solver)
