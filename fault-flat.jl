@@ -6,6 +6,10 @@ function run_fault_study(file, solver; kwargs...)
     return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
 end
 
+
+
+
+
 function build_fault_study(pm::PMs.AbstractPowerModel)
     # voltage magnitude & angles at generator buses# should be fixed to the OPF results
     variable_voltage(pm, bounded = false)
@@ -146,7 +150,7 @@ path = "data/b4fault.m"
 # path = "data/case73.raw"
 net = PowerModels.parse_file(path)
 net["multinetwork"] = false
-net["fault"] = Dict()
+
 # net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>13404, "gf"=>10)
 
 function add_fault!(net, busid; resistance=0.1)
@@ -161,6 +165,33 @@ function add_fault!(net, busid; resistance=0.1)
     net["fault"]["$i"] = fault
 end
 
-add_fault!(net, 3)
+base_result = run_ac_opf(net, solver)
+
+fault_net = deepcopy(net)
+
+# TODO: is there a function already that does this??
+function update_base!(net, result)
+    s = result["solution"]
+
+    for (k,b) in net["bus"]
+        b["vm"] = s["bus"][k]["vm"]
+        b["va"] = s["bus"][k]["va"]        
+    end 
+
+    # don't really need this
+    for (k,g) in net["gen"]
+        g["pg"] = s["gen"][k]["pg"]
+        g["qg"] = s["gen"][k]["qg"]        
+    end     
+end
+
+update_base!(fault_net, base_result)
+add_fault!(fault_net, 3)
+
+function run_fault_study(file, solver; kwargs...)
+    return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
+end
+
+
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
-result = run_fault_study(net, solver)
+result = run_fault_study(fault_net, solver)

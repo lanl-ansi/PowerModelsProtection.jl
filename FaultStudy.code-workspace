@@ -4,10 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "..\\Repos\\PowerModels.jl"
+			"path": "..\\PowerModelsDistribution.jl"
 		},
 		{
-			"path": "..\\PowerModelsDistribution.jl"
+			"path": "..\\Repos\\PowerModels.jl"
 		}
 	],
 	"settings": {}
