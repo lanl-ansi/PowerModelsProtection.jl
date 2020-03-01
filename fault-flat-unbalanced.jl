@@ -101,8 +101,10 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractIVRModel, n::Int, i
     cnds = PMs.conductor_ids(pm; nw=n)
     ncnds = length(cnds)
 
-    Gt = isempty(bus_gs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gs))
+    Gt =  
     Bt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_bs))
+
+    Gf = isempty(bus_gs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gf)) # TODO: handle scalar or vector bus_gf
 
     for c in cnds
         JuMP.@NLconstraint(pm.model,  sum(cr[a][c] for a in bus_arcs)
@@ -110,16 +112,16 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractIVRModel, n::Int, i
                                     + sum(crt[a_trans][c] for a_trans in bus_arcs_trans)
                                     ==
                                     sum(crg[g][c]        for g in bus_gens)
-                                    - sum( Gt[c,d]*vr[d] for d in cnds) # shunts
-                                    - sum(gf for gf in values(bus_gf))*vr[c]
+                                    - sum( Gt[c,d]*vr[d] - Bt[c,d]*vi[d] for d in cnds) # shunts
+                                    - sum( Gf[c,d]*vr[d] for d in cnds) # faults
                                     )
         JuMP.@NLconstraint(pm.model, sum(ci[a][c] for a in bus_arcs)
                                     + sum(cisw[a_sw][c] for a_sw in bus_arcs_sw)
                                     + sum(cit[a_trans][c] for a_trans in bus_arcs_trans)
                                     ==
                                     sum(cig[g][c]        for g in bus_gens)
-                                    - sum( Gt[c,d]*vi[d] for d in cnds) # shunts
-                                    - sum(gf for gf in values(bus_gf))*vi[c]
+                                    - sum( Gt[c,d]*vi[d] + Bt[c,d]*vr[d] for d in cnds) # shunts
+                                    - sum( Gf[c,d]*vi[d] for d in cnds) # faults
                                     )
     end
 end
@@ -131,16 +133,15 @@ function constraint_mc_gen_fault_voltage_drop(pm::AbstractPowerModel, i::Int; nw
     busid = gen["gen_bus"]
     gen_bus = ref(pm, nw, :bus, busid)
 
-    if haskey(gen, "rg")
+    r = 0
+    x = 0.1
+   
+   if haskey(gen, "rg")
         r = gen["rg"]
-    else
-        r = 0
-    end
+   end
 
     if haskey(gen, "xg")
         x = gen["xg"]
-    else
-        x = 0.1
     end   
 
     # Watch out! OpenDSS doesn't include base case voltages in input file
@@ -186,7 +187,9 @@ net["multinetwork"] = false
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
 net["fault"] = Dict()
-net["fault"]["1"] = Dict("bus"=>3, "gf"=>10)
+gf = 10
+Gf = [[gf 0 0] [0 gf 0] [0 0 gf]]
+net["fault"]["1"] = Dict("bus"=>3, "gf"=>Gf)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file("data/mc/case3_balanced.dss")
