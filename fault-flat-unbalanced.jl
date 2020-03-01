@@ -62,7 +62,7 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractPowerModel, i::Int;
     bus_loads = PMs.ref(pm, nw, :bus_loads, i)
     bus_shunts = PMs.ref(pm, nw, :bus_shunts, i)
 
-    bus_faults = []
+        bus_faults = []
 
     # TODO: replace with list comprehension
     for (k,f) in ref(pm, :fault)
