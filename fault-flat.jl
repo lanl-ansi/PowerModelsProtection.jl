@@ -165,7 +165,7 @@ function add_fault!(net, busid; resistance=0.1)
     net["fault"]["$i"] = fault
 end
 
-base_result = run_ac_opf(net, solver)
+base_result = run_dc_opf(net, solver)
 
 fault_net = deepcopy(net)
 
@@ -210,6 +210,16 @@ function run_ac_fault_study(file, solver; kwargs...)
     return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
 end
 
+function run_dc_fault_study(file, solver; kwargs...)
+    if typeof(file) <: AbstractString
+        file = PowerModels.parse_file(file)
+    end
+
+    base_result = run_dc_opf(file, solver)
+    update_base!(file, base_result)
+    return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
+end
+
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
-result = run_ac_fault_study(fault_net, solver)
+result = run_dc_fault_study(fault_net, solver)
