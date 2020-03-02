@@ -1,4 +1,4 @@
-using Printf
+using Printf, DataFrames
 
 function print_dict(x; drop=["index","bus_i"])
     drop_set = Set(drop)
@@ -66,26 +66,35 @@ function print_bus(case, bid)
 
 end
 
-function to_df(case, table_name; solution=nothing)
+function to_df(case, table_name, result=nothing)
     df = DataFrame()
     table = case[table_name]
-    soln_table = solution[table_name]
-    
+  
     cols = collect(keys(table))
     
-    df[:index] = cols
+    df[!, :index] = cols
 
     for k in keys(first(values(table)))
-        col = [x[k] for x in values(table)]
+        col = []
 
-        df[Symbol(k)] = col 
+        for x in values(table)
+            if k in keys(x)
+                push!(col, x[k])
+            else
+                push!(col, nothing)
+            end
+        end
+
+        df[!, Symbol(k)] = col 
     end 
     
-    if solution !== nothing
+    if result !== nothing
+        soln_table = result["solution"][table_name]
+
         for k in keys(first(values(soln_table)))
             col = [x[k] for x in values(soln_table)]
 
-            df[Symbol(k)] = col 
+            df[!, Symbol(k)] = col 
         end 
     end
     
