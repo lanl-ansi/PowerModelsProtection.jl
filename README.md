@@ -19,12 +19,12 @@ current limits
 
 ## TODO
 
-[ ] Inverter interfaced generation/storage
-[ ] Induction motor contribution during faults
-[ ] Transformer winding faults
-[ ] Sequential powerflow -> fault study formulation?
-[ ] Convenience function to add faults, particularly for unbalanced faults?
-[ ] Convenience function to enumerate faults over all nodes?
+- [ ] Inverter interfaced generation/storage
+- [ ] Induction motor contribution during faults
+- [ ] Transformer winding faults
+- [ ] Sequential powerflow -> fault study formulation?
+- [ ] Convenience function to add faults, particularly for unbalanced faults?
+- [ ] Convenience function to enumerate faults over all nodes?
 
 
 ## Inverter Fault Models
