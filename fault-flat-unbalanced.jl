@@ -178,9 +178,6 @@ end
 
 
 
-path = "data/b4fault.m"
-path = "data/mc/case3_balanced.dss"
-net = PMD.parse_file(path)
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
 function add_mc_fault!(net, busid; resistance=0.1, type="three-phase", phases=[1, 2, 3])
@@ -210,6 +207,12 @@ function add_mc_fault!(net, busid; resistance=0.1, type="three-phase", phases=[1
     n = length(keys(net["fault"]))
     net["fault"]["$(n + 1)"] = Dict("bus"=>busid, "gf"=>Gf)
 end
+
+
+path = "data/b4fault.m"
+path = "data/mc/case3_balanced.dss"
+net = PMD.parse_file(path)
+
 
 add_mc_fault!(net, 2)
 

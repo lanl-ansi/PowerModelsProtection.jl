@@ -135,24 +135,6 @@ function constraint_gen_fault_voltage_drop(pm::AbstractIVRModel, n::Int, i, busi
 end
 
 
-path = "data/b4fault.m"
-    # path = "data/case30fault.m"
-    # path = "data/case30.m"
-    # path = "data/case30.raw"
-# path = "data/uiuc-150bus.RAW"
-# path = "data/GO500v2_perfect_0.raw"
-# path = "data/SDET700Bus.raw"
-# path = "data/GO3000_new_perfect.raw"
-# path = "data/SDET_2316bus model.raw"
-# path = "data/ACTIVSg10k.RAW"
-# pm = PowerModels.instantiate_model(path, PowerModels.IVRPowerModel, build_fault_study)
-
-# path = "data/case73.raw"
-net = PowerModels.parse_file(path)
-net["multinetwork"] = false
-
-# net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>13404, "gf"=>10)
-
 function add_fault!(net, busid; resistance=0.1)
     if !("fault" in keys(net))
         net["fault"] = Dict()
@@ -165,9 +147,6 @@ function add_fault!(net, busid; resistance=0.1)
     net["fault"]["$i"] = fault
 end
 
-base_result = run_dc_opf(net, solver)
-
-fault_net = deepcopy(net)
 
 # TODO: is there a function already that does this??
 function update_base!(net, result)
@@ -185,8 +164,7 @@ function update_base!(net, result)
     end     
 end
 
-update_base!(fault_net, base_result)
-add_fault!(fault_net, 3)
+
 
 # Here's an attempt at a sequential formulation
 # It's a little messy with lots of copy n paste
@@ -220,6 +198,30 @@ function run_dc_fault_study(file, solver; kwargs...)
     return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
 end
 
+path = "data/b4fault.m"
+# path = "data/case30fault.m"
+# path = "data/case30.m"
+# path = "data/case30.raw"
+# path = "data/uiuc-150bus.RAW"
+# path = "data/GO500v2_perfect_0.raw"
+# path = "data/SDET700Bus.raw"
+# path = "data/GO3000_new_perfect.raw"
+# path = "data/SDET_2316bus model.raw"
+# path = "data/ACTIVSg10k.RAW"
+# pm = PowerModels.instantiate_model(path, PowerModels.IVRPowerModel, build_fault_study)
+
+# path = "data/case73.raw"
+net = PowerModels.parse_file(path)
+net["multinetwork"] = false
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
+# net["fault"]["1"] = Dict("source_id"=>Any["fault", 1], "bus"=>13404, "gf"=>10)
+
+
+base_result = run_dc_opf(net, solver)
+fault_net = deepcopy(net)
+
+update_base!(fault_net, base_result)
+add_fault!(fault_net, 3)
+
 result = run_dc_fault_study(fault_net, solver)
