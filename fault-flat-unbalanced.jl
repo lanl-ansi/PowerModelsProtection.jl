@@ -184,7 +184,7 @@ end
 
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
-function add_mc_fault!(net, busid; resistance=0.1, type="three-phase", phases=[1, 2, 3])
+function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="three-phase", phases=[1, 2, 3])
     if !("fault" in keys(net))
         net["fault"] = Dict()
     end
@@ -200,8 +200,26 @@ function add_mc_fault!(net, busid; resistance=0.1, type="three-phase", phases=[1
         i = phases[1]
         j = phases[2]
 
-    Gf[i,j] = gf
+        Gf[i,j] = gf
         Gf[j,i] = gf
+    elseif lowercase(type) == "llg"
+        # See https://en.wikipedia.org/wiki/Y-%CE%94_transform
+        # Section: Equations for the transformation from Y to Delta
+
+        G3 = 1/resistance # resistance from fault node to ground
+        G1 = 1/phase_resistance # resistance from 1st faulted phase to fault node
+        G2 = 1/phase_resistance # resistance from 2st faulted phase to fault node
+        Gtot = G1 + G2 + G3
+
+        G12 = G1*G2/Gtot 
+        G23 = G2*G3/Gtot
+        G31 = G3*G1/Gtot
+
+        G[i,j] = G12
+        G[j,i] = G12
+        G[i,i] = G31
+        G[j,j] = G23
+
     else # three-phase
         for i in 1:3
             Gf[i,i] = gf

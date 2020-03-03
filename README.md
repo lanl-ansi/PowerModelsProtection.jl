@@ -39,7 +39,12 @@ In roughly decreasing order of priority
 
 
 ## LLG Fault Model
-![GitHub Logo](/docs/imagesw/wye-delta.svg)
+![GitHub Logo](/docs/images/wye-delta.svg)
+
+Gtot = sum Gi for i in 1...3
+G12 = Gc = G1G2/Gtot 
+G23 = Ga = G2G3/Gtot
+G31 = Gb = G3G1/Gtot
 
 
 ## Inverter Fault Models
