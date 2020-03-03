@@ -43,8 +43,6 @@ In roughly decreasing order of priority
 ![Unbalanced Wye to Delta Admittance Conversion](/docs/images/wye-delta-admittance-conversion.svg)
 
 
-
-
 ## Inverter Fault Models
 
 ### Virtual Resistance Model

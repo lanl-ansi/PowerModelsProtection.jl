@@ -206,24 +206,43 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
         # See https://en.wikipedia.org/wiki/Y-%CE%94_transform
         # Section: Equations for the transformation from Y to Delta
 
-        G3 = 1/resistance # resistance from fault node to ground
         G1 = 1/phase_resistance # resistance from 1st faulted phase to fault node
         G2 = 1/phase_resistance # resistance from 2st faulted phase to fault node
-        Gtot = G1 + G2 + G3
+        Gn = 1/resistance # resistance from fault node to ground
+        Gtot = G1 + G2 + Gn
+
+        G12 = G1*G2/Gtot 
+        G1n = G1*Gn/Gtot
+        G2n = G2*Gn/Gtot
+
+        G[i,j] = G12
+        G[j,i] = G12
+        G[i,i] = G1n
+        G[j,j] = G2n
+    else # three-phase
+        G1 = 1/phase_resistance # resistance from 1st faulted phase to fault node
+        G2 = 1/phase_resistance # resistance from 2st faulted phase to fault node
+        G3 = 1/phase_resistance # resistance from 3st faulted phase to fault node
+        Gn = 1/resistance # resistance from fault node to ground
+        Gtot = G1 + G2 + G3 + Gn
 
         G12 = G1*G2/Gtot 
         G23 = G2*G3/Gtot
         G31 = G3*G1/Gtot
+        G1n = G1*Gn/Gtot
+        G2n = G2*Gn/Gtot
+        G3n = G3*Gn/Gtot
 
-        G[i,j] = G12
-        G[j,i] = G12
-        G[i,i] = G31
-        G[j,j] = G23
+        G[1,2] = G12
+        G[2,1] = G12
+        G[2,3] = G23
+        G[3,2] = G23
+        G[3,1] = G31
+        G[1,3] = G31
 
-    else # three-phase
-        for i in 1:3
-            Gf[i,i] = gf
-        end
+        G[1,1] = G1n
+        G[2,2] = G2n
+        G[3,3] = G3n
     end
         
     n = length(keys(net["fault"]))
