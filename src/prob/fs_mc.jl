@@ -6,6 +6,7 @@ function run_mc_fault_study(data::Dict{String,Any}, solver; kwargs...)
         data["active_fault"] = fault
         result = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
         println(result)
+        println(stop)
     end
     return solution
 end
@@ -22,17 +23,17 @@ function build_mc_fault_study(pm::_PMs.AbstractPowerModel)
     variable_mc_branch_current(pm, bounded = false)
     variable_mc_transformer_current(pm, bounded = false)
     _PMD.variable_mc_generation(pm, bounded = false) 
- 
+    println(stopp)
 #     # gens should be constrained before KCL, or Pd/Qd undefined
 #     for id in PMs.ids(pm, :gen)
 #         PMD.constraint_mc_generation(pm, id)
 #     end
 
 
-#     for (i,bus) in PMs.ref(pm, :bus)
-#         # do need a new version to handle gmat
-#         constraint_mc_fault_current_balance(pm, i)        
-#     end
+    for (i,bus) in _PMs.ref(pm, :bus)
+        # do need a new version to handle gmat
+        constraint_mc_fault_current_balance(pm, i)        
+    end
 
 #     for (i,gen) in ref(pm, :gen)
 #         # do I need a new version for multiconductor

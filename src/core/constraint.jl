@@ -79,3 +79,45 @@ function constraint_fault_current_balance(pm::_PMs.AbstractIVRModel, n::Int, i, 
                                 - cfi
                                 )
 end
+
+# function constraint_mc_current_balance(pm::PMs.AbstractIVRModel, n::Int, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
+#     vr = _PMs.var(pm, n, :vr, i)
+#     vi = _PMs.var(pm, n, :vi, i)
+
+#     # TODO: add storage back with inverter fault model
+#     cr    = get(PMs.var(pm, n),    :cr, Dict()); PMs._check_var_keys(cr, bus_arcs, "real current", "branch")
+#     ci    = get(PMs.var(pm, n),    :ci, Dict()); PMs._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
+#     crg   = get(PMs.var(pm, n),   :crg_bus, Dict()); PMs._check_var_keys(crg, bus_gens, "real current", "generator")
+#     cig   = get(PMs.var(pm, n),   :cig_bus, Dict()); PMs._check_var_keys(cig, bus_gens, "imaginary current", "generator")
+#     crsw  = get(PMs.var(pm, n),  :crsw, Dict()); PMs._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
+#     cisw  = get(PMs.var(pm, n),  :cisw, Dict()); PMs._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
+#     crt   = get(PMs.var(pm, n),   :crt, Dict()); PMs._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
+#     cit   = get(PMs.var(pm, n),   :cit, Dict()); PMs._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
+
+#     cnds = PMs.conductor_ids(pm; nw=n)
+#     ncnds = length(cnds)
+
+#     Gt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gs))  
+#     Bt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_bs))
+
+#     Gf = isempty(bus_gf) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gf)) # TODO: handle scalar or vector bus_gf
+
+#     for c in cnds
+#         JuMP.@NLconstraint(pm.model,  sum(cr[a][c] for a in bus_arcs)
+#                                     + sum(crsw[a_sw][c] for a_sw in bus_arcs_sw)
+#                                     + sum(crt[a_trans][c] for a_trans in bus_arcs_trans)
+#                                     ==
+#                                     sum(crg[g][c]        for g in bus_gens)
+#                                     - sum( Gt[c,d]*vr[d] - Bt[c,d]*vi[d] for d in cnds) # shunts
+#                                     - sum( Gf[c,d]*vr[d] for d in cnds) # faults
+#                                     )
+#         JuMP.@NLconstraint(pm.model, sum(ci[a][c] for a in bus_arcs)
+#                                     + sum(cisw[a_sw][c] for a_sw in bus_arcs_sw)
+#                                     + sum(cit[a_trans][c] for a_trans in bus_arcs_trans)
+#                                     ==
+#                                     sum(cig[g][c]        for g in bus_gens)
+#                                     - sum( Gt[c,d]*vi[d] + Bt[c,d]*vr[d] for d in cnds) # shunts
+#                                     - sum( Gf[c,d]*vi[d] for d in cnds) # faults
+#                                     )
+#     end
+# end
