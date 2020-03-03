@@ -25,6 +25,7 @@ current limits
 - [x] Sequential powerflow -> fault study formulation?
 - [x] Convenience function to add faults, particularly for unbalanced faults?
 - [ ] Convenience function to enumerate faults over all nodes?
+- [ ] change "bus" field in fault objects to "fault_bus" to follow PowerModels conventions
 
 
 ## Inverter Fault Models
