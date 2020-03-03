@@ -22,7 +22,7 @@ current limits
 In roughly decreasing order of priority
 
 - [ ] Finish mc implementation
-- [ ] Add LLG faults to add_fault! function
+- [x] Add LLG faults to add_fault! function
 - [ ] Convenience function to enumerate faults over all nodes
 - [ ] Add unit tests for B7Fault
 - [ ] Add unit tests for Kersting IEEE 13-bus fault study
