@@ -38,6 +38,10 @@ In roughly decreasing order of priority
 - [x] Convenience function to add faults, particularly for unbalanced faults?
 
 
+## LLG Fault Model
+![GitHub Logo](/docs/imagesw/wye-delta.svg)
+
+
 ## Inverter Fault Models
 
 ### Virtual Resistance Model
