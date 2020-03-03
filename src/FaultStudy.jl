@@ -25,9 +25,10 @@ module FaultStudy
 
     include("io/common.jl")
     include("io/matpower.jl")
+    include("io/opendss.jl")
 
     include("prob/fs.jl")
-    # include("prob/ubfs.jl")
+    include("prob/fs_mc.jl")
     #include("prob/pf.jl")
 
     include("core/export.jl")  # must be last include to properly export functions

@@ -10,8 +10,13 @@ function check_pf!(data::Dict{String,Any}, solver)
 end
 
 function add_pf_data!(data::Dict{String,Any}, solver)
-    result = _PMs.run_pf(data, _PMs.ACPPowerModel, solver)
-    add_pf_data!(data, result)
+    if data["method"] == "PMs"
+        result = _PMs.run_pf(data, _PMs.ACPPowerModel, solver)
+        add_pf_data!(data, result)
+    else
+        result = _PMD.run_mc_pf(data, _PMs.ACPPowerModel, solver)
+        add_pf_data!(data, result)
+    end
 end
 
 function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
