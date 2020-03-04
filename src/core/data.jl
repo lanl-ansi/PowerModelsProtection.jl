@@ -46,7 +46,7 @@ end
 
 function add_fault_study!(data::Dict{String,Any})
     pm = _PMs.instantiate_model(data, _PMs.IVRPowerModel, post_empty; multiconductor=true)
-    println(keys(pm.ref[:nw][0][:bus]))
+    println(keys(pm.ref[:nw][0][:bus][1]))
     println(u)
     data["fault"] = Dict{String, Any}()
     for (i, bus) in data["bus"]
