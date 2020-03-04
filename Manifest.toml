@@ -300,12 +300,6 @@ git-tree-sha1 = "12f99ecc94fc72b5891f90f59b3f2c456e8d996e"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.15.2"
 
-[[PowerModelsAnnex]]
-deps = ["DataFrames", "InfrastructureModels", "JuMP", "MathOptInterface", "Memento", "Missings", "PowerModels", "PowerSystemsUnits", "Unitful"]
-git-tree-sha1 = "ff43b291e99cf83dd860cc1cf47ce5155f123194"
-uuid = "6e471128-d39d-5672-b02b-a742bd1b77ed"
-version = "0.4.1"
-
 [[PowerModelsDistribution]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "PowerModels", "Statistics"]
 git-tree-sha1 = "f2c1464b1e12d606ee0b5d8027ef197dfaf10d91"
@@ -313,12 +307,6 @@ repo-rev = "master"
 repo-url = "git@github.com:lanl-ansi/PowerModelsDistribution.jl.git"
 uuid = "d7431456-977f-11e9-2de3-97ff7677985e"
 version = "0.8.0"
-
-[[PowerSystemsUnits]]
-deps = ["Dates", "Statistics", "Unitful"]
-git-tree-sha1 = "aa9d83c87359c6d913e27fd893aba69941b012fe"
-uuid = "c279aad7-7dc9-58d3-995b-109d3f5deb94"
-version = "0.2.0"
 
 [[Printf]]
 deps = ["Unicode"]
@@ -417,12 +405,6 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-
-[[Unitful]]
-deps = ["LinearAlgebra", "Random", "Test"]
-git-tree-sha1 = "94736a38908c6b43d22e1abffc4f72ab19dabbc1"
-uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
-version = "0.15.0"
 
 [[XML2_jll]]
 deps = ["Libdl", "Libiconv_jll", "Pkg", "Zlib_jll"]

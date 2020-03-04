@@ -213,18 +213,18 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
         gpp = gp*gp/gtot 
         gpg = gp*gf/gtot
 
-        G[i,j] = gpp
-        G[j,i] = gpp
-        G[i,i] = gpg
-        G[j,j] = gpg
+        Gf[i,j] = gpp
+        Gf[j,i] = gpp
+        Gf[i,i] = gpg
+        Gf[j,j] = gpg
     elseif lowercase(type) == "3p" # three-phase ungrounded
-        # See http://faculty.citadel.edu/potisuk/elec202/notes/3phase1.pdf p. 12
+        # See http://faculty.citadel.edu/potisuk/elec202/notes/3phase1.pdf p.12
         gpp = gf/3
 
         for i in 1:3
             for j in 1:3
                 if i != j
-                    G[i,j] = gpp
+                    Gf[i,j] = gpp
                 end
             end
         end        
@@ -238,15 +238,15 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
         for i in 1:3
             for j in 1:3
                 if i == j
-                    G[i,j] = gpp
+                    Gf[i,j] = gpp
                 else
-                    G[i,j] = gpg
+                    Gf[i,j] = gpg
                 end
             end
         end
     else # balanced
         for i in 1:3
-            G[i,i] = gf
+            Gf[i,i] = gf
         end
     end
 
@@ -262,7 +262,7 @@ path = "data/mc/13Bus/IEEE13NodeCkt.dss"
 net = PMD.parse_file(path)
 
 
-add_mc_fault!(net, 680)
+add_mc_fault!(net, 5, resistance=1e-4)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file(path)
