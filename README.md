@@ -19,12 +19,28 @@ current limits
 
 ## TODO
 
-[ ] Inverter interfaced generation/storage
-[ ] Induction motor contribution during faults
-[ ] Transformer winding faults
-[ ] Sequential powerflow -> fault study formulation?
-[ ] Convenience function to add faults, particularly for unbalanced faults?
-[ ] Convenience function to enumerate faults over all nodes?
+In roughly decreasing order of priority
+
+- [ ] Finish mc implementation
+- [x] Add LLG faults to add_fault! function
+- [ ] Convenience function to enumerate faults over all nodes
+- [ ] Add unit tests for B7Fault
+- [ ] Add unit tests for Kersting IEEE 13-bus fault study
+- [ ] Add LICENSE.md - check with Russell first on this
+- [ ] Push to lanl-ansi/PowerModelsFaultStudy.jl
+- [ ] Add "status" field to fault objects
+- [ ] change "bus" field in fault objects to "fault_bus" to follow PowerModels conventions
+- [ ] Parse OpenDSS fault objects in PowerModelsDistribution/io/parse_pmd.jl
+- [ ] Inverter interfaced generation/storage
+- [ ] Induction motor contribution during faults
+- [ ] Transformer winding faults
+- [x] Sequential powerflow -> fault study formulation?
+- [x] Convenience function to add faults, particularly for unbalanced faults?
+
+
+## LLG Fault Model
+![Wye & Delta Load Configurations](/docs/images/wye-delta.svg)
+![Unbalanced Wye to Delta Admittance Conversion](/docs/images/wye-delta-admittance-conversion.svg)
 
 
 ## Inverter Fault Models
