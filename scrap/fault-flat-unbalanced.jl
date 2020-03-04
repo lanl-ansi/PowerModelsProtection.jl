@@ -1,5 +1,7 @@
 using PowerModels, PowerModelsDistribution, JuMP, Ipopt
 
+# include("powermodelsio.jl")
+
 const PMs = PowerModels
 const PMD = PowerModelsDistribution
 
@@ -60,12 +62,13 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractPowerModel, i::Int;
     bus_gens = PMs.ref(pm, nw, :bus_gens, i)
     bus_shunts = PMs.ref(pm, nw, :bus_shunts, i)
 
-        bus_faults = []
+    bus_faults = []
 
     # TODO: replace with list comprehension
     for (k,f) in ref(pm, :fault)
-        if f["bus"] == i
+        if f["fault_bus"] == i
             push!(bus_faults, k)
+            # println("Adding fault $k to bus $i")
         end
     end    
 
@@ -99,10 +102,10 @@ function constraint_mc_fault_current_balance(pm::PMs.AbstractIVRModel, n::Int, i
     cnds = PMs.conductor_ids(pm; nw=n)
     ncnds = length(cnds)
 
-    Gt =  
+    Gt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gs))  
     Bt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_bs))
 
-    Gf = isempty(bus_gs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gf)) # TODO: handle scalar or vector bus_gf
+    Gf = isempty(bus_gf) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gf)) # TODO: handle scalar or vector bus_gf
 
     for c in cnds
         JuMP.@NLconstraint(pm.model,  sum(cr[a][c] for a in bus_arcs)
@@ -130,6 +133,7 @@ function constraint_mc_gen_fault_voltage_drop(pm::AbstractPowerModel, i::Int; nw
     gen = ref(pm, nw, :gen, i)
     busid = gen["gen_bus"]
     gen_bus = ref(pm, nw, :bus, busid)
+
 
     r = 0
     x = 0.1
@@ -178,17 +182,15 @@ end
 
 
 
-path = "data/b4fault.m"
-path = "data/mc/case3_balanced.dss"
-net = PMD.parse_file(path)
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
-function add_mc_fault!(net, busid; resistance=0.1, type="three-phase", phases=[1, 2, 3])
+function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="three-phase", phases=[1, 2, 3])
     if !("fault" in keys(net))
         net["fault"] = Dict()
     end
 
     gf = max(1/resistance, 1e-6)
+    gp = max(1/phase_resistance, 1e-6)
     Gf = zeros(3,3)
 
     if lowercase(type) == "lg"
@@ -201,20 +203,78 @@ function add_mc_fault!(net, busid; resistance=0.1, type="three-phase", phases=[1
 
         Gf[i,j] = gf
         Gf[j,i] = gf
-    else # three-phase
+    elseif lowercase(type) == "llg"
+        i = phases[1]
+        j = phases[2]        
+        # See https://en.wikipedia.org/wiki/Y-%CE%94_transform
+        # Section: Equations for the transformation from Y to Delta
+        gtot = 2*gp + gf
+
+        gpp = gp*gp/gtot 
+        gpg = gp*gf/gtot
+
+        G[i,j] = gpp
+        G[j,i] = gpp
+        G[i,i] = gpg
+        G[j,j] = gpg
+    elseif lowercase(type) == "3p" # three-phase ungrounded
+        # See http://faculty.citadel.edu/potisuk/elec202/notes/3phase1.pdf p. 12
+        gpp = gf/3
+
         for i in 1:3
-            Gf[i,i] = gf
+            for j in 1:3
+                if i != j
+                    G[i,j] = gpp
+                end
+            end
+        end        
+    elseif lowercase(type) == "3pg" # three-phase grounded
+        # See https://en.wikipedia.org/wiki/Star-mesh_transform
+        gtot = 3*gp + gf
+
+        gpp = gp*gp/gtot 
+        gpg = gp*gf/gtot
+
+        for i in 1:3
+            for j in 1:3
+                if i == j
+                    G[i,j] = gpp
+                else
+                    G[i,j] = gpg
+                end
+            end
+        end
+    else # balanced
+        for i in 1:3
+            G[i,i] = gf
         end
     end
+
         
     n = length(keys(net["fault"]))
-    net["fault"]["$(n + 1)"] = Dict("bus"=>busid, "gf"=>Gf)
+    net["fault"]["$(n + 1)"] = Dict("fault_bus"=>busid, "gf"=>Gf, "status"=>1)
 end
 
-add_mc_fault!(net, 2)
+
+path = "data/b4fault.m"
+path = "data/mc/ut_trans_2w_yy.dss"
+path = "data/mc/13Bus/IEEE13NodeCkt.dss"
+path = "data/dist/case3_unbalanced.dss"
+net = PMD.parse_file(path)
+
+
+add_mc_fault!(net, 680)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file(path)
 sol = PMD.run_mc_pf_iv(pmd, PMs.IVRPowerModel, solver)
 
 result = run_mc_fault_study(net, solver)
+
+# buses = to_df(net, "bus", result)
+# branches = to_df(net, "branch", result)
+
+# #  branches[!,[:f_bus,:t_bus,:name,:cr_to,:ci_to]]
+# buses[!,[:index,:name,:vr,:vi]]
+
+

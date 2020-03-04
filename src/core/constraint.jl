@@ -95,7 +95,8 @@ end
 
 function constraint_mc_fault_current(pm::_PMs.AbstractPowerModel; nw::Int=pm.cnw)
     bus = _PMs.ref(pm, nw, :active_fault, "bus_i")
-    z = _PMs.ref(pm, nw, :active_fault, "Gf")
+    Gf = _PMs.ref(pm, nw, :active_fault, "Gf")
+
     vr = _PMs.var(pm, nw, :vr, bus)
     vi = _PMs.var(pm, nw, :vi, bus)
 
@@ -109,12 +110,14 @@ function constraint_mc_fault_current(pm::_PMs.AbstractPowerModel; nw::Int=pm.cnw
         start = 0
     )
 
-    cr = _PMs.var(pm, nw, :cfr, bus)
-    ci = _PMs.var(pm, nw, :cfi, bus)
-    # Gf[c,d]*vi[d] for d in cnds
+    cr = _PMs.var(pm, nw, :cfr)
+    ci = _PMs.var(pm, nw, :cfi)
+
+    cnds = _PMs.conductor_ids(pm; nw=nw)
+
     for c in _PMs.conductor_ids(pm; nw=nw)
-        JuMP.@constraint(pm.model, vr[c] == cr[c] * .1)
-        JuMP.@constraint(pm.model, vi[c] == ci[c] * .1)
+        JuMP.@constraint(pm.model, cr[c] == sum(Gf[c,d]*vr[d] for d in cnds))
+        JuMP.@constraint(pm.model, ci[c] == sum(Gf[c,d]*vi[d] for d in cnds))
     end
 end
 
@@ -176,8 +179,8 @@ function constraint_mc_fault_current_balance(pm::_PMs.AbstractIVRModel, n::Int, 
     Gt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gs))  
     Bt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_bs))
 
-    cfr = _PMs.var(pm, n, :cfr, bus)
-    cfi = _PMs.var(pm, n, :cfi, bus)
+    cfr = _PMs.var(pm, n, :cfr)
+    cfi = _PMs.var(pm, n, :cfi)
 
     for c in cnds
         JuMP.@NLconstraint(pm.model,  sum(cr[a][c] for a in bus_arcs)
@@ -196,5 +199,50 @@ function constraint_mc_fault_current_balance(pm::_PMs.AbstractIVRModel, n::Int, 
                                     - sum( Gt[c,d]*vi[d] + Bt[c,d]*vr[d] for d in cnds) # shunts
                                     - cfi[c] # faults
                                     )
+    end
+end
+
+
+function constraint_mc_generation_wye(pm::_PMs.IVRPowerModel, nw::Int, id::Int, bus_id::Int; report::Bool=true, bounded::Bool=true)
+    vr = _PMs.var(pm, nw, :vr, bus_id)
+    vi = _PMs.var(pm, nw, :vi, bus_id)
+    crg = _PMs.var(pm, nw, :crg, id)
+    cig = _PMs.var(pm, nw, :cig, id)
+
+    nph = 3
+
+    _PMs.var(pm, nw, :crg_bus)[id] = crg
+    _PMs.var(pm, nw, :cig_bus)[id] = cig
+
+    if report
+        _PMs.sol(pm, nw, :gen, id)[:crg_bus] = _PMs.var(pm, nw, :crg_bus, id)
+        _PMs.sol(pm, nw, :gen, id)[:cig_bus] = _PMs.var(pm, nw, :crg_bus, id)
+    end
+end
+
+
+""
+function constraint_mc_generation_delta(pm::_PMs.IVRPowerModel, nw::Int, id::Int, bus_id::Int; report::Bool=true, bounded::Bool=true)
+    vr = _PMs.var(pm, nw, :vr, bus_id)
+    vi = _PMs.var(pm, nw, :vi, bus_id)
+    crg = _PMs.var(pm, nw, :crg, id)
+    cig = _PMs.var(pm, nw, :cig, id)
+
+    nph = 3
+    prev = Dict(i=>(i+nph-2)%nph+1 for i in 1:nph)
+    next = Dict(i=>i%nph+1 for i in 1:nph)
+
+    vrg = JuMP.@NLexpression(pm.model, [i in 1:nph], vr[i]-vr[next[i]])
+    vig = JuMP.@NLexpression(pm.model, [i in 1:nph], vi[i]-vi[next[i]])
+
+    crg_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], crg[i]-crg[prev[i]])
+    cig_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], cig[i]-cig[prev[i]])
+
+    _PMs.var(pm, nw, :crg_bus)[id] = crg_bus
+    _PMs.var(pm, nw, :cig_bus)[id] = cig_bus
+
+    if report
+        _PMs.sol(pm, nw, :gen, id)[:crg_bus] = crg_bus
+        _PMs.sol(pm, nw, :gen, id)[:cig_bus] = cig_bus
     end
 end

@@ -31,16 +31,62 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
 end
 
 function add_fault_data!(data::Dict{String,Any})
-    data["fault"] = Dict{String, Any}()
-    # for (i, bus) in data["bus"]
-    #     data["fault"][i] = Dict{String, Any}()
-    #     data["fault"][i]["ll"] = Dict("gp"=> .01, "phases" => [1, 2])
-    #     data["fault"][i]["lg"] = Dict("gf"=> .1, "phases" => [1])
-    # end
-    data["fault"]["1"] = Dict("bus_i" => 3, "type" => "lg", "gf"=> .1, "phases" => [1])
+    if !haskey(data, "fault")
+        add_fault_study!(data)
+    end
+    # data["fault"] = Dict{String, Any}()
+    # gf = 1/.1
+    # # for (i, bus) in data["bus"]
+    # #     data["fault"][i] = Dict{String, Any}()
+    # #     data["fault"][i]["ll"] = Dict("gp"=> .01, "phases" => [1, 2])
+    # #     data["fault"][i]["lg"] = Dict("gf"=> .1, "phases" => [1])
+    # # end
+    # data["fault"]["1"] = Dict("bus_i" => 3, "type" => "lg", "gf"=> gf, "phases" => [1])
 end
 
+function add_fault_study!(data::Dict{String,Any})
+    pm = _PMs.instantiate_model(data, _PMs.IVRPowerModel, post_empty; multiconductor=true)
+    println(keys(pm.ref[:nw][0][:bus]))
+    println(u)
+    data["fault"] = Dict{String, Any}()
+    for (i, bus) in data["bus"]
+        data["fault"][i] = Dict{String, Any}()
+        println(bus)
+        # add_lg_fault!(data, bus, i)
+        # add_ll_fault!(data, bus, i)
+        
+    end
+    println(ll)
+end
 
+function post_empty(pm::_PMs.AbstractPowerModel)
+end
+
+function add_lg_fault!(data::Dict{String,Any}, bus, i, index::Int; resistance=0.1)
+    ncnd = length(bus["vm"])
+    gf = max(1/resistance, 1e-6)
+
+    data["fault"][i]["lg"] = Dict{Int, Any}()
+
+    for c = 1:ncnd
+        Gf = zeros(ncnd, ncnd)
+        Gf[c,c] = gf
+        data["fault"][i]["lg"][c] = Dict("bus_i" => bus["bus_i"], "type" => "lg", "Gf"=> Gf, "phases" => [c])
+    end
+end
+
+function add_ll_fault!(data::Dict{String,Any}, bus, i, index::Int; resistance=0.1)
+    ncnd = length(bus["vm"])
+    gf = max(1/resistance, 1e-6)
+
+    data["fault"][i]["ll"] = Dict{Int, Any}()
+
+    for c = 1:ncnd
+        Gf = zeros(ncnd, ncnd)
+        Gf[c,c] = gf
+        data["fault"][i]["lg"][c] = Dict("bus_i" => bus["bus_i"], "type" => "lg", "Gf"=> Gf, "phases" => [c])
+    end
+end
 
 # # create a convenience function add_fault or keyword options to run_mc_fault study
 # function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="three-phase", phases=[1, 2, 3])
