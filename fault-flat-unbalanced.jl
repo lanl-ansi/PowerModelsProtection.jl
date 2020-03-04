@@ -190,6 +190,7 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
     end
 
     gf = max(1/resistance, 1e-6)
+    gp = max(1/phase_resistance, 1e-6)
     Gf = zeros(3,3)
 
     if lowercase(type) == "lg"
@@ -207,37 +208,48 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
         j = phases[2]        
         # See https://en.wikipedia.org/wiki/Y-%CE%94_transform
         # Section: Equations for the transformation from Y to Delta
+        gtot = 2*gp + gf
 
-        Gp = 1/phase_resistance # resistance from faulted phase to fault node
-        Gn = 1/resistance # resistance from fault node to ground
-        Gtot = 2*Gp + Gn
+        gpp = gp*gp/gtot 
+        gpg = gp*gf/gtot
 
-        Gpp = Gp*Gp/Gtot 
-        Gpn = Gp*Gn/Gtot
+        G[i,j] = gpp
+        G[j,i] = gpp
+        G[i,i] = gpg
+        G[j,j] = gpg
+    elseif lowercase(type) == "3p" # three-phase ungrounded
+        # See http://faculty.citadel.edu/potisuk/elec202/notes/3phase1.pdf p. 12
+        gpp = gf/3
 
-        G[i,j] = Gpp
-        G[j,i] = Gpp
-        G[i,i] = Gpn
-        G[j,j] = Gpn
-    else # three-phase
+        for i in 1:3
+            for j in 1:3
+                if i != j
+                    G[i,j] = gpp
+                end
+            end
+        end        
+    elseif lowercase(type) == "3pg" # three-phase grounded
         # See https://en.wikipedia.org/wiki/Star-mesh_transform
-        Gp = 1/phase_resistance # resistance from 1st faulted phase to fault node
-        Gn = 1/resistance # resistance from fault node to ground
-        Gtot = 3*Gp + Gn
+        gtot = 3*gp + gf
 
-        Gpp = Gp*Gp/Gtot 
-        Gpn = Gp*Gn/Gtot
+        gpp = gp*gp/gtot 
+        gpg = gp*gf/gtot
 
         for i in 1:3
             for j in 1:3
                 if i == j
-                    G[i,j] = Gpp
+                    G[i,j] = gpp
                 else
-                    G[i,j] = Gpn
+                    G[i,j] = gpg
                 end
             end
         end
+    else # balanced
+        for i in 1:3
+            G[i,i] = gf
+        end
     end
+
         
     n = length(keys(net["fault"]))
     net["fault"]["$(n + 1)"] = Dict("fault_bus"=>busid, "gf"=>Gf, "status"=>1)
