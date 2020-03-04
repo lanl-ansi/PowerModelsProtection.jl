@@ -219,7 +219,7 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
         G[j,i] = G12
         G[i,i] = G1n
         G[j,j] = G2n
-    else # three-phase
+    elseif lowercase(type) == '3p' # three-phase
         G1 = 1/phase_resistance # resistance from 1st faulted phase to fault node
         G2 = 1/phase_resistance # resistance from 2st faulted phase to fault node
         G3 = 1/phase_resistance # resistance from 3st faulted phase to fault node
@@ -243,6 +243,10 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
         G[1,1] = G1n
         G[2,2] = G2n
         G[3,3] = G3n
+    else
+        for i in 1:3
+            G[i,i] = gf
+        end
     end
         
     n = length(keys(net["fault"]))
@@ -252,11 +256,11 @@ end
 
 path = "data/b4fault.m"
 path = "data/mc/ut_trans_2w_yy.dss"
+path = "data/mc/13Bus/IEEE13NodeCkt.dss"
 net = PMD.parse_file(path)
 
 
-add_mc_fault!(net, 4)
-# net["shunt"]["1"] = Dict("gs"=>[0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0], "bs"=>[0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0], "shunt_bus"=>4, "status"=>1)
+add_mc_fault!(net, 680)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file(path)
