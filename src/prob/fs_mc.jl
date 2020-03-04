@@ -4,51 +4,43 @@ function run_mc_fault_study(data::Dict{String,Any}, solver; kwargs...)
     solution = Dict{String, Any}()
     for (i,fault) in data["fault"]
         data["active_fault"] = fault
-        result = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
+        result = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_mc_fault_study; multiconductor=true, ref_extensions=[_PMD.ref_add_arcs_trans!, ref_add_fault!], kwargs...)
         println(result)
-        println(stop)
     end
     return solution
 end
 
 ""
-function run_fault_study(file::String, solver; kwargs...)
+function run_mc_fault_study(file::String, solver; kwargs...)
     return run_mc_fault_study(parse_file(file), solver; kwargs...)
 end
 ""
 
 function build_mc_fault_study(pm::_PMs.AbstractPowerModel)
-
     _PMD.variable_mc_voltage(pm, bounded = false)
     variable_mc_branch_current(pm, bounded = false)
     variable_mc_transformer_current(pm, bounded = false)
     _PMD.variable_mc_generation(pm, bounded = false) 
-    println(stopp)
-#     # gens should be constrained before KCL, or Pd/Qd undefined
-#     for id in PMs.ids(pm, :gen)
-#         PMD.constraint_mc_generation(pm, id)
-#     end
 
-
-    for (i,bus) in _PMs.ref(pm, :bus)
-        # do need a new version to handle gmat
-        constraint_mc_fault_current_balance(pm, i)        
+    for id in _PMs.ids(pm, :gen)
+        _PMD.constraint_mc_generation(pm, id)
     end
 
-#     for (i,gen) in ref(pm, :gen)
-#         # do I need a new version for multiconductor
-#         constraint_mc_gen_fault_voltage_drop(pm, i)
-#     end
+    constraint_mc_gen_voltage_drop(pm)
 
-#     for i in PMs.ids(pm, :branch)
-#         PMD.constraint_mc_current_from(pm, i)
-#         PMD.constraint_mc_current_to(pm, i)
+    constraint_mc_fault_current(pm)
 
-#         PMD.constraint_mc_voltage_drop(pm, i)
-#     end
+    for (i,bus) in _PMs.ref(pm, :bus)
+        constraint_mc_current_balance(pm, i)  
+    end      
 
-#     for i in PMs.ids(pm, :transformer)
-#         PMD.constraint_mc_trans(pm, i)
-#     end
-# end
+    for i in _PMs.ids(pm, :branch)
+        _PMD.constraint_mc_current_from(pm, i)
+        _PMD.constraint_mc_current_to(pm, i)
+        _PMD.constraint_mc_voltage_drop(pm, i)
+    end
+
+    for i in _PMs.ids(pm, :transformer)
+        _PMD.constraint_mc_trans(pm, i)
+    end
 end

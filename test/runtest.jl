@@ -34,7 +34,7 @@ juniper_solver = JuMP.with_optimizer(Juniper.Optimizer, nl_solver=JuMP.with_opti
 
 @testset "FaultStudy" begin
 
-    include("fs.jl") 
+    # include("fs.jl") 
     include("fsmc.jl")
 
 end

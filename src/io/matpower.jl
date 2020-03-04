@@ -1,5 +1,5 @@
-function parse_matpower(io::IO; validate=true)::Dict
-    pm_data = _PMs.parse_matpower(io, validate=validate)
+function parse_matpower(file::String)
+    pm_data = _PMs.parse_file(file)
     pm_data["method"] = "PMs"
     if haskey(pm_data, "gensub")
         for (i,gen) in pm_data["gensub"]

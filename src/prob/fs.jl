@@ -22,7 +22,8 @@ function build_fault_study(pm::_PMs.AbstractPowerModel)
     variable_branch_current(pm, bounded = false)
     _PMs.variable_gen(pm, bounded = false)
 
-    constraint_gen_voltage_drop(pm)
+    constraint_mc_gen_voltage_drop(pm)
+    
     constraint_fault_current(pm)
 
     for (i,bus) in _PMs.ref(pm, :bus)
