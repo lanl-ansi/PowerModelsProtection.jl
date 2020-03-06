@@ -258,11 +258,11 @@ end
 
 path = "data/b4fault.m"
 path = "data/mc/ut_trans_2w_yy.dss"
-path = "data/mc/13Bus/IEEE13NodeCkt.dss"
+# path = "data/mc/13Bus/IEEE13NodeCkt.dss"
 net = PMD.parse_file(path)
 
 
-add_mc_fault!(net, 5, resistance=1e-4)
+add_mc_fault!(net, 4, resistance=1e-4)
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file(path)
