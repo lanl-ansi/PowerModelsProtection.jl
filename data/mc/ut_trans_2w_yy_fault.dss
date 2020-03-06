@@ -30,7 +30,8 @@ New Line.LINE2 Bus1=2 Bus2=3 phases=3 X1=0.3 R1=0.6
 ! New Load.LOAD5 Phases=1 Bus1=3.2 kV=2.3 kW=85 kvar=52 vminpu=0.8 vmaxpu=1.2
 ! New Load.LOAD6 Phases=1 Bus1=3.3 kV=2.3 kW=96 kvar=63 vminpu=0.8 vmaxpu=1.2
 
-New Fault.B3Balanced 3.1.2.3 
+! Watch out! By default faults are SLG on phase A
+New Fault.B3Balanced phases=3 Bus1=3.1.2.3 
 
 ! Set Voltage Bases
 Set voltagebases=[11  4]
