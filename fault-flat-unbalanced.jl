@@ -26,6 +26,7 @@ function build_mc_fault_study(pm::PMs.AbstractPowerModel)
     PMD.variable_mc_generation(pm, bounded = false) 
 
     # TODO: Special current balance constraint needed for ref buses?
+    # TODO: How to disable ref buses for islanded microgrids?
     for (i,bus) in PMs.ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3
         constraint_mc_ref_bus_voltage(pm, i)
@@ -39,11 +40,14 @@ function build_mc_fault_study(pm::PMs.AbstractPowerModel)
     for (i,bus) in PMs.ref(pm, :bus)
         # do need a new version to handle gmat
         constraint_mc_fault_current_balance(pm, i)        
-    end
 
-    for (i,gen) in ref(pm, :gen)
-        # do I need a new version for multiconductor
-        constraint_mc_gen_fault_voltage_drop(pm, i)
+        if length(PMs.ref(pm, :bus_gens, i)) > 0 && !(i in PMs.ids(pm,:ref_buses))
+            # this assumes inactive generators are filtered out of bus_gens
+
+            for j in ref(pm, :bus_gens, i)
+                constraint_mc_gen_fault_voltage_drop(pm, j)
+            end
+        end        
     end
 
     for i in PMs.ids(pm, :branch)

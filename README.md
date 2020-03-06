@@ -23,7 +23,8 @@ In roughly decreasing order of priority
 
 - [x] Finish mc implementation
 - [x] Add LLG faults to add_fault! function
-- [ ] Set reference bus as constant voltage. Only want to do this for grid connected cases. How to disable the constraint for islanded microgrids?
+- [x] Set reference bus as constant voltage. Only want to do this for grid connected cases. 
+- [ ] How to disable the reference bus constraint for islanded microgrids?
 - [ ] Convenience function to enumerate faults over all nodes
 - [ ] Add unit tests for B7Fault
 - [ ] Add unit tests for Kersting IEEE 13-bus fault study
