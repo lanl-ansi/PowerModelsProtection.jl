@@ -294,18 +294,31 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
 end
 
 
-path = "data/mc/ut_trans_2w_yy.dss"
+path = "data/mc/ut_trans_2w_yy_no_load.dss"
 # path = "data/mc/13Bus/IEEE13NodeCkt.dss"
 net = PMD.parse_file(path)
 net["fault"] = Dict()
 
-add_mc_fault!(net, 4, resistance=1e-4, type="3pg")
+rf = 0.001
+# add_mc_fault!(net, 4, resistance=rf, phase_resistance=rf/100, type="3pg")
+# add_mc_fault!(net, 4, resistance=rf, type="ll")
+add_mc_fault!(net, 4, resistance=rf, type="lg")
+
+
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file(path)
 sol = PMD.run_mc_pf_iv(pmd, PMs.IVRPowerModel, solver)
 
 result = run_mc_fault_study(net, solver)
+
+for (i,b) in net["bus"]
+    kvll = b["base_kv"]
+    vbase = 1000*kvll/sqrt(3)
+    bs = result["solution"]["bus"][i]
+    b["vm"] = [abs(v)*vbase for v in bs["vr"] + 1im*bs["vi"]]
+end
+
 
 for (k,br) in net["branch"]
     j = br["t_bus"]
@@ -314,7 +327,7 @@ for (k,br) in net["branch"]
     ibase = net["baseMVA"]*1000*sqrt(3)/kvll
     brs = result["solution"]["branch"]["$k"]
 
-    br["cm_to"] = [abs(x)*ibase for x in brs["cr_to"] + 1im*brs["ci_to"]]
+    br["cm_to"] = [abs(c)*ibase for c in brs["cr_to"] + 1im*brs["ci_to"]]
 end
 
 buses = to_df(net, "bus", result)
