@@ -25,11 +25,16 @@ function build_mc_fault_study(pm::PMs.AbstractPowerModel)
     PMD.variable_mc_transformer_current(pm, bounded = false)
     PMD.variable_mc_generation(pm, bounded = false) 
 
+    # TODO: Special current balance constraint needed for ref buses?
+    for (i,bus) in PMs.ref(pm, :ref_buses)
+        @assert bus["bus_type"] == 3
+        constraint_mc_ref_bus_voltage(pm, i)
+    end    
+
     # gens should be constrained before KCL, or Pd/Qd undefined
     for id in PMs.ids(pm, :gen)
         PMD.constraint_mc_generation(pm, id)
     end
-
 
     for (i,bus) in PMs.ref(pm, :bus)
         # do need a new version to handle gmat
@@ -181,7 +186,36 @@ function constraint_mc_gen_fault_voltage_drop(pm::AbstractIVRModel, n::Int, i, b
 end
 
 
+""
+# PowerModelsDistribution doesn't appear to set reference bus voltages for models using rectangular coordinates
+function constraint_mc_ref_bus_voltage(pm::AbstractIVRModel, i::Int; nw::Int=pm.cnw)
+    # Watch out! OpenDSS doesn't include base case voltages in input file
+    vm = ref(pm, :bus, i, "vm") 
+    va = ref(pm, :bus, i, "va")
 
+    # Watch out! Angles are in radians unlike in vanilla PowerModels
+    v = [vm[i]*exp(1im*va[i]) for i in 1:3]
+
+    vr = [real(vk) for vk in v]
+    vi = [imag(vk) for vk in v]
+
+    constraint_mc_ref_bus_voltage(pm, nw, i, vr, vi)
+end
+
+
+""
+function constraint_mc_ref_bus_voltage(pm::AbstractIVRModel, n::Int, i, vr0, vi0)
+    vr = var(pm, n, :vr, i)
+    vi = var(pm, n, :vi, i)
+
+    cnds = PMs.conductor_ids(pm; nw=n)
+    ncnds = length(cnds)
+
+    for c in cnds
+        JuMP.@constraint(pm.model, vr[c] == vr0[c])
+        JuMP.@constraint(pm.model, vi[c] == vi0[c])
+    end
+end
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
 function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="balanced", phases=[1, 2, 3])
