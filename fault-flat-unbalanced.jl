@@ -261,7 +261,7 @@ path = "data/mc/ut_trans_2w_yy.dss"
 net = PMD.parse_file(path)
 net["fault"] = Dict()
 
-add_mc_fault!(net, 4, resistance=1e-4, type="ll")
+add_mc_fault!(net, 4, resistance=1e-4, type="3pg")
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file(path)
