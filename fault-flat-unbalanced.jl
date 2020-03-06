@@ -184,7 +184,7 @@ end
 
 
 # create a convenience function add_fault or keyword options to run_mc_fault study
-function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="three-phase", phases=[1, 2, 3])
+function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="balanced", phases=[1, 2, 3])
     if !("fault" in keys(net))
         net["fault"] = Dict()
     end
@@ -256,13 +256,12 @@ function add_mc_fault!(net, busid; resistance=0.1, phase_resistance=0.01, type="
 end
 
 
-path = "data/b4fault.m"
 path = "data/mc/ut_trans_2w_yy.dss"
 # path = "data/mc/13Bus/IEEE13NodeCkt.dss"
 net = PMD.parse_file(path)
+net["fault"] = Dict()
 
-
-add_mc_fault!(net, 4, resistance=1e-4)
+add_mc_fault!(net, 4, resistance=1e-4, type="ll")
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 pmd = PMD.parse_file(path)
@@ -270,8 +269,18 @@ sol = PMD.run_mc_pf_iv(pmd, PMs.IVRPowerModel, solver)
 
 result = run_mc_fault_study(net, solver)
 
+for (k,br) in net["branch"]
+    j = br["t_bus"]
+    b = net["bus"]["$j"]
+    kvll = b["base_kv"]
+    ibase = net["baseMVA"]*1000*sqrt(3)/kvll
+    brs = result["solution"]["branch"]["$k"]
+
+    br["cm_to"] = [abs(x)*ibase for x in brs["cr_to"] + 1im*brs["ci_to"]]
+end
+
 buses = to_df(net, "bus", result)
 branches = to_df(net, "branch", result)
 
-#  branches[!,[:f_bus,:t_bus,:name,:cr_to,:ci_to]]
-buses[!,[:index,:name,:vr,:vi]]
+# buses[!,[:index,:name,:vr,:vi]]
+branches[!,[:f_bus,:t_bus,:name,:cm_to,:cr_to]]
