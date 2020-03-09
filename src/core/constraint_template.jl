@@ -45,8 +45,8 @@ function constraint_mc_gen_voltage_drop(pm::_PMs.AbstractPowerModel; nw::Int=pm.
         vm = _PMs.ref(pm, :bus, bus_id, "vm") 
         va = _PMs.ref(pm, :bus, bus_id, "va")
 
-        vgr = [vm[i] * cos(va[i]) for i in gen["active_phases"]]
-        vgi = [vm[i] * sin(va[i]) for i in gen["active_phases"]]
+        vgr = [vm[i] * cos(va[i]) for i in 1:3]
+        vgi = [vm[i] * sin(va[i]) for i in 1:3]
 
         constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi)
     end
@@ -80,4 +80,14 @@ function constraint_mc_generation(pm::_PMs.AbstractPowerModel, id::Int; nw::Int=
     else
         constraint_mc_generation_delta(pm, nw, id, bus["index"]; report=report, bounded=bounded)
     end
+end
+
+function constraint_mc_ref_bus_voltage(pm::_PMs.AbstractIVRModel, i::Int; nw::Int=pm.cnw)
+    vm = _PMs.ref(pm, :bus, i, "vm") 
+    va = _PMs.ref(pm, :bus, i, "va")
+    
+    vr = [vm[i] * cos(va[i]) for i in 1:3]
+    vi = [vm[i] * sin(va[i]) for i in 1:3]
+
+    constraint_mc_ref_bus_voltage(pm, nw, i, vr, vi)
 end

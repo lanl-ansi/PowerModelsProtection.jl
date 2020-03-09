@@ -22,6 +22,7 @@ module FaultStudy
     include("core/constraint.jl")
     include("core/data.jl")
     include("core/ref.jl")
+    include("core/solution.jl")
 
     include("io/common.jl")
     include("io/matpower.jl")

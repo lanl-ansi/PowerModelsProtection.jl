@@ -48,17 +48,23 @@ function add_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     get_active_phases!(data)
     for (i, bus) in data["bus"]
+        if i == "9"
         data["fault"][i] = Dict{String, Any}()
         add_lg_fault!(data, bus, i)
+        end
         # add_ll_fault!(data, bus, i)
         
     end
     println(data["fault"])
     delete!(data, "bus_phases")
-    println(ll)
 end
 
 function add_lg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; resistance=0.1)
+    # for (i, bus) in data["bus"]
+    #     println(i)
+    #     println(bus)
+    #     println("")
+    # end
     gf = max(1/resistance, 1e-6)
     ncnd = 3
     data["fault"][i]["lg"] = Dict{Int, Any}()

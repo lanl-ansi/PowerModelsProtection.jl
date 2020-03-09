@@ -6,7 +6,8 @@ function run_mc_fault_study(data::Dict{String,Any}, solver; kwargs...)
         for (j,type) in bus
             for (f,fault) in type
                 data["active_fault"] = fault
-                result = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_mc_fault_study; multiconductor=true, ref_extensions=[_PMD.ref_add_arcs_trans!, ref_add_fault!], kwargs...)
+                println(fault)
+                result = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_mc_fault_study; multiconductor=true, ref_extensions=[_PMD.ref_add_arcs_trans!, ref_add_fault!], solution_processors = [solution_fs!], kwargs...)
                 println(result)
             end
         end  
@@ -26,6 +27,12 @@ function build_mc_fault_study(pm::_PMs.AbstractPowerModel)
     variable_mc_branch_current(pm, bounded = false)
     variable_mc_transformer_current(pm, bounded = false)
     variable_mc_generation(pm, bounded = false) 
+
+    for (i,bus) in _PMs.ref(pm, :ref_buses)
+        @assert bus["bus_type"] == 3
+        constraint_mc_ref_bus_voltage(pm, i)
+    end    
+
 
     for id in _PMs.ids(pm, :gen)
         constraint_mc_generation(pm, id)
@@ -48,4 +55,5 @@ function build_mc_fault_study(pm::_PMs.AbstractPowerModel)
     for i in _PMs.ids(pm, :transformer)
         _PMD.constraint_mc_trans(pm, i)
     end
+    println(pm.model)
 end
