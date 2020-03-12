@@ -1,4 +1,5 @@
 using PowerModels, JuMP, Ipopt
+include("powermodelsio.jl")
 
 const PMs = PowerModels
 
@@ -135,7 +136,7 @@ function constraint_gen_fault_voltage_drop(pm::AbstractIVRModel, n::Int, i, busi
 end
 
 
-function add_fault!(net, busid; resistance=0.1)
+function add_fault!(net, busid; resistance=0.0001)
     if !("fault" in keys(net))
         net["fault"] = Dict()
     end
@@ -198,7 +199,6 @@ function run_dc_fault_study(file, solver; kwargs...)
     return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
 end
 
-path = "data/b4fault.m"
 # path = "data/case30fault.m"
 # path = "data/case30.m"
 # path = "data/case30.raw"
@@ -208,6 +208,8 @@ path = "data/b4fault.m"
 # path = "data/GO3000_new_perfect.raw"
 # path = "data/SDET_2316bus model.raw"
 # path = "data/ACTIVSg10k.RAW"
+path = "../PowerModels.jl/test/data/pti/case5.raw"
+
 # pm = PowerModels.instantiate_model(path, PowerModels.IVRPowerModel, build_fault_study)
 
 # path = "data/case73.raw"
@@ -222,6 +224,24 @@ base_result = run_dc_opf(net, solver)
 fault_net = deepcopy(net)
 
 update_base!(fault_net, base_result)
-add_fault!(fault_net, 3)
+add_fault!(fault_net, 2)
 
 result = run_dc_fault_study(fault_net, solver)
+
+for (k,br) in net["branch"]
+    j = br["t_bus"]
+    b = net["bus"]["$j"]
+    kvll = b["base_kv"]
+    ibase = net["baseMVA"]*1000*sqrt(3)/kvll
+    brs = result["solution"]["branch"]["$k"]
+
+    br["cm_to"] = [abs(c) for c in brs["cr_to"] + 1im*brs["ci_to"]]
+    br["ckt"] = br["source_id"][4]
+    br["type"] = br["source_id"][1]
+end
+
+buses = to_df(net, "bus", result)
+branches = to_df(net, "branch", result)
+
+# buses[!,[:index,:name,:vr,:vi]]
+branches[!,[:t_bus,:f_bus,:ckt,:cm_to]]

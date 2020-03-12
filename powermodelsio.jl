@@ -66,6 +66,8 @@ function print_bus(case, bid)
 
 end
 
+# Note: use names() to print the column names
+
 function to_df(case, table_name, result=nothing)
     df = DataFrame()
     table = case[table_name]
