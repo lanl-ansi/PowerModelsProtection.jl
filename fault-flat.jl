@@ -208,7 +208,7 @@ end
 # path = "data/GO3000_new_perfect.raw"
 # path = "data/SDET_2316bus model.raw"
 # path = "data/ACTIVSg10k.RAW"
-path = "../PowerModels.jl/test/data/pti/case5.raw"
+path = "data/case5.raw"
 
 # pm = PowerModels.instantiate_model(path, PowerModels.IVRPowerModel, build_fault_study)
 
