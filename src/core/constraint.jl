@@ -118,9 +118,7 @@ function constraint_mc_fault_current(pm::_PMs.AbstractPowerModel; nw::Int=pm.cnw
     for c in _PMs.conductor_ids(pm; nw=nw)
         JuMP.@constraint(pm.model, cr[c] == sum(Gf[c,d]*vr[d] for d in cnds))
         JuMP.@constraint(pm.model, ci[c] == sum(Gf[c,d]*vi[d] for d in cnds))
-        println(sum(Gf[c,d]*vr[d] for d in cnds))
     end
-    println(n)
 end
 
 function constraint_mc_current_balance(pm::_PMs.AbstractIVRModel, n::Int, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
@@ -150,6 +148,7 @@ function constraint_mc_current_balance(pm::_PMs.AbstractIVRModel, n::Int, i, bus
                                     ==
                                     sum(crg[g][c]        for g in bus_gens)
                                     - sum( Gt[c,d]*vr[d] - Bt[c,d]*vi[d] for d in cnds) # shunts
+                                    - 0
                                     )
         JuMP.@NLconstraint(pm.model, sum(ci[a][c] for a in bus_arcs)
                                     + sum(cisw[a_sw][c] for a_sw in bus_arcs_sw)
@@ -157,6 +156,7 @@ function constraint_mc_current_balance(pm::_PMs.AbstractIVRModel, n::Int, i, bus
                                     ==
                                     sum(cig[g][c]        for g in bus_gens)
                                     - sum( Gt[c,d]*vi[d] + Bt[c,d]*vr[d] for d in cnds) # shunts
+                                    - 0
                                     )
     end
 end

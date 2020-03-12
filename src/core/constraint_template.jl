@@ -73,7 +73,7 @@ end
 
 function constraint_mc_generation(pm::_PMs.AbstractPowerModel, id::Int; nw::Int=pm.cnw, report::Bool=true, bounded::Bool=true)
     generator = _PMs.ref(pm, nw, :gen, id)
-    bus = _PMs.ref(pm, nw,:bus, generator["gen_bus"])
+    bus = _PMs.ref(pm, nw, :bus, generator["gen_bus"])
 
     if generator["conn"]=="wye"
         constraint_mc_generation_wye(pm, nw, id, bus["index"]; report=report, bounded=bounded)
