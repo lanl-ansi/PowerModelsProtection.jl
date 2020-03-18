@@ -1,14 +1,12 @@
 using PowerModels, JuMP, Ipopt
 
+include("powermodelsio.jl")
+
 const PMs = PowerModels
 
 function run_fault_study(file, solver; kwargs...)
     return run_model(file, PowerModels.IVRPowerModel, solver, build_fault_study; kwargs...)
 end
-
-
-
-
 
 function build_fault_study(pm::PMs.AbstractPowerModel)
     # voltage magnitude & angles at generator buses# should be fixed to the OPF results
@@ -100,6 +98,7 @@ function constraint_gen_fault_voltage_drop(pm::AbstractPowerModel, i::Int; nw::I
 
     r = 0
     x = 0.1
+    x = 1 # powerworld default
    
    if haskey(gen, "rg")
         r = gen["rg"]
@@ -208,6 +207,7 @@ path = "data/b4fault.m"
 # path = "data/GO3000_new_perfect.raw"
 # path = "data/SDET_2316bus model.raw"
 # path = "data/ACTIVSg10k.RAW"
+path = "data/B7FaultExample.raw"
 # pm = PowerModels.instantiate_model(path, PowerModels.IVRPowerModel, build_fault_study)
 
 # path = "data/case73.raw"
@@ -225,3 +225,29 @@ update_base!(fault_net, base_result)
 add_fault!(fault_net, 3)
 
 result = run_dc_fault_study(fault_net, solver)
+
+for (i,b) in net["bus"]
+    kvll = b["base_kv"]
+    vbase = 1000*kvll/sqrt(3)
+    bs = result["solution"]["bus"][i]
+    b["vm"] = [abs(v)*1 for v in bs["vr"] + 1im*bs["vi"]]
+end
+
+
+for (k,br) in net["branch"]
+    j = br["t_bus"]
+    b = net["bus"]["$j"]
+    kvll = b["base_kv"]
+    ibase = net["baseMVA"]*1000*sqrt(3)/kvll
+    brs = result["solution"]["branch"]["$k"]
+
+    br["ckt"] = strip(br["source_id"][4])
+    br["cm_fr"] = [abs(c)*1 for c in brs["cr_fr"] + 1im*brs["ci_fr"]]
+    br["cm_to"] = [abs(c)*1 for c in brs["cr_to"] + 1im*brs["ci_to"]]
+end
+
+buses = to_df(net, "bus", result)
+branches = to_df(net, "branch", result)
+
+# buses[!,[:index,:name,:vr,:vi]]
+branches[!,[:f_bus,:t_bus,:ckt,:cm_fr]]

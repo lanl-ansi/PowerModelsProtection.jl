@@ -334,4 +334,4 @@ buses = to_df(net, "bus", result)
 branches = to_df(net, "branch", result)
 
 # buses[!,[:index,:name,:vr,:vi]]
-branches[!,[:f_bus,:t_bus,:name,:cm_to,:cr_to]]
+branches[!,[:f_bus,:t_bus,:name,:cm_to]]

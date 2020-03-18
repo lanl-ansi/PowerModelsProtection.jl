@@ -26,7 +26,7 @@ function print_bus(case, bid)
         println("Loads:")
         @printf "%5s  %8s, %8s, %8s\n" "" "index" "pd" "qd"
 
-        for (i,x) in enumerate(values(case["load"]))
+        for (i,x) in enumerate(bus_loads)
             @printf "%5d: %8d, %8.3f, %8.3f\n" i x["index"] x["pd"] x["qd"]
         end
     else

@@ -1,0 +1,878 @@
+//--------------------------------------------------------------------------------
+//CASE INFORMATION
+//--------------------------------------------------------------------------------
+PWCaseInformation (CountBus,BusMaxVoltID,BusMinVoltID,MismatchPmaxID,MismatchQmaxID,BusMaxVolt,
+   BusMinVolt,MismatchPmax,MismatchQmax,CountArea,CountZone,LossMW,LossMvar,
+   LoadMW,LoadMWNeg,LoadMvar,LoadMvarNeg,ShuntMvar,GenMW,GenMWNeg,GenMvar,
+   GenMvarNeg,BranchMaxPerc,PTDFLoss,PVMonLoadMW,PVMonLoadMvar,PVMonGenMW,
+   PVMonGenMVar,CustomFloat:0,CustomFloat:1,CustomFloat:2,CustomFloat:3,
+   CustomFloat:4,CountInterface,GenCost,GenMWPosSpinRes,GenMWNegSpinRes,
+   CustomExpression:0,CustomExpression:1,CountSub,Selected,CountMTDC,SlackBuses,
+   ShuntMW,CaseName,PVMonLossMW,PVMonLossMvar,Memo,CustomString:0,CustomString:1,
+   CustomString:2,CustomString:3,CustomString:4,PVMonShuntMvar,PVMonShuntMW,
+   CountIsland,CalcField:0,CountGen,CountLoad,CountShunt,CountLine,
+   CountSeriesCap,CountLTC,CountLTCMvar,CountPhase,CountBreaker,CountDisconnect,
+   CountZBR,CountFuse,CountLoadBreakDisconnect,CountGroundDisconnect,CountDCLine,
+   CountInjectionGroup,TSSaveAll,CustomInteger:0,CustomInteger:1,CustomInteger:2,
+   CustomInteger:3,CustomInteger:4,ContainedInDiffFlowsBC,CustomExpressionStr:0,
+   CustomExpressionStr:1,BranchMaxPercID,CaseTimestamp,InOutage,RankOverload,
+   TSSaveGenMW,TSSaveGenMvar,TSSaveLoadMW,TSSaveLoadMvar,TSSaveGenMWAccel,
+   TSSaveGenMWMech,TSGenMW,TSGenMvar,TSLoadMW,TSLoadMvar,TSGenMWAccel,
+   TSGenMWMech,TSSaveDSMetric,TSDSMetric,TSSaveDSLoadMWUnserved,
+   TSDSLoadMWUnserved,DistMW,DistMvar,TSSaveGICTotalMvarLosses,
+   TSGICTotalMvarLosses,TSSaveGICMaximumTransformerIeffectiveAmps,
+   TSGICMaximumTransformerIeffectiveAmps,DataCheck:0,DataCheckAggr:0,
+   SolutionDetail)
+{
+     7 "Bus '1'" "Bus '3'" "Bus '4'" "Bus '4'"  1.050  0.993  0.016  0.000      3      1  8.069 -26.437 760.000  0.000 130.000  0.000  0.000 768.097  0.000 103.563  0.000 76.030  0.000 "NO " "NO " "NO " "NO " "" "" "" "" ""      3 16934.188 1431.903 318.097 "" ""      0 "YES"      0 "7 (7) in Area Right (3);"  0.000 "C:\Users\305232\Documents\Projects\RONM\Protection\B7FaultExample.aux" "NO " "NO " "" "" "" "" "" "" "NO " "NO "      1 ""      5      6      0     11      0      0      0      0      0      0      0      0      0      0      0      0 "NO " "" "" "" "" "" "NO " "" "" "Branch '2' '5' '1'" "" "NONE"  1.824 "NO " "NO " "NO " "NO " "NO " "NO " "" "" "" "" "" "" "NO "  0.000 "NO "  0.000  0.000  0.000 "NO " "" "NO " "" "" "" "Successful Power Flow Solution"
+   <SUBDATA PWCaseHeader>
+     //Case Description
+      
+      
+   </SUBDATA>
+}
+
+DataGrid (Name,FilterPre,RowHeight,FontNonDefault,FontName,FontStyles,FontSize,FontColor,
+   SortVariable,SortOrder,Filter,Zoom,FrozenCols,RemoveTrailingZeros)
+{
+"FaultBranch" "YES"     13 "NO " "Segoe UI" ""      8      0 "" "Low To High" "" 100.000 -1 "NO "
+   <SUBDATA ColumnInfo>
+     "BusNumFrom"            60  8 2
+     "BusNumTo"              60  8 2
+     "Circuit"               50  8 2
+     "FaultCurMagAFrom"      90  8 5
+     "FaultCurMagBFrom"      90  8 5
+     "FaultCurMagCFrom"      90  8 5
+     "FaultCurMagATo"        90  8 5
+     "FaultCurMagBTo"        90  8 5
+     "FaultCurMagCTo"        90  8 5
+   </SUBDATA>
+}
+
+//--------------------------------------------------------------------------------
+// DEFAULT DRAWING VALUES SETTINGS
+//--------------------------------------------------------------------------------
+
+DefDrawOneline (FontName,FontStyles,FontColor,SOFontSize,DFDoFontSize,SOSBackgroundColorToUse)
+{
+"Tahoma" "" 0 14 "YES" 16777215
+}
+
+DefDrawArea (SOData,SOColor,SOUseFillColor,SOFillColor,SOHeight,SOWidth,SOThickness,
+   SOOrientation,LimitHighlightingUsed,LimitHighlightColor,
+   LimitHighlightMagnification,SOField,SOField:1,SOField:2,SOField:3,SOField:4,
+   SOField:5,SOField:6,SOField:7)
+{
+"Name" 0 "YES" 16763080 5.000000 10.000000 1 "Rectangle" "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+}
+
+DefDrawZone (SOData,SOColor,SOUseFillColor,SOFillColor,SOHeight,SOWidth,SOThickness,
+   SOOrientation,LimitHighlightingUsed,LimitHighlightColor,
+   LimitHighlightMagnification,SOField,SOField:1,SOField:2,SOField:3,SOField:4,
+   SOField:5,SOField:6,SOField:7)
+{
+"Name" 0 "YES" 16763080 5.000000 10.000000 1 "Rectangle" "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+}
+
+DefDrawSuperArea (SOData,SOColor,SOUseFillColor,SOFillColor,SOHeight,SOWidth,SOThickness,
+   SOOrientation,LimitHighlightingUsed,LimitHighlightColor,
+   LimitHighlightMagnification,SOField,SOField:1,SOField:2,SOField:3,SOField:4,
+   SOField:5,SOField:6,SOField:7)
+{
+"Name" 0 "YES" 16763080 5.000000 10.000000 1 "Rectangle" "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+}
+
+DefDrawBackground (SOColor,SOUseFillColor,SOFillColor,SOFontSize,SOThickness,LimitHighlightingUsed,
+   LimitHighlightColor,LimitHighlightMagnification)
+{
+0 "NO " -1 14 1 "NO " 255 0
+}
+
+DefDrawBus (BusNomVolt,SOColor,SOUseFillColor,SOFillColor,SOSize,SOWidth,SOFontSize,
+   SOThickness,SOStyle,SOOrientation,VoltGaugeColor,VoltGaugeMaxPU,
+   VoltGaugeMinPU,VoltGaugeTargetPU,LimitHighlightingUsed,LimitHighlightColor,
+   LimitHighlightMagnification,SOField,SOField:1,SOField:2,SOField:3,SOField:4,
+   SOField:5,SOField:6,SOField:7)
+{
+300.00 0 "YES" 0 10.000000 0.300000 30 1 "Rectangle" "Right" 16711680 1.100000 0.900000 1.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+200.00 0 "YES" 0 7.000000 0.200000 20 1 "Rectangle" "Right" 16711680 1.100000 0.900000 1.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " "Name@0@0@0@0@1@" " - - - " " - - - "
+100.00 0 "YES" 0 5.000000 0.200000 15 1 "Rectangle" "Right" 16711680 1.100000 0.900000 1.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " "Name@0@0@0@0@1@" " - - - " " - - - "
+  0.00 0 "YES" 0 3.000000 0.200000 10 1 "Rectangle" "Right" 16711680 1.100000 0.900000 1.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " "Name@0@0@0@0@1@" " - - - " " - - - "
+}
+
+DefDrawGen (BusNomVolt,SOColor,SOUseFillColor,SOFillColor,UseRotorColor,RotorShapeColor,
+   SOStyle,SOSize,SOWidth,SOFontSize,SOThickness,SOOrientation,
+   LimitHighlightingUsed,LimitHighlightColor,LimitHighlightMagnification,SOField,
+   SOField:1,SOField:2,SOField:3,SOField:4,SOField:5)
+{
+  0.00 0 "NO " -1 "NO " -1 "Dog Bone" 10.000000 7.500000 14 1 "Up" "NO " 255 0 " - - - " " - - - " "Gen MW@4@0@0@0@1@" "Gen MVAR@4@0@0@0@1@" " - - - " " - - - "
+}
+
+DefDrawInterface (SOColor,SOUseFillColor,SOFillColor,SOFontSize,SOPieSize,SOThickness,
+   LimitHighlightingUsed,LimitHighlightColor,LimitHighlightMagnification,SOField,
+   SOField:1,SOField:2,SOField:3,SOField:4,SOField:5)
+{
+0 "NO " -1 14 50.000000 1 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+}
+
+DefDrawLineTransformer (BusNomVolt,SOColor,SOFontSize,SOThickness,SOCBSize,SOPieSize,SOXFMRSize,
+   LineGaugeColor,SOStubSize,SOStubSpace,LimitHighlightingUsed,
+   LimitHighlightColor,LimitHighlightMagnification,SOField,SOField:1,SOField:2,
+   SOField:3,SOField:4,SOField:5,SOField:6,SOField:7,SOField:8,SOField:9)
+{
+600.00 65280 50 2 3.000000 70.000000 4.000000 16711680 4.000000 4.500000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+400.00 33023 40 2 2.500000 50.000000 4.000000 16711680 3.300000 3.700000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+300.00 255 30 1 2.000000 30.000000 3.000000 16711680 2.500000 3.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+200.00 16744448 20 1 1.400000 15.000000 2.000000 16711680 1.700000 2.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+100.00 0 15 1 1.000000 8.000000 1.500000 16711680 1.300000 1.500000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+  0.00 32768 10 1 0.600000 3.000000 1.000000 16711680 0.800000 1.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+}
+
+DefDrawLoad (BusNomVolt,SOColor,SOSize,SOWidth,SOFontSize,SOThickness,SOOrientation,
+   LimitHighlightingUsed,LimitHighlightColor,LimitHighlightMagnification,SOField,
+   SOField:1,SOField:2,SOField:3,SOField:4,SOField:5)
+{
+  0.00 0 10.000000 3.750000 14 1 "Down" "NO " 255 0 " - - - " " - - - " "Load MW@4@0@0@0@1@" "Load MVAR@4@0@0@0@1@" " - - - " " - - - "
+}
+
+DefDrawShunt (BusNomVolt,SOColor,SOSize,SOWidth,SOFontSize,SOThickness,SOOrientation,
+   LimitHighlightingUsed,LimitHighlightColor,LimitHighlightMagnification,SOField,
+   SOField:1,SOField:2,SOField:3,SOField:4,SOField:5)
+{
+  0.00 0 10.000000 3.000000 14 1 "Down" "NO " 255 0 " - - - " " - - - " " - - - " "Shunt MVAR@5@1@0@0@1@" " - - - " " - - - "
+}
+
+DefDrawDFACTS (BusNomVolt,SOColor,SOUseFillColor,SOFillColor,SOFontSize,SOThickness,SOHeight,
+   SOWidth,LimitHighlightingUsed,LimitHighlightColor,LimitHighlightMagnification,
+   SOField,SOField:1,SOField:2,SOField:3,SOField:4,SOField:5,SOField:6,SOField:7)
+{
+  0.00 0 "YES" 16711680 14 1 2.000000 6.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+}
+
+DefDrawSubstation (BusNomVolt,SOColor,SOUseFillColor,SOFillColor,SOHeight,SOWidth,SOStyle,
+   SOFontSize,SOThickness,LimitHighlightingUsed,LimitHighlightColor,
+   LimitHighlightMagnification,SOField,SOField:1,SOField:2,SOField:3,SOField:4,
+   SOField:5,SOField:6,SOField:7)
+{
+600.00 0 "YES" 65280 15.000000 30.000000 "UseSubLayout" 14 1 "NO " 255 0 "Name@0@0@0@0@1@" " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+400.00 0 "YES" 33023 12.000000 24.000000 "UseSubLayout" 14 1 "NO " 255 0 "Name@0@0@0@0@1@" " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+300.00 0 "YES" 255 10.000000 20.000000 "UseSubLayout" 14 1 "NO " 255 0 "Name@0@0@0@0@1@" " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+200.00 0 "YES" 16744448 7.000000 14.000000 "UseSubLayout" 14 1 "NO " 255 0 "Name@0@0@0@0@1@" " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+100.00 0 "YES" 8421504 5.000000 10.000000 "UseSubLayout" 14 1 "NO " 255 0 "Name@0@0@0@0@1@" " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+  0.00 0 "YES" 32768 3.000000 6.000000 "UseSubLayout" 14 1 "NO " 255 0 "Name@0@0@0@0@1@" " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+}
+
+DefDrawMSLine (BusNomVolt,SOColor,SOFontSize,SOThickness,SOPieSize,SOStubSize,SOStubSpace,
+   SOXFMRSize,SOPercent,LimitHighlightingUsed,LimitHighlightColor,
+   LimitHighlightMagnification,SOField,SOField:1,SOField:2,SOField:3,SOField:4,
+   SOField:5,SOField:6,SOField:7,SOField:8,SOField:9)
+{
+600.00 65280 50 2 70.000000 4.000000 4.500000 4.000000 15.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+400.00 33023 40 2 50.000000 3.300000 3.700000 4.000000 15.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+300.00 255 30 1 30.000000 2.500000 3.000000 3.000000 11.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+200.00 16744448 20 1 15.000000 1.700000 2.000000 2.000000 8.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+100.00 0 15 1 8.000000 1.300000 1.500000 1.500000 6.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+  0.00 32768 10 1 3.000000 0.800000 1.000000 1.000000 4.000000 "NO " 255 0 " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - " " - - - "
+}
+
+Owner (Number,Name,DataMaintainerAssign)
+{
+     1 "1" ""
+}
+
+Bus (Number,Name,NomkV,Vpu,Vangle,NomG,NomB,AreaNumber,ZoneNumber,BANumber,SubNumber,
+   Slack,Status,CTGLoadThrowNum,CTGLoadThrowNameNomkV,LongName,kV,VangleRad,
+   VpuReal,VpuImag,MargCostMW,MargCostMWEnergy,MargCostMWCong,MargCostMWLoss,
+   MargCostMvar,MargCostMvarCong,MargCostMvarLoss,MargCostVolt,GenRemRegVoltSet,
+   OwnerNumber,Equiv,Scale,TimeStepSelected,LimitSet,Monitor,UseSpecificLimits,
+   LimitLowUsed,LimitHighUsed,OPFUnenforceableVolt,OPFVoltBinding,LossSensMW,
+   LossSensMvar,DCLossMultiplier,Latitude,Longitude,LatitudeString,
+   LongitudeString,Datum,DataMaintainerAssign)
+{
+     1 "1"            138.00 1.050000   6.199084   0.0000   0.0000      1      1      1 "" "NO " "Connected" "" "" "1        138" 144.9000   0.108194   1.0439   0.1134 "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" ""      1 "Study" "NO " "NO " "Default" "YES" "NO "   0.9000   1.1000 "   " "No"   0.0493   0.0000   1.0000 "" "" "" "" "" ""
+     2 "2"            138.00 1.040000   4.223547   0.0000   0.0000      1      1      1 "" "NO " "Connected" "" "" "2        138" 143.5200   0.073715   1.0372   0.0766 "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" ""      1 "Study" "NO " "NO " "Default" "YES" "NO "   0.9000   1.1000 "   " "No"   0.0266   0.0000   1.0000 "" "" "" "" "" ""
+     3 "3"            138.00 0.992669   0.979502   0.0000   0.0000      1      1      1 "" "NO " "Connected" "" "" "3        138" 136.9883   0.017096   0.9925   0.0170 "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" ""      1 "Study" "NO " "NO " "Default" "YES" "NO "   0.9000   1.1000 "   " "No"  -0.0108  -0.0064   1.0000 "" "" "" "" "" ""
+     4 "4"            138.00 1.000000   1.438514   0.0000   0.0000      1      1      1 "" "NO " "Connected" "" "" "4        138" 138.0000   0.025107   0.9997   0.0251 "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" ""      1 "Study" "NO " "NO " "Default" "YES" "NO "   0.9000   1.1000 "   " "No"  -0.0024   0.0000   1.0000 "" "" "" "" "" ""
+     5 "5"            138.00 1.006645  -0.829366   0.0000   0.0000      1      1      1 "" "NO " "Connected" "" "" "5        138" 138.9170  -0.014475   1.0065  -0.0146 "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" ""      1 "Study" "NO " "NO " "Default" "YES" "NO "   0.9000   1.1000 "   " "No"  -0.0224  -0.0094   1.0000 "" "" "" "" "" ""
+     6 "6"            138.00 1.040000   2.812175   0.0000   0.0000      2      1      2 "" "NO " "Connected" "" "" "6        138" 143.5200   0.049082   1.0387   0.0510 "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" ""      1 "Study" "NO " "NO " "Default" "YES" "NO "   0.9000   1.1000 "   " "No"  -0.0060   0.0000   1.0000 "" "" "" "" "" ""
+     7 "7"            138.00 1.040000   0.000000   0.0000   0.0000      3      1      3 "" "YES" "Connected" "" "" "7        138" 143.5200   0.000000   1.0400   0.0000 "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" "Not Valid" ""      1 "Study" "NO " "NO " "Default" "YES" "NO "   0.9000   1.1000 "   " "No"   0.0000   0.0000   1.0000 "" "" "" "" "" ""
+}
+
+Load (BusNum,ID,Status,SMW,SMvar,IMW,IMvar,ZMW,ZMvar,DistStatus,DistMWInput,
+   DistMvarInput,AreaNumber,ZoneNumber,BANumber,AGC,OwnerNumber,
+   DataMaintainerAssign)
+{
+     2 "1 " "Closed"    40.000    20.000     0.000     0.000     0.000     0.000 "Closed"     0.000     0.000      1      1      1 "YES"      1 ""
+     3 "1 " "Closed"   110.000    40.000     0.000     0.000     0.000     0.000 "Closed"     0.000     0.000      1      1      1 "YES"      1 ""
+     4 "1 " "Closed"    80.000    30.000     0.000     0.000     0.000     0.000 "Closed"     0.000     0.000      1      1      1 "YES"      1 ""
+     5 "1 " "Closed"   130.000    40.000     0.000     0.000     0.000     0.000 "Closed"     0.000     0.000      1      1      1 "YES"      1 ""
+     6 "1 " "Closed"   200.000     0.000     0.000     0.000     0.000     0.000 "Closed"     0.000     0.000      2      1      2 "YES"      1 ""
+     7 "1 " "Closed"   200.000     0.000     0.000     0.000     0.000     0.000 "Closed"     0.000     0.000      3      1      3 "YES"      1 ""
+}
+
+Gen (BusNum,ID,Status,MW,Mvar,AGC,EnforceMWLimit,MWMin,MWMax,PartFact,AVR,VoltSet,
+   RegBusNum,MvarMin,MvarMax,RegFactor,UseCapCurve,UseLineDrop,Rcomp,Xcomp,
+   MVABase,GenR,GenX,StepR,StepX,StepTap,AreaNumber,ZoneNumber,BANumber,
+   CTGMaxResp,CTGMaxRespPerc,CTGPreventAGC,GovRespLimit,TimeStepOrgMWMin,
+   TimeStepOrgMWMax,FuelTypeCode,UnitTypeCode,FixedCostDep,CubicB,CubicC,CubicD,
+   VariableOM,CostShift,FuelCostExtra,CostMultiplier,FuelCost,OPFAGC,
+   OPFFastStart,TimeStepSelected,OwnerNum1,OwnerPerc1,OwnerNum2,OwnerPerc2,
+   OwnerNum3,OwnerPerc3,OwnerNum4,OwnerPerc4,OwnerNum5,OwnerPerc5,OwnerNum6,
+   OwnerPerc6,OwnerNum7,OwnerPerc7,OwnerNum8,OwnerPerc8,DataMaintainerAssign)
+{
+     1 "1" "Closed"  105.6746    4.1799 "YES" "YES"  100.0000  400.0000    1.0000 "YES" 1.050000      1 -9900.0000 9900.0000  100.0000 "NO " "NO"       0.000  0.000  100.0000   0.00000   0.10000   0.00000   0.00000   1.00000      1      1      1 "" "" "NO" "Normal"    100.0000 400.0000 "UN" "UN" 373.5400   7.6182   0.0013   0.0000   0.0000   0.0000   0.0000   1.0000   2.0350 "If Agcable" "NO " "NO "      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     2 "1" "Closed"  167.7236   34.1813 "YES" "YES"  150.0000  500.0000    1.0000 "YES" 1.040000      2 -9900.0000 9900.0000  100.0000 "NO " "NO"       0.000  0.000  100.0000   0.00000   0.10000   0.00000   0.00000   1.00000      1      1      1 "" "" "NO" "Normal"    150.0000 500.0000 "UN" "UN" 403.6100   7.5192   0.0014   0.0000   0.0000   0.0000   0.0000   1.0000   2.0610 "If Agcable" "NO " "NO "      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     4 "1" "Closed"   93.7145   20.4974 "YES" "YES"   50.0000  200.0000    1.0000 "YES" 1.000000      4 -9900.0000 9900.0000  100.0000 "NO " "NO"       0.000  0.000  100.0000   0.00000   0.10000   0.00000   0.00000   1.00000      1      1      1 "" "" "NO" "Normal"     50.0000 200.0000 "UN" "UN" 253.2400   7.8400   0.0013   0.0000   0.0000   0.0000   0.0000   1.0000   2.0930 "If Agcable" "NO " "NO "      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     6 "1" "Closed"  200.3281   -6.5890 "YES" "YES"  150.0000  500.0000    1.0000 "YES" 1.040000      6 -9900.0000 9900.0000  100.0000 "NO " "NO"       0.000  0.000  100.0000   0.00000   0.10000   0.00000   0.00000   1.00000      2      1      2 "" "" "NO" "Normal"    150.0000 500.0000 "UN" "UN" 388.9300   7.5729   0.0013   0.0000   0.0000   0.0000   0.0000   1.0000   2.1390 "If Agcable" "NO " "NO "      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     7 "1" "Closed"  200.6566   51.2939 "YES" "YES"    0.0000  600.0000    1.0000 "YES" 1.040000      7 -99998.9990 99998.9990  100.0000 "NO " "NO"       0.000  0.000  100.0000   0.00000   0.10000   0.00000   0.00000   1.00000      3      1      3 "" "" "NO" "Normal"      0.0000 600.0000 "UN" "UN" 194.2800   7.7712   0.0019   0.0000   0.0000   0.0000   0.0000   1.0000   2.5740 "If Agcable" "NO " "NO "      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+}
+
+Branch (BusNumFrom,BusNumTo,Circuit,Status,R,X,B,G,LimitMVAA,LimitMVAB,LimitMVAC,
+   LimitMVAD,LimitMVAE,LimitMVAF,LimitMVAG,LimitMVAH,LimitMVAI,LimitMVAJ,
+   LimitMVAK,LimitMVAL,LimitMVAM,LimitMVAN,LimitMVAO,LineShuntMWFrom,
+   LineShuntMWTo,LineShuntMvarFrom,LineShuntMvarTo,Tap,Phase,ByPass,StatusNormal,
+   SeriesCap,MeteredEnd,MargCostMVA,LimitSet,Monitor,OPFLimitBinding,
+   TimeStepSelected,OPFEnforceEquality,LineLength,Gmag,Bmag,BranchDeviceType,
+   ConsolidateAllow,OpenOrCloseBreakersAllow,BranchCloseAngleThreshold,OwnerNum1,
+   OwnerPerc1,OwnerNum2,OwnerPerc2,OwnerNum3,OwnerPerc3,OwnerNum4,OwnerPerc4,
+   OwnerNum5,OwnerPerc5,OwnerNum6,OwnerPerc6,OwnerNum7,OwnerPerc7,OwnerNum8,
+   OwnerPerc8,DataMaintainerAssign)
+{
+     1      2 " 1" "Closed"  0.020000  0.060000  0.060000  0.000000   150.000   100.000   100.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     1      3 " 1" "Closed"  0.080000  0.240000  0.050000  0.000000    65.000    80.000    80.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     2      3 " 1" "Closed"  0.060000  0.180000  0.040000  0.000000    80.000    80.000    80.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     2      4 " 1" "Closed"  0.060000  0.180000  0.040000  0.000000   100.000   100.000   100.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     2      5 " 1" "Closed"  0.040000  0.120000  0.030000  0.000000   100.000   100.000   100.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     2      6 " 1" "Closed"  0.020000  0.060000  0.050000  0.000000   200.000   200.000   200.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     3      4 " 1" "Closed"  0.010000  0.030000  0.020000  0.000000   100.000   100.000   100.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     4      5 " 1" "Closed"  0.080000  0.240000  0.050000  0.000000    60.000   100.000   100.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     7      5 " 1" "Closed"  0.020000  0.060000  0.040000  0.000000   200.000   200.000   200.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     6      7 " 1" "Closed"  0.080000  0.240000  0.050000  0.000000   200.000   200.000   200.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+     6      7 " 2" "Closed"  0.080000  0.240000  0.050000  0.000000   200.000   200.000   200.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000    0.0000    0.0000    0.0000    0.0000 1.000000   0.000000 "NO"  "Closed" "NO " "From" "" "Default" "YES" "No" "NO " "NO "   0.0000 "" "" "Line"        "" "" ""      1 100.0000 "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+}
+
+Area (Number,Name,AGC,AutoControlShunt,AutoControlXF,EnforceGenMWLimits,SuperArea,
+   AGCTolerance,EconDispIncludeMargLoss,SlackBus,ExportMWUnspecified,
+   OPFControlLoadMW,CTGMakeUpGen,OPFControlTap,OPFControlPhase,OPFControlDCLine,
+   OPFControlDFACTs,OPFLimitBranch,OPFLimitInterface,OPFLimitBusVolt,
+   OPFIncludeMargLoss,OPFUnenforceable,OPFMargCostACE,DCLossMultiplier,
+   OPFReferenceType,OPFReferenceObject,DataMaintainerAssign)
+{
+     1 "Top"                              "ED"         "YES" "YES" "YES" ""   0.5000 "YES" ""                    0.000 "NO "   0.0000 "YES" "YES" "YES" "NO " "YES" "NO " "YES" "NO " "   " ""   1.0000 "Existing" "" ""
+     2 "Left"                             "ED"         "YES" "YES" "YES" ""   0.5000 "YES" ""                    0.000 "NO "   0.0000 "YES" "YES" "YES" "NO " "YES" "NO " "YES" "NO " "   " ""   1.0000 "Existing" "" ""
+     3 "Right"                            "ED"         "YES" "YES" "YES" ""   0.5000 "YES" ""                    0.000 "NO "   0.0000 "YES" "YES" "YES" "NO " "YES" "NO " "YES" "NO " "   " ""   1.0000 "Existing" "" ""
+}
+
+Zone (Number,Name,DCLossMultiplier,DataMaintainerAssign)
+{
+     1 "1"                                  1.0000 ""
+}
+
+Interface (Name,Number,LimitMWA,LimitMWB,LimitMWC,LimitMWD,LimitMWE,LimitMWF,LimitMWG,
+   LimitMWH,LimitMWI,LimitMWJ,LimitMWK,LimitMWL,LimitMWM,LimitMWN,LimitMWO,
+   MonDirection,MonBoth,LimitUsed,LimitSet,OPFEnforceEquality,Monitor,
+   OPFLimitBinding,MargCostMW,TimeStepSelected,MWOffset,DataMaintainerAssign)
+{
+"Left-Right"      0     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000 "FROM -> TO" "NO "   0.0000 "Default" "NO " "YES" "No" "" "NO "   0.0000 ""
+   <SUBDATA InterfaceElement>
+     "AREA 2 3"
+   </SUBDATA>
+"Left-Top"      0     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000 "FROM -> TO" "NO "   0.0000 "Default" "NO " "YES" "No" "" "NO "   0.0000 ""
+   <SUBDATA InterfaceElement>
+     "AREA 2 1"
+   </SUBDATA>
+"Right-Top"      0     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000     0.000 "FROM -> TO" "NO "   0.0000 "Default" "NO " "YES" "No" "" "NO "   0.0000 ""
+   <SUBDATA InterfaceElement>
+     "AREA 3 1"
+   </SUBDATA>
+}
+
+//--------------------------------------------------------------------------------
+// THE FOLLOWING SECTION AREA/ZONE/OWNER FILTER SETTINGS
+//--------------------------------------------------------------------------------
+Area (Number,Filter)
+{
+     1 "YES"
+     2 "YES"
+     3 "YES"
+}
+
+Zone (Number,Filter)
+{
+     1 "YES"
+}
+
+Owner (Number,Name,Filter)
+{
+     1 "1" "YES"
+}
+
+Gen (BusNum,ID,CostModel,FixedCostDep,CubicB,CubicC,CubicD,FuelCost,FuelCostExtra,
+   VariableOM,FixedCostInd,FuelType,UnitType,CostShift,CostMultiplier)
+{
+     1 "1" "Cubic"   373.54    7.618   0.0013  0.00000     2.04    0.000    0.000     0.00 "UN (Unknown)" "UN (Unknown)"    0.000    1.000
+     2 "1" "Cubic"   403.61    7.519   0.0014  0.00000     2.06    0.000    0.000     0.00 "UN (Unknown)" "UN (Unknown)"    0.000    1.000
+     4 "1" "Cubic"   253.24    7.840   0.0013  0.00000     2.09    0.000    0.000     0.00 "UN (Unknown)" "UN (Unknown)"    0.000    1.000
+     6 "1" "Cubic"   388.93    7.573   0.0013  0.00000     2.14    0.000    0.000     0.00 "UN (Unknown)" "UN (Unknown)"    0.000    1.000
+     7 "1" "Cubic"   194.28    7.771   0.0019  0.00000     2.57    0.000    0.000     0.00 "UN (Unknown)" "UN (Unknown)"    0.000    1.000
+}
+
+Load (BusNum,ID,AGC,FixedBenefit,MWMax,MWMin)
+{
+     2 "1 " "YES"     0.00      0.000      0.000
+     3 "1 " "YES"     0.00      0.000      0.000
+     4 "1 " "YES"     0.00      0.000      0.000
+     5 "1 " "YES"     0.00      0.000      0.000
+     6 "1 " "YES"     0.00      0.000      0.000
+     7 "1 " "YES"     0.00      0.000      0.000
+}
+
+PostPowerFlowActions (Skip)
+{
+"NO "
+   <SUBDATA CTGElement>
+   </SUBDATA>
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE SIMULATION SOLUTIONS OPTIONS
+//--------------------------------------------------------------------------------
+Sim_Solution_Options_Value (Option,Value)
+{
+"AGCToleranceMVA"                  "5"
+"ChkDFACTS"                        "NO"
+"ChkMWAGC"                         "YES"
+"ChkPhaseShifters"                 "YES"
+"ChkShunts"                        "YES"
+"ChkSVCs"                          "YES"
+"ChkTaps"                          "YES"
+"ChkVarBackoffImmediately"         "YES"
+"ChkVarImmediately"                "NO"
+"CloseCBToEnergizeShunts"          "NO"
+"ConsolidationUse"                 "NO"
+"CTGInterfaceEnforcement"          "Never"
+"DCApprox"                         "NO"
+"DCLossComp"                       "NO"
+"DCModelType"                      "RIgnore"
+"DCMvarComp"                       "NO"
+"DCPhaseIgnore"                    "YES"
+"DCXFCorrIgnore"                   "YES"
+"DisableAngleRotation"             "NO"
+"DisableAngleSmoothing"            "NO"
+"DisableGenMVRCheck"               "NO"
+"DisableOptMult"                   "NO"
+"DisableRestoreSolution"           "NO"
+"DisableRestoreState"              "NO"
+"DisableXFTapWrongSign"            "YES"
+"DoOneIteration"                   "NO"
+"DynAssignSlack"                   "NO"
+"EconDispEnforceConvex"            "NO"
+"EconDispPenaltyFactors"           "YES"
+"EnforceGenMWLimits"               "NO"
+"EvalSolutionIsland"               "NO"
+"FlatStartInit"                    "NO"
+"LogID"                            "Numbers"
+"LogLTCColor"                      "32768"
+"LogLTCSuppress"                   "NO"
+"LogMvarColor"                     "8388736"
+"LogMvarSuppress"                  "NO"
+"LogMWColor"                       "16711680"
+"LogMWSuppress"                    "NO"
+"LogNomkV"                         "NO"
+"LogOPFLPColor"                    "16711680"
+"LogOPFLPSuppress"                 "YES"
+"LogPhaseColor"                    "8388863"
+"LogPhaseSuppress"                 "NO"
+"LogShuntColor"                    "33023"
+"LogShuntSuppress"                 "NO"
+"LossSenseFunc"                    "None"
+"LTCTapBalance"                    "YES"
+"MaxItr"                           "50"
+"MaxItrVoltLoop"                   "20"
+"MinLTCSense"                      "0.05"
+"MinVoltILoad"                     "0.5"
+"MinVoltSLoad"                     "0.7"
+"ModelPSDiscrete"                  "NO"
+"MVABase"                          "100"
+"MVAConvergenceTol"                "0.1"
+"MvarSharingAllocation"            "RegPerc"
+"MWAGCAreaIsland"                  "Use Area/SuperArea ACE"
+"MWAGCIGEnforceGenMWLimits"        "NO"
+"MWAGCIGName"                      ""
+"MWAGCIGOnlyAGCAble"               "NO"
+"MWAGCIGPositiveLoad"              "NO"
+"MWAGCIGPowerFact"                 "1"
+"MWAGCIGQMult"                     "1"
+"MWAGCIGUseContantPF"              "NO"
+"PreventOscillations"              "NO"
+"Show"                             "NO"
+"ShuntInner"                       "YES"
+"TransformerStepping"              "Coordinated"
+"ZBRThreshold"                     "0.0002"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE ENVIRONMENT OPTIONS
+//--------------------------------------------------------------------------------
+Sim_Environment_Options_Value (Option,Value)
+{
+"AutoSaveBaseCaseOnLoad"           "0"
+"AutoSolveOnLoad"                  "NO"
+"AutoStart"                        "NO"
+"BlinkColor"                       "16777215"
+"BlinkInterval"                    "1"
+"ClockStyle"                       "2"
+"Create3Winding"                   ""
+"DefaultOnelineFile"               ""
+"DefaultOnelineFile:1"             "Always"
+"Delim"                            "$"
+"DisplayOnly"                      "NO"
+"DisplayUnlinked"                  "YES"
+"GenAGCAble"                       "YES"
+"HDBExportNoDefaultLabels"         "NO"
+"HDBExportTranslateDCSystem"       "Prompt"
+"KiloOrMega"                       "0"
+"MainOneLineFile"                  "B7FLAT.PWD"
+"MeasurementUnits"                 "0"
+"MinMetaFontSize"                  "2"
+"MinScreenFontSize"                "3.5"
+"MWTRAreaShowAll"                  "YES"
+"OnelineBrowsingPath"              ""
+"OOMouseWheelZoom"                 "YES"
+"SaveContour"                      "NO"
+"SaveUnlinked"                     "NO"
+"SEAutoLoadInterval"               "30"
+"SEAutoLoadPath"                   ""
+"SEAutoSaveFileLocationPath"       ""
+"SEOArchiveFileDelim"              "_"
+"SEOArchivePWBFileChecked"         "NO"
+"SEOAutoSaveIntervalMinutes"       "0"
+"SEOAutoUpdateOnelineFind"         "YES"
+"SEOAuxiliaryFile"                 ""
+"SEOCBTyp"                         ""
+"SEODoNotAutoLoadAuxilaryFile"     "YES"
+"SEOMaxArchiveFileNum"             "0"
+"SEOPromptToSaveChangedOnelines"   "NO"
+"SEORotateOnelinesDelay"           "30"
+"SEORotateOnelinesEnabled"         "NO"
+"SEOSpecifiedAUXFile"              ""
+"SEOSpecifiedAUXFile:1"            ""
+"SEOSpecifiedAUXFile:2"            ""
+"SEOTranslationAUX"                ""
+"SEOTranslationAUX:1"              "NO"
+"SEOUseSpecifiedAUXFile"           "NO"
+"SEOUseSpecifiedAUXFile:1"         "NO"
+"SEOUseSpecifiedAUXFile:2"         "NO"
+"SetGenMWToMinWhenOpenedFromOneline" "NO"
+"ShowBlackouts"                    "NO"
+"ShowFull"                         "NO"
+"ShowHints"                        "NO"
+"ShowLog"                          "NO"
+"ShowXY"                           "YES"
+"UseDefaultOneline"                "NO"
+"VisualizeOutagedObject"           "NO"
+"VisualizeOutagedObject:1"         "NO"
+"VisualizeOutagedObject:2"         "NO"
+"XfmrSymbol"                       "0"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE SIMULATION OPTIONS
+//--------------------------------------------------------------------------------
+Sim_Simulation_Options_Value (Option,Value)
+{
+"CostUnservedEnergy"               "0"
+"CurrentDay"                       "0"
+"CurrentTime"                      "0"
+"EndDay"                           "0"
+"EndTime"                          "36000"
+"FreqModel"                        "60"
+"NeverEnds"                        "YES"
+"PowerBlockSize"                   "0.5"
+"StartDay"                         "0"
+"StartTime"                        "0"
+"TapDelay"                         "30"
+"TimeSpeedUp"                      "60"
+"TransRampTime"                    "600"
+"TSBAutoRun"                       "NO"
+"TSBFileAutoLoad"                  "YES"
+"TSBFileDefault"                   ""
+"TSBFileUpdateDefault"             "YES"
+"UseFixedTimeStep"                 "NO"
+"UseTapDelays"                     "YES"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE CASE INFO DEFAULT OPTIONS
+//--------------------------------------------------------------------------------
+CaseInfo_Options_Value (Option,Value)
+{
+"ColorBackground"                  "16777215"
+"ColorDataFill"                    "65535"
+"ColorEnterable"                   "16734553"
+"ColorHeadingBackground"           "15790320"
+"ColorLimit"                       "7850"
+"ColorNotUsed"                     "12632256"
+"ColorSpecialExternal"             "10027110"
+"ColorToggleable"                  "39219"
+"ColumnHeadingType"                "Normal"
+"ColumnHeadingWordWrap"            "YES"
+"CopyIncludeColumnHeadings"        "YES"
+"CopyIncludeObjectName"            "YES"
+"DataMaintainerFilter"             "NO"
+"DisableRefresh"                   "NO"
+"FontColor"                        "0"
+"FontName"                         "Segoe UI"
+"FontSize"                         "8"
+"FontStyles"                       ""
+"HighlightSelected"                "NO"
+"HighlightSelectedColor"           "65535"
+"KeyFieldsUse"                     "Primary"
+"MetricsAbsolute"                  "NO"
+"MetricsBlank"                     "NO"
+"MetricsShow"                      "NO"
+"RowHeight"                        "13"
+"ShowGridlines"                    "YES"
+"ShowHints"                        "YES"
+"UseConciseVariableNames"          "YES"
+"UseDefinedNamesInVariables"       "NO"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE CUSTOM COLORS
+//--------------------------------------------------------------------------------
+CustomColors (CustomColorsOverwrite)
+{
+"NO "
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE SYSTEM SCALING OPTIONS
+//--------------------------------------------------------------------------------
+Scale_Options_Value (Option,Value)
+{
+"BGAGC"                            "NO"
+"EnforceGenMWLimits"               "YES"
+"GenAGCAble"                       "NO"
+"GenAGCAble:1"                     "NO"
+"IncludeOutOfServiceLoads"         "YES"
+"ScaleStartingPoint"               "Present"
+"ScaleUseModeledMW"                "NO"
+"UseMeritOrder"                    "NO"
+"UseMeritOrder:1"                  "NO"
+"VaryLoadConstantPF"               "YES"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE SYSTEM EQUIVALENT OPTIONS
+//--------------------------------------------------------------------------------
+Equiv_Options_Value (Option,Value)
+{
+"AdjustAreaUnspecifiedInterchange" "NO"
+"DeleteAllExtGen"                  "YES"
+"DeleteEmptyBusGroups"             "YES"
+"EquivConvertShuntsToLoad"         "NO"
+"EquivLineID"                      "99"
+"EquivMaxLineImpedance"            "2.5"
+"EquivRetainGen"                   "0"
+"EquivRetainOther"                 "NO"
+"EquivRetainOther:1"               "NO"
+"EquivRetainOther:2"               "NO"
+"EquivRetainOther:3"               "NO"
+"EquivRetainRemotelyRegulatedBuses" "NO"
+"LMS_IgnoreRadial"                 "NO"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE PTDF OPTIONS
+//--------------------------------------------------------------------------------
+PTDF_Options (ATC_LinCalcMethod)
+{
+"     1"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE LODF OPTIONS
+//--------------------------------------------------------------------------------
+LODF_Options (ATC_LinCalcMethod)
+{
+"     1"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE TLR OPTIONS
+//--------------------------------------------------------------------------------
+TLR_Options (BGAGC,TLRCalculationAppend,ATC_LinCalcMethod,MultDevice,BusObjectOnline)
+{
+"NO " "CLEAR" "     1" "SL" "YES"
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE MESSAGE LOG OPTIONS
+//--------------------------------------------------------------------------------
+MessLog_Options (LogAutoEnableAuto,LogAutoWriteEveryXlines,LogAutoWriteEveryXSeconds,
+   LogAutoFileName,LogDisableLogging,LogMaxEntries,LogUseTimeStamps)
+{
+"NO "     10     10 "" "NO "   5000 NO 
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE INJECTION GROUP AUTO INSERTION OPTIONS
+//--------------------------------------------------------------------------------
+IG_AutoInsert_Options (PPntUseFixedParFac,BusIdentifier,DeleteExisting,GroupBy,PPntPFInit,OnlySelected,
+   PPntParFac,PPntType,Prefix,StartAt,UseField:1,UseField,
+   PPntAutoInsUsePrefixAsName)
+{
+"NO " "NUMBERS" "NO " "Area" "SPECIFIED PRESENT" "NO "  0.000 "GEN" "INJGRP:"      0      0      0 "NO "
+}
+
+//--------------------------------------------------------------------------------
+// THE FOLLOWING ARE THE LIMIT MONITORING SETTINGS.
+//--------------------------------------------------------------------------------
+Limit_Monitoring_Options (LMS_IgnoreRadial)
+{
+"NO "
+}
+
+LimitSet (Number,Name,LowVolt,HighVolt,BranchPercent,InterfacePercent,NomogramPercent,
+   BranchRateSet,BranchRateSetCTG,InterfaceRateSet,InterfaceRateSetCTG,Disabled,
+   AmpMVA,Selected,NeverReport,AlwaysReport,VoltChangePercent,NeverBranchInc,
+   AlwaysBranchInc,NeverLowVoltDec,AlwaysLowVoltDec,NeverHighVoltInc,
+   AlwaysHighVoltInc,NeverInterfaceInc,AlwaysInterfaceInc,MonitorEnd,
+   LowVoltCutoff,UseLimitCost,LowVoltRateSet,HighVoltRateSet,LowVoltRateSetCTG,
+   HighVoltRateSetCTG,LowVoltCTG,HighVoltCTG,MonDiscBus,UseSetCTGMon,
+   DataMaintainer,DataMaintainerAssign,ScreenBranchPercent,
+   ScreenInterfacePercent,ScreenBusPairPercent,ScreenTolLowVolt,
+   ScreenTolHighVolt,ScreenTolChangeVolt,BusPairPercent,BusPairRateSet,
+   BusPairRateSetCTG,ScreenLowVoltMult)
+{
+         1 "Default"      0.900      1.100    100.000    100.000    100.000 "A" "A" "A" "A" "NO " "Amp/MVA" "NO " "NO " "NO " "NO "      0.000    999.000      0.000      2.000      0.000      2.000      0.000    999.000 "Higher"      0.000 "No" "A" "A" "A" "A"      0.900      1.100 "NO " "NO " "" ""     90.000     90.000     90.000      0.010      0.010      0.010    100.000 "A" "A"      1.000
+}
+
+Area (Number,MonitorLimits,MonitorMinkV,MonitorMaxkV)
+{
+         1 "YES"     0.0000  9999.0000
+         2 "YES"     0.0000  9999.0000
+         3 "YES"     0.0000  9999.0000
+}
+
+Zone (Number,MonitorLimits,MonitorMinkV,MonitorMaxkV)
+{
+         1 "YES"     0.0000  9999.0000
+}
+
+SCRIPT
+{
+SetData(Bus, [Monitor,LimitSet], ["YES", "Default"], All); //  set all buses to monitored as part of first limit group
+}
+SCRIPT
+{
+SetData(Branch, [Monitor,LimitSet], ["YES", "Default"], All); //  set all branches to monitored as part of first limit group
+}
+SCRIPT
+{
+SetData(Interface, [Monitor,LimitSet], ["YES", "Default"], All); //  set all interfaces to monitored as part of first limit group
+}
+//--------------------------------------------------------------------------------
+// THE FOLLOWING THE OPF OPTIONS AND RESULTS.
+//--------------------------------------------------------------------------------
+OPF_Options (OPFGenAllowCommitment,OPFGenAllowDecommitment,OPFBusMaxViolCost,
+   OPFCalculateBusReactiveLMP,OPFDFACTSCost,OPF_DisableACE,OPF_DisAreaTrans,
+   OPFDisBusEnforce,OPF_DisDCLineMW,OPFDisDFACTSXinj,OPF_DisGenMW,
+   OPF_DisIntEnforce,OPF_DisLineEnforce,OPF_DisGenMW:1,OPF_DisPhaseShift,
+   OPFDisableXFRegPSEnforce,OPF_GenCostModel,OPFIncludeReserveRequirements,
+   OPF_IntCorrectTol,OPF_IntMaxViolCost,OPF_IntMWRelease,OPF_LineCorrectTol,
+   OPF_LineMaxViolCost,OPF_LineMVARelease,OPFPFUpdateGenChange,OPFPFUpdate,
+   OPF_MaxLPIterations,SCOPFMaxElementCTGViol,OPF_MinControlSense,
+   OPF_MinPhaseShiftSense,OPF_MWPerSegment,OPF_ObjFunc,BusObjectOnline,
+   OPFAreaInitPFControl,OPFAreaStandAlonePFControl,OPFCyclingMinItr,
+   OPFCyclingRowMult,OPFGenFastStartTurnOnPercent,OPFSaveTableauInPWB,
+   OPFUseLastTableau,OPFBranchUseMW,OPFDCPhaseShifterMaxLimitChange,
+   OPF_PhaseShiftCost,OPFXFRegPSInRangeCost,OPFXFRegPSMaxViolCost,
+   OPF_PtsPerCurve,OPF_SaveLinCurve,SCOPFMaxOuterLoopItr,SCOPFOuterLoopType,
+   SCOPFRadialLoad,SCOPFUseMustInclude,OPFShowLMPComponents,LPSolutionTrace,
+   OPFIncludeUnenforceCost,OPFValidSolutionOnMaxITR)
+{
+"YES" "NO " 1000.000 "YES"  0.010 "NO " "NO " "YES" "NO " "YES" "NO " "NO " "NO " "YES" "NO " "NO "      1 "NO "  2.000 1000.000 75.000  2.000 1000.000 75.000 ""      0   2500  12  0.010  0.001 10.000      0 "YES" " 1" " 1"     50     10 " 2.000" "YES" "NO " "NO "     10  0.100  0.100 1000.000      5 "NO "    1  0  0 "YES" "NO "  0 "YES" "NO "
+}
+
+Area (Number,OPFMargCostACE,OPFUnenforceable,OPFControlPhase,OPFLimitBranch,
+   OPFLimitInterface)
+{
+         1 "" "   " "YES" "YES" "NO "
+         2 "" "   " "YES" "YES" "NO "
+         3 "" "   " "YES" "YES" "NO "
+}
+
+Bus (Number,MargCostMW)
+{
+     1 "Not Valid"
+     2 "Not Valid"
+     3 "Not Valid"
+     4 "Not Valid"
+     5 "Not Valid"
+     6 "Not Valid"
+     7 "Not Valid"
+}
+
+Branch (BusNumFrom,BusNumTo,Circuit,MargCostMVA,OPFLimitBinding,OPFLimitUnenforceable,
+   OPFEnforceEquality)
+{
+     1      2 " 1" "" "No" "   " "NO "
+     1      3 " 1" "" "No" "   " "NO "
+     2      3 " 1" "" "No" "   " "NO "
+     2      4 " 1" "" "No" "   " "NO "
+     2      5 " 1" "" "No" "   " "NO "
+     2      6 " 1" "" "No" "   " "NO "
+     3      4 " 1" "" "No" "   " "NO "
+     4      5 " 1" "" "No" "   " "NO "
+     7      5 " 1" "" "No" "   " "NO "
+     6      7 " 1" "" "No" "   " "NO "
+     6      7 " 2" "" "No" "   " "NO "
+}
+
+Interface (Name,MargCostMW,OPFLimitBinding,OPFLimitUnenforceable,OPFEnforceEquality)
+{
+"Left-Right" "" "No" "   " "NO "
+"Left-Top" "" "No" "   " "NO "
+"Right-Top" "" "No" "   " "NO "
+}
+
+Gen (BusNum,ID,OPFAGC)
+{
+     1 "1" "If Agcable"
+     2 "1" "If Agcable"
+     4 "1" "If Agcable"
+     6 "1" "If Agcable"
+     7 "1" "If Agcable"
+}
+
+OPFSolutionSummary (LPOPFSolutionDateTime,LPOPFSolutionDateTime:1,LPOPFSolutionTime,
+   LPOPFSolutionStatus,LPOPFNumberOfIterations,LPOPFCostFunction,
+   LPOPFCostFunction:1,LPOPFCostFunction:2,LPOPFCostFunction:3,
+   LPOPFNumberOfBuses,LPOPFBusMC,LPOPFBusMC:1,LPOPFBusMC:2,LPOPFBusMC:3,
+   LPOPFInitialViolations,LPOPFInitialViolations:1,LPOPFInitialViolations:2,
+   LPOPFInitialViolations:3,LPOPFBindingLines,LPOPFBindingLines:1,
+   LPOPFBindingLines:2,LPOPFUnenforceableViol,LPOPFUnenforceableViol:1,
+   LPOPFUnenforceableViol:2,LPOPFUnenforceableViol:3,LPOPFUnenforceableViol:4,
+   LPOPFUnenforceableViol:5,LPOPFSum,LPOPFSum:1,LPOPFSum:2,LPOPFSum:3,LPOPFSum:4,
+   LPOPFSum:5,LPOPFMC,LPOPFMC:1,OPFDCPhaseShifterLimitChangeCount)
+{
+"12/30/1899, 00:00:00.000" "12/30/1899, 00:00:00.000"  0.000 ""      0  0.000  0.000  0.000  0.000      0  0.000  0.000  0.000  0.000      0      0      0      0      0      0      0      0      0      0      0      0      0  0.000  0.000  0.000  0.000  0.000  0.000  0.000  0.000      0
+}
+
+//--------------------------------------------------------------------------------
+// THE FOLLOWING SECTION CONTAINS OPTIONS FOR THE CONTINGENCY ANALYSIS.
+//--------------------------------------------------------------------------------
+CTG_Options (HardDriveFilename,HardDriveUseColHead,HardDriveSave,InjSensFilterNameGen,
+   InjSensFilterNameLoad,InjSensMaxEffect,InjSensMaxSens,AlwaysReport,
+   AlwaysBranchInc,AlwaysHighVoltInc,AlwaysInterfaceInc,AlwaysLowVoltDec,
+   BCViolReport,BCViolBranchInc,BCViolHighVoltInc,BCViolInterfaceInc,
+   BCViolLowVoltDec,NeverReport,NeverBranchInc,NeverHighVoltInc,
+   NeverInterfaceInc,NeverLowVoltDec,VoltChangePercent,IslandViolationMinBus,
+   IslandViolationMinLoadMW,IslandViolations,MonPrimaryBus,MonDiscBus,
+   MonVoltSensThres,MonVoltSensFilter,MonVoltSens,CTG_AlwaysSaveResults,
+   WhatActuallyOccuredContingencyDescription,CTGSaveInPWB,CTGStoreLODFS,CTGLabel,
+   CTGLabel:1,CalculationMethod,DisableGenDropOverlap,OPF_SolutionType,
+   IterateOnActionStatus,AllowAmpLimits,ReactivePowerModel,AGCToleranceMVA,
+   AGCTolerance,MakeUpPower,PostCTGAuxFile,PostCTGSolAuxFile,
+   PreventIslandWithoutEnoughGen,RetryRobust,TSModelMaxDelay,TSModelsTrip,
+   TSModelsMonitor,UseIncTP,IgnoreRASIfTrueInRef,ScreenAllow,
+   ScreenIncludeVoltage,ScreenVoltMaxItr,ScreenMethod,ScreenNumBranch,
+   ScreenNumBus,ScreenNumBusPair,ScreenNumInterface,ScreenVoltStoreViol,
+   CTG_ReportMaxVioPerType,CTG_ReportAll,CTG_ReportBaseCaseOutages,
+   CTG_ReportBranchChangeFlowVio,CTG_ReportBusHighVolt,CTG_ReportBusLowVolt,
+   CTG_ReportBusVoltageExtremes,CTG_ReportCaseSummary,CTG_ReportCondense,
+   CTG_ReportCreateTables,CTG_ReportFieldSeparator,CTG_ReportIDBusBy,
+   CTG_ReportInactiveViolations,CTG_ReportInterfaceChangeFlowVio,
+   CTG_ReportInterfaceFlow,CTG_ReportLargestBranchFlow,
+   CTG_ReportLargestInterfaceFlow,CTG_ReportLineFlow,CTG_ReportMonitoredAreas,
+   CTG_ReportMonitoredZones,CTG_ReportOnlyNonZero,CTG_ReportOnlyViolations,
+   CTG_ReportOptionSettings,CTG_ReportVoltDecreaseVio,CTG_ReportVoltIncreaseVio)
+{
+"" "NO " "NO " "None" "None" 5 5 "NO " 999.000  2.000 999.000  2.000 "     1"  0.000  0.000  0.000  0.000 "NO "  0.000  0.000  0.000  0.000 "NO " 10 50.000 "NO " "YES" "NO " 10.000 "" "NO " "YES" "PRETTY NAME_NUMBER" "YES" " 0" "" "" "AC" "NO " NO  "NO " "NO " "Ignore"  5.000  0.050 "Area Part Factors" "" "" "NO " "NO " 3600.000 "" "" NO  "NO " "NO" "YES" 2 "DC" 20 20 10 10 "NO "       9999 "NO " "NO " "NO " "YES" "YES" "NO " "NO " "NO " "NO " "$"      0 "NO " "NO " "YES" "NO " "NO " "YES" "NO " "NO " "NO " "NO " "NO " "NO " "NO "
+}
+
+Distributed_Options (ATCUseDistributedComputing,CTGUseDistributedComputing,DistMasterPasswordHash,
+   CTGNumberPerProcess)
+{
+"NO " "NO " "" 0
+}
+// THE FOLLOWING SECTION CONTAINS OPTIONS FOR MAKE UP GENERATION FOR CONTINGENCY ANALYSIS.
+Area (Number,CTGMakeUpGen)
+{
+     1     0.0000
+     2     0.0000
+     3     0.0000
+}
+
+//--------------------------------------------------------------------------------
+//THE FOLLOWING ARE THE CONTINGENCY AUTO INSERT OPTIONS
+//--------------------------------------------------------------------------------
+CTG_AutoInsert_Options_Value (Option,Value)
+{
+"BusIdentifier"                    "BOTH"
+"CtgAutoInsCombinationVal"         "0"
+"CtgAutoInsCombinationVal:1"       "0"
+"CtgAutoInsCombinationVal:2"       "0"
+"CtgAutoInsCombinationVal:3"       "0"
+"CtgAutoInsDeleteExistCtgs"        "NO"
+"CtgAutoInsElementFilter"          ""
+"CtgAutoInsElementFilter:1"        ""
+"CtgAutoInsElementFilter:2"        ""
+"CtgAutoInsElementFilter:3"        ""
+"CtgAutoInsElementFilter:4"        ""
+"CtgAutoInsElementFilter:5"        ""
+"CtgAutoInsElementFilter:6"        ""
+"CtgAutoInsElementType"            "BRANCH"
+"CtgAutoInsOnlyIncludeWithin"      "NO"
+"CtgAutoInsOnlyIncludeWithinBus"   "0"
+"CtgAutoInsOnlyIncludeWithinNum"   "0"
+"CtgAutoInsOpenBreakers"           "NO"
+"CtgAutoInsPrefix"                 "L_"
+"CtgAutoInsPrefix:1"               "T_"
+"CtgAutoInsPrefix:2"               "G_"
+"CtgAutoInsPrefix:3"               "B_"
+"CtgAutoInsPrefix:4"               "S_"
+"CtgAutoInsPrefix:5"               "3WT_"
+"CtgAutoInsPrefix:6"               "SUB_"
+"CtgAutoInsPrefix:7"               "LS_"
+"CtgAutoInsPreventIdenticalBreakers" "NO"
+"CtgAutoInsUseAreaZoneFilters"     "YES"
+"CtgAutoInsUseElementFilter"       "NO"
+"CtgAutoInsUseElementFilter:1"     "NO"
+"CtgAutoInsUseElementFilter:2"     "NO"
+"CtgAutoInsUseElementFilter:3"     "NO"
+"CtgAutoInsUseElementFilter:4"     "NO"
+"CtgAutoInsUseElementFilter:5"     "NO"
+"CtgAutoInsUseElementFilter:6"     "NO"
+"CTGAutoParallelCommon"            "All"
+"DOCBranchVoltageTreatment"        "Higher"
+"DOCMaxkV"                         "9999"
+"DOCMinkV"                         "0"
+"DOCUseAllkV"                      "YES"
+"Duration"                         "0.083333"
+"FaultLocation"                    "10"
+"Include3WXfifFoundWithXf"         "INSERT3WXF"
+"IncludeNomVolt"                   "NO"
+"MeasType"                         "Num Nodes"
+"SelfClear"                        "NO"
+"SelfClear:1"                      "NO"
+"StartTime"                        "1"
+}
+
+//--------------------------------------------------------------------------------
+// THE FOLLOWING SECTIONS CONTAINS THE ATC SETTINGS.
+//--------------------------------------------------------------------------------
+ATC_Options (AllowAmpLimits,GenEnforceMWLimits:1,ATC_SolMethod,ATCTransactor:1,
+   ATC_IncludePSPostCont,ATC_ForcePreContRamp,ATCIgnoreLimitersBelow,
+   ATCIterateOnFailedContingency,ATCLimitersToIterateOn,ATC_TransferTol,
+   UseMeritOrder:1,UseMeritOrder,ATC_LinCalcMethod,LinearizeMakeupPower,
+   ATC_MultipleScenarios,VariableName,ATC_MultipleScenarios:1,VaryLoadConstantPF,
+   ReactivePowerModel,ATC_IgnorePTDFBelow,ATC_IgnorePTDFBelow:1,ATC_IncBranchCtg,
+   ATC_MaxLimCtg,ATC_MaxLimElements,ATC_MaxMWLimit,ATC_LimitersSaved,
+   ATC_IgnoreBaseLimitations,GenEnforceMWLimits,ATCTransactor)
+{
+"NO " "NO "      0 "Area<KEY1>3</KEY1>" "YES" "NO " " 0.000" "NO " "     1" 10.000 "NO" "NO" "DC" "NO " "NO " "CTGViolMaxLine" "NO " "YES" "Ignore"  0.500  0.500 "NO "      5      5 99999.000     20 "YES" "YES" "Area<KEY1>2</KEY1>"
+}
+
