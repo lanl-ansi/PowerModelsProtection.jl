@@ -2,16 +2,18 @@
 // FAULT ANALYSIS SEQUENCE DATA
 //--------------------------------------------------------------------------------
 
+// Set bus shunt conductance to zero
 DATA (BUS, [BusNum,BusSeqG,BusSeqG:1,BusSeqB,BusSeqB:1])
 {
-    2 0.20000000 0.00000000 0.10000000 0.00000000
-    3 0.22000000 0.00000000 0.03000000 0.00000000
-    4 0.04000000 0.02000000 0.01000000 0.01000000
-    5 0.25000000 0.00000000 0.05000000 0.00000000
-    6 0.69999999 0.30000001 0.20000000 0.10000000
-    7 0.50000000 0.00000000 0.10000000 0.00000000
+    2 0.00000000 0.00000000 0.00000000 0.00000000
+    3 0.00000000 0.00000000 0.00000000 0.00000000
+    4 0.00000000 0.00000000 0.00000000 0.00000000
+    5 0.00000000 0.00000000 0.00000000 0.00000000
+    6 0.00000000 0.00000000 0.00000000 0.00000000
+    7 0.00000000 0.00000000 0.00000000 0.00000000
 }
 
+// Set generator Xd'' to 0.1 pu (though 1 pu seems to be more accepted)
 DATA (GEN, [BusNum,GenID,GenSeqR,GenSeqR:1,GenSeqR:2,GenNeutralToGroundR,GenSeqX,GenSeqX:1,
    GenSeqX:2,GenNeutralToGroundX])
 {
@@ -22,6 +24,8 @@ DATA (GEN, [BusNum,GenID,GenSeqR,GenSeqR:1,GenSeqR:2,GenNeutralToGroundR,GenSeqX
     7 "1" 0.00000000 0.00000000 0.00000000 0.00000000 0.10000000 0.10000000 0.10000000 0.00000000
 }
 
+// Only Z1 series impedances are set, so Z0 series impedance will be 
+// default of 2.5*Z1. This shouldn't matter much or at all for balanced faults
 DATA (BRANCH, [BusNum,BusNum:1,LineCircuit,BranchSeqR,BranchSeqX,BranchSeqC,BranchSeqG,
    BranchSeqG:1,BranchSeqB,BranchSeqB:1,XFConfiguration])
 {
@@ -37,9 +41,9 @@ DATA (BRANCH, [BusNum,BusNum:1,LineCircuit,BranchSeqR,BranchSeqX,BranchSeqC,Bran
     7     5 " 1" 0.04800000 0.12000000 0.03000000 0.00000000 0.00000000 0.00000000 0.00000000 ""
 }
 
-DATA (MUTUALIMPEDANCE, [BusNum,BusNum:1,BusNum:2,BusNum:3,LineCircuit,LineCircuit:1,LineR,LineX,
-   CustomSingle,CustomSingle:1,CustomSingle:2,CustomSingle:3])
-{
-         6          7          6          7 " 1" "2" 0.01000000 0.02000000 0.00000000 1.00000000 0.00000000 1.00000000
-}
+// DATA (MUTUALIMPEDANCE, [BusNum,BusNum:1,BusNum:2,BusNum:3,LineCircuit,LineCircuit:1,LineR,LineX,
+//    CustomSingle,CustomSingle:1,CustomSingle:2,CustomSingle:3])
+// {
+//          6          7          6          7 " 1" "2" 0.01000000 0.02000000 0.00000000 1.00000000 0.00000000 1.00000000
+// }
 
