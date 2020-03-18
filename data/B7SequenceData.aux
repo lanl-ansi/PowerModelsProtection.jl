@@ -25,7 +25,7 @@ DATA (GEN, [BusNum,GenID,GenSeqR,GenSeqR:1,GenSeqR:2,GenNeutralToGroundR,GenSeqX
 }
 
 // Only Z1 series impedances are set, so Z0 series impedance will be 
-// default of 2.5*Z1. This shouldn't matter much or at all for balanced faults
+// default of 2.5*Z1. This should not matter much or at all for balanced faults
 DATA (BRANCH, [BusNum,BusNum:1,LineCircuit,BranchSeqR,BranchSeqX,BranchSeqC,BranchSeqG,
    BranchSeqG:1,BranchSeqB,BranchSeqB:1,XFConfiguration])
 {

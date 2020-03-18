@@ -98,7 +98,7 @@ function constraint_gen_fault_voltage_drop(pm::AbstractPowerModel, i::Int; nw::I
 
     r = 0
     x = 0.1
-    x = 1 # powerworld default
+    # x = 1 # powerworld default
    
    if haskey(gen, "rg")
         r = gen["rg"]
@@ -134,7 +134,7 @@ function constraint_gen_fault_voltage_drop(pm::AbstractIVRModel, n::Int, i, busi
 end
 
 
-function add_fault!(net, busid; resistance=0.1)
+function add_fault!(net, busid; resistance=1e-4)
     if !("fault" in keys(net))
         net["fault"] = Dict()
     end
@@ -221,7 +221,14 @@ solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 base_result = run_dc_opf(net, solver)
 fault_net = deepcopy(net)
 
-update_base!(fault_net, base_result)
+# update_base!(fault_net, base_result)
+
+# use flat start
+for (i,b) in fault_net["bus"]
+    b["vm"] = 1
+    b["va"] = 0
+end
+
 add_fault!(fault_net, 3)
 
 result = run_dc_fault_study(fault_net, solver)
@@ -230,7 +237,7 @@ for (i,b) in net["bus"]
     kvll = b["base_kv"]
     vbase = 1000*kvll/sqrt(3)
     bs = result["solution"]["bus"][i]
-    b["vm"] = [abs(v)*1 for v in bs["vr"] + 1im*bs["vi"]]
+    b["vm"] = abs(bs["vr"] + 1im*bs["vi"])
 end
 
 
@@ -242,12 +249,15 @@ for (k,br) in net["branch"]
     brs = result["solution"]["branch"]["$k"]
 
     br["ckt"] = strip(br["source_id"][4])
-    br["cm_fr"] = [abs(c)*1 for c in brs["cr_fr"] + 1im*brs["ci_fr"]]
-    br["cm_to"] = [abs(c)*1 for c in brs["cr_to"] + 1im*brs["ci_to"]]
+    br["cm_fr"] = abs(brs["cr_fr"] + 1im*brs["ci_fr"])
+    br["cm_to"] = abs(brs["cr_to"] + 1im*brs["ci_to"])
 end
 
 buses = to_df(net, "bus", result)
 branches = to_df(net, "branch", result)
 
-# buses[!,[:index,:name,:vr,:vi]]
-branches[!,[:f_bus,:t_bus,:ckt,:cm_fr]]
+fb = sort(buses[!,[:index,:vm]])
+fbr = sort(branches[!,[:f_bus,:t_bus,:ckt,:cm_fr]], (:f_bus,:t_bus,:ckt))
+
+println("Bus solution\n----------------")
+println(fb)
