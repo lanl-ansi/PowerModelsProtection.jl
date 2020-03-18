@@ -1,0 +1,8 @@
+SCRIPT SaveAllToAux {
+    OpenCase("C:\\Users\\305232\\Documents\\Projects\\RONM\\Protection\\B7FaultFlat.pwb");
+    OpenOneline("C:\\Users\\305232\\Documents\\Projects\\RONM\\Protection\\B7FaultExample.pwd");
+    SaveCase("C:\\Users\\305232\\Repos\\FaultStudy\\data\\B7FaultFlat.aux", AUX);
+    SaveCase("C:\\Users\\305232\\Repos\\FaultStudy\\data\\B7FaultFlat.pti", PTI33, YES);
+    SaveOneline("C:\\Users\\305232\\Repos\\FaultStudy\\data\\B7FaultFlat.axd", "B7FaultFlat", AXD);
+    ExitProgram;
+}
