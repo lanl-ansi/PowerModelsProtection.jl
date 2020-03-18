@@ -1,5 +1,4 @@
 using PowerModels, JuMP, Ipopt
-
 include("powermodelsio.jl")
 
 const PMs = PowerModels
@@ -134,7 +133,7 @@ function constraint_gen_fault_voltage_drop(pm::AbstractIVRModel, n::Int, i, busi
 end
 
 
-function add_fault!(net, busid; resistance=1e-4)
+function add_fault!(net, busid; resistance=0.0001)
     if !("fault" in keys(net))
         net["fault"] = Dict()
     end
@@ -207,6 +206,7 @@ path = "data/b4fault.m"
 # path = "data/GO3000_new_perfect.raw"
 # path = "data/SDET_2316bus model.raw"
 # path = "data/ACTIVSg10k.RAW"
+# path = "data/case5.raw"
 path = "data/B7FaultExample.raw"
 # pm = PowerModels.instantiate_model(path, PowerModels.IVRPowerModel, build_fault_study)
 
@@ -256,8 +256,6 @@ end
 buses = to_df(net, "bus", result)
 branches = to_df(net, "branch", result)
 
-fb = sort(buses[!,[:index,:vm]])
-fbr = sort(branches[!,[:f_bus,:t_bus,:ckt,:cm_fr]], (:f_bus,:t_bus,:ckt))
 
 println("Bus solution\n----------------")
 println(fb)
