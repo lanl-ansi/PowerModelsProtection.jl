@@ -211,7 +211,7 @@ path = "data/B7FaultExample.raw"
 # pm = PowerModels.instantiate_model(path, PowerModels.IVRPowerModel, build_fault_study)
 
 # path = "data/case73.raw"
-net = PowerModels.parse_file(path)
+net = PowerModels.parse_file(path, import_all=true)
 net["multinetwork"] = false
 
 solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
