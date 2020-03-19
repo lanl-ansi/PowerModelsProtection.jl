@@ -17,9 +17,9 @@ Memento.setlevel!(TESTLOG, "error")
 
 import JuMP
 import Ipopt
-import Cbc
-import Juniper
-import SCS
+# import Cbc
+# import Juniper
+# import SCS
 
 import JSON
 
@@ -28,9 +28,9 @@ using LinearAlgebra
 
 
 ipopt_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
-cbc_solver = JuMP.with_optimizer(Cbc.Optimizer, logLevel=0)
-scs_solver = JuMP.with_optimizer(SCS.Optimizer, max_iters=20000, eps=1e-5, alpha=0.4, verbose=0)
-juniper_solver = JuMP.with_optimizer(Juniper.Optimizer, nl_solver=JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-4, print_level=0), mip_solver=cbc_solver, log_levels=[])
+# cbc_solver = JuMP.with_optimizer(Cbc.Optimizer, logLevel=0)
+# scs_solver = JuMP.with_optimizer(SCS.Optimizer, max_iters=20000, eps=1e-5, alpha=0.4, verbose=0)
+# juniper_solver = JuMP.with_optimizer(Juniper.Optimizer, nl_solver=JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-4, print_level=0), mip_solver=cbc_solver, log_levels=[])
 
 @testset "PowerModelsProtection" begin
 
