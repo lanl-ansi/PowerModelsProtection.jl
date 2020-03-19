@@ -1,3 +1,8 @@
+name = "PowerModelsProtection"
+uuid = "719c1aef-945b-435a-a240-4c2992e5e0df"
+authors = ["Art Barnes", "Jose Tabarez"]
+version = "0.1.0"
+
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
 InfrastructureModels = "2030c09a-7f63-5d83-885d-db604e0e9cc0"

@@ -1,4 +1,4 @@
-module FaultStudy
+module PowerModelsProtection
     
     import JuMP
     import Memento

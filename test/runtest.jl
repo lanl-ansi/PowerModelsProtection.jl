@@ -1,6 +1,6 @@
 
-include("../src/FaultStudy.jl")
-const FS = FaultStudy
+include("../src/PowerModelsProtection.jl")
+const FS = PowerModelsProtection
 
 import Memento
 
@@ -32,7 +32,7 @@ cbc_solver = JuMP.with_optimizer(Cbc.Optimizer, logLevel=0)
 scs_solver = JuMP.with_optimizer(SCS.Optimizer, max_iters=20000, eps=1e-5, alpha=0.4, verbose=0)
 juniper_solver = JuMP.with_optimizer(Juniper.Optimizer, nl_solver=JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-4, print_level=0), mip_solver=cbc_solver, log_levels=[])
 
-@testset "FaultStudy" begin
+@testset "PowerModelsProtection" begin
 
     # include("fs.jl") 
     include("fsmc.jl")

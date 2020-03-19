@@ -1,9 +1,9 @@
-# FaultStudy exports everything except internal symbols, which are defined as
+# PowerModelsProtection exports everything except internal symbols, which are defined as
 # those whose name starts with an underscore. If you don't want all of these
-# symbols in your environment, then use `import FaultStudy` instead of
-# `using FaultStudy`.
+# symbols in your environment, then use `import PowerModelsProtection` instead of
+# `using PowerModelsProtection`.
 
-# Do not add FaultStudy-defined symbols to this exclude list. Instead, rename
+# Do not add PowerModelsProtection-defined symbols to this exclude list. Instead, rename
 # them with an underscore.
 
 const _EXCLUDE_SYMBOLS = [Symbol(@__MODULE__), :eval, :include]
