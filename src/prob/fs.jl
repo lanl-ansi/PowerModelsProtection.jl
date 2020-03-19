@@ -6,7 +6,8 @@ function run_fault_study(data::Dict{String,Any}, solver; kwargs...)
     for (i,fault) in data["fault"]
         data["active_fault"] = fault
         result = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
-        println(result)
+        # println(result)
+        solution["$i"] = result
     end
     return solution
 end
@@ -22,7 +23,7 @@ function build_fault_study(pm::_PMs.AbstractPowerModel)
     variable_branch_current(pm, bounded = false)
     _PMs.variable_gen(pm, bounded = false)
 
-    constraint_mc_gen_voltage_drop(pm)
+    constraint_gen_voltage_drop(pm)
     
     constraint_fault_current(pm)
 

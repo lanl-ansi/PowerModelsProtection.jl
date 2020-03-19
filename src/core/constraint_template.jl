@@ -5,8 +5,8 @@ function constraint_gen_voltage_drop(pm::_PMs.AbstractPowerModel; nw::Int=pm.cnw
         i = gen["index"]
         bus_id = gen["gen_bus"]
 
-        r = gen["rs"] 
-        x = gen["xs"]
+        r = gen["zr"] 
+        x = gen["zx"]
         
         vm = _PMs.ref(pm, :bus, bus_id, "vm") 
         va = _PMs.ref(pm, :bus, bus_id, "va")
@@ -39,8 +39,8 @@ function constraint_mc_gen_voltage_drop(pm::_PMs.AbstractPowerModel; nw::Int=pm.
         i = gen["index"]
         bus_id = gen["gen_bus"]
 
-        r = gen["rs"] 
-        x = gen["xs"]
+        r = gen["zr"] 
+        x = gen["zx"]
 
         vm = _PMs.ref(pm, :bus, bus_id, "vm") 
         va = _PMs.ref(pm, :bus, bus_id, "va")

@@ -10,12 +10,16 @@ function check_pf!(data::Dict{String,Any}, solver)
 end
 
 function add_pf_data!(data::Dict{String,Any}, solver)
-    if data["method"] == "PMs"
-        result = _PMs.run_pf(data, _PMs.ACPPowerModel, solver)
-        add_pf_data!(data, result)
+    if haskey(data, "multiconductor") && data["multiconductor"] == true
+        if haskey(data, "method") && data["method"] == "PMs"
+            result = _PMs.run_mc_pf(data, _PMs.ACPPowerModel, solver)
+            add_pf_data!(data, result)
+        end
     else
-        result = _PMD.run_mc_pf(data, _PMs.ACPPowerModel, solver)
-        add_pf_data!(data, result)
+        if haskey(data, "method") && data["method"] == "PMs"
+            result = _PMD.run_pf(data, _PMs.ACPPowerModel, solver)
+            add_pf_data!(data, result)
+        end
     end
 end
 
@@ -43,6 +47,51 @@ end
 
 function add_fault!(data::Dict{String,Any})
     hold = deepcopy(data["fault"])
+    data["fault"] = Dict{String, Any}()
+    for (k, fault) in hold
+        for (i, bus) in data["bus"]
+            if bus["name"] == fault["bus"]
+                !haskey(data["fault"], i) ? data["fault"][i] = Dict{String, Any}() : nothing
+                add_fault!(data, bus, i, fault["gr"])
+            end
+        end
+    end
+    println(data["fault"])
+end
+
+function add_fault_study!(data::Dict{String,Any})
+    data["fault"] = Dict{String, Any}()
+    get_active_phases!(data)
+    get_fault_buses!(data)
+    println(data["fault_buses"])
+    for (i, bus) in data["bus"]
+        if i in data["fault_buses"]
+            data["fault"][i] = Dict{String, Any}()
+            add_fault!(data, bus, i, 0.0001)
+        end
+    end
+    delete!(data, "fault_buses")
+end
+
+function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance)
+    gf = max(1/resistance, 1e-6)
+    !haskey(data["fault"][i], "lg") ? data["fault"][i]["lg"] = Dict{Int, Any}() : nothing
+    data["fault"][i]["lg"][c] = Dict("bus_i" => bus["bus_i"], "type" => "lg", "Gf"=> gf, "phases" => [c], "name" => bus["name"])
+end
+
+function add_mc_fault_data!(data::Dict{String,Any})
+    # data["fault"] = Dict{String, Any}()
+    # data["fault"]["1"] = Dict("type" => "lg", "bus" => "701", "phases" => [2], "gr" => .00001)
+    
+    if !haskey(data, "fault")
+        add_mc_fault_study!(data)
+    else
+        add_mc_fault!(data)
+    end
+end
+
+function add_mc_fault!(data::Dict{String,Any})
+    hold = deepcopy(data["fault"])
     delete!(data, "bus_phases")
     data["fault"] = Dict{String, Any}()
     for (k, fault) in hold
@@ -60,7 +109,7 @@ function add_fault!(data::Dict{String,Any})
     println(data["fault"])
 end
 
-function add_fault_study!(data::Dict{String,Any})
+function add_mc_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     get_active_phases!(data)
     get_fault_buses!(data)
