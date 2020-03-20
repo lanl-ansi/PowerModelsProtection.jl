@@ -1,0 +1,36 @@
+clearAll
+set parallel=No
+
+compile "C:\Program Files\OpenDSS\EPRITestCircuits\ckt5\Master_ckt5.dss"
+set CPU=0 
+Solve
+
+Clone 6 ! Clones the active Circuit 6 more times
+
+set parallel=Yes
+
+set activeActor=* 
+set mode=yearly number=2000 hour = 0 totaltime=0
+
+set activeActor=2
+set hour = 2000
+
+set activeActor=3
+set hour = 4000
+
+set activeActor=4
+set hour = 6000
+
+set activeActor=5
+set hour = 8000
+
+set activeActor=6
+set hour = 10000
+
+set activeActor=7
+set hour = 12000
+
+SolveAll
+Wait
+
+get actorprogress

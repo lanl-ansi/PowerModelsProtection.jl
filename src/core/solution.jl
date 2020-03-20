@@ -4,8 +4,6 @@ function solution_fs!(pm::_PMs.AbstractPowerModel, sol::Dict{String,Any})
     sol["fault"]["currents"] = Dict{String, Any}()
     add_branch_currents!(pm, sol)
     add_tansformer_currents!(pm, sol)
-    println(sol["fault"])
-    println("##########################################################################")
 end
 
 function add_tansformer_currents!(pm::_PMs.AbstractPowerModel, sol::Dict{String,Any})
@@ -26,7 +24,7 @@ function add_branch_currents!(pm::_PMs.AbstractPowerModel, sol::Dict{String,Any}
             v_base = _PMs.ref(pm, pm.cnw, :bus, branch["t_bus"])["base_kv"]
             i_base = sqrt(3) * s_base/ v_base
             bus_i = string(index)
-            name = branch["name"]
+            name = branch["source_id"]
             sol["fault"]["currents"][name] = [abs(sol["branch"][bus_i]["csr_fr"][c] + sol["branch"][bus_i]["csi_fr"][c] *im) * i_base for c in 1:3]
         end
     end
