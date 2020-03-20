@@ -1,3 +1,4 @@
+using Memento 
 
 function constraint_gen_voltage_drop(pm::_PMs.AbstractPowerModel; nw::Int=pm.cnw)
     deg2rad = pi/180
@@ -28,8 +29,13 @@ function constraint_current_balance(pm::_PMs.AbstractPowerModel, i::Int; nw::Int
     bus_bs = Dict(k => _PMs.ref(pm, nw, :shunt, k, "bs") for k in bus_shunts)
     
     if bus != _PMs.ref(pm, nw, :active_fault, "bus") 
+        debug(_LOGGER, "Calling current_balance on bus $i")
+        # println("Calling current_balance on bus $i")
+
         constraint_current_balance(pm, nw, i, bus_arcs, bus_gens, bus_gs, bus_bs)
     else
+        debug(_LOGGER, "Calling fault current_balance on bus $i")
+        # println("Calling fault current_balance on bus $i")
         constraint_fault_current_balance(pm, nw, i, bus_arcs, bus_gens, bus_gs, bus_bs, bus)
     end
 end
