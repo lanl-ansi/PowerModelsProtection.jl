@@ -51,6 +51,8 @@ function add_fault!(data::Dict{String,Any})
                     add_lg_fault!(data, bus, i, fault["phases"], fault["gr"])
                 elseif fault["type"] == "ll"
                     add_ll_fault!(data, bus, i, fault["phases"], fault["gr"])
+                elseif fault["type"] == "llg"
+                    add_llg_fault!(data, bus, i, fault["phases"], fault["gr"], fault["pr"])
                 elseif fault["type"] == "3p"
                     add_3p_fault!(data, bus, i, fault["phases"], fault["gr"])
                 elseif fault["type"] == "3pg"
@@ -127,20 +129,17 @@ function add_llg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String
     gtot = 2 * gp + gf
     gpp = gp * gp/gtot
     gpg = gp * gf/gtot
-    data["fault"][i]["3pg"] = Dict{Int, Any}()
+    data["fault"][i]["llg"] = Dict{Int, Any}()
     ncnd = length(data["bus_phases"][bus["bus_i"]])
     if ncnd == 3
+        j = phases[1]
+        k = phases[2]
         Gf = zeros(3, 3)
-        for j = 1:3
-            for k = 1:3
-                if j != k
-                    Gf[j,k] = -gpp
-                else
-                    Gf[j,k] = 2*gpp + gpg
-                end
-            end
-        end
-        data["fault"][i]["3pg"][1] = Dict("bus_i" => bus["bus_i"], "type" => "3pg", "Gf"=> Gf, "phases" => [1,2,3])
+        Gf[j,j] = gpp + gpg
+        Gf[j,k] = -gpp
+        Gf[k,k] = gpp + gpg
+        Gf[k,j] = -gpp
+        data["fault"][i]["llg"][1] = Dict("bus_i" => bus["bus_i"], "type" => "llg", "Gf"=> Gf, "phases" => [j, k])
     end
 end
 

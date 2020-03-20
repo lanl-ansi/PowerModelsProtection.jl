@@ -30,6 +30,15 @@
             @test isapprox(result["808"]["ll"][1]["solution"]["fault"]["currents"]["line.l3"][2], 412.9; atol = 1e0)
 
             data["fault"] = Dict{String, Any}()
+            data["fault"]["1"] = Dict("type" => "llg", "bus" => "808", "phases" => [2,3], "gr" => .00001, "pr" => .00001)
+            result = FS.run_mc_fault_study(data, ipopt_solver)
+            @test result["808"]["llg"][1]["termination_status"] == PMs.LOCALLY_SOLVED
+            # test a phase 
+            @test isapprox(result["808"]["llg"][1]["solution"]["fault"]["currents"]["line.l3"][2], 450.5; atol = 1e0)
+            # test b phase 
+            @test isapprox(result["808"]["llg"][1]["solution"]["fault"]["currents"]["line.l3"][3], 447.7; atol = 1e0)
+
+            data["fault"] = Dict{String, Any}()
             data["fault"]["1"] = Dict("type" => "3p", "bus" => "808", "phases" => [1,2,3], "gr" => .00001)
             result = FS.run_mc_fault_study(data, ipopt_solver)
             @test result["808"]["3p"][1]["termination_status"] == PMs.LOCALLY_SOLVED
