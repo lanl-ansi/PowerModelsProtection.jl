@@ -12,7 +12,7 @@ end
 
 function constraint_fault_current(pm::_PMs.AbstractPowerModel; nw::Int=pm.cnw)
     bus = _PMs.ref(pm, nw, :active_fault, "bus")
-    z = _PMs.ref(pm, nw, :active_fault, "gf")
+    g = _PMs.ref(pm, nw, :active_fault, "gf")
     vr = _PMs.var(pm, nw, :vr, bus)
     vi = _PMs.var(pm, nw, :vi, bus)
 
@@ -27,8 +27,8 @@ function constraint_fault_current(pm::_PMs.AbstractPowerModel; nw::Int=pm.cnw)
 
     cr = _PMs.var(pm, nw, :cfr, bus)
     ci = _PMs.var(pm, nw, :cfi, bus)
-    JuMP.@constraint(pm.model, vr == cr * z)
-    JuMP.@constraint(pm.model, vi == ci * z)
+    JuMP.@constraint(pm.model, g * vr == cr)
+    JuMP.@constraint(pm.model, g * vi == ci)
 end
 
 function constraint_current_balance(pm::_PMs.AbstractIVRModel, n::Int, i, bus_arcs, bus_gens, bus_gs, bus_bs)
