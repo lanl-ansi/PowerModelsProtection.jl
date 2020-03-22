@@ -97,7 +97,7 @@ function constraint_gen_fault_voltage_drop(pm::AbstractPowerModel, i::Int; nw::I
 
     r = 0
     x = 0.1
-    # x = 1 # powerworld default
+    x = 1 # powerworld default
    
    if haskey(gen, "rg")
         r = gen["rg"]
@@ -256,6 +256,8 @@ end
 buses = to_df(net, "bus", result)
 branches = to_df(net, "branch", result)
 
+fb = sort(buses[!,[:index,:vm]])
+fbr = sort(branches[!,[:f_bus,:t_bus,:ckt,:cm_fr]], (:f_bus,:t_bus,:ckt))
 
 println("Bus solution\n----------------")
 println(fb)
