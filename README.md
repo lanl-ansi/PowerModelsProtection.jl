@@ -56,3 +56,7 @@ crg0, cig0 set from inverter current injection in base power flow
 -cmax <= cig <= cmax
 
 Objective is sum((crg[g] - crg0[c])^2 + (cig[g] - cig0[c])^2 for g in inverter_gens)
+
+## License
+
+This code is provided under a BSD license as part of the Multi-Infrastructure Control and Optimization Toolkit (MICOT) project, LA-CC-13-108.
