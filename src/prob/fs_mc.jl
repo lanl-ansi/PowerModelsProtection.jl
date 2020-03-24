@@ -1,7 +1,7 @@
 
 function run_mc_fault_study(data::Dict{String,Any}, solver; kwargs...)
     check_pf!(data, solver)
-    add_fault_data!(data)
+    add_mc_fault_data!(data)
     solution = Dict{String, Any}()
     for (i,bus) in data["fault"]
         name = data["bus"][i]["name"]
