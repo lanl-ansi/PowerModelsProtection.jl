@@ -72,10 +72,9 @@ function add_fault_study!(data::Dict{String,Any})
     delete!(data, "fault_buses")
 end
 
-function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance)
+function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001)
     gf = max(1/resistance, 1e-6)
-    !haskey(data["fault"][i], "lg") ? data["fault"][i]["lg"] = Dict{Int, Any}() : nothing
-    data["fault"][i]["lg"][c] = Dict("bus_i" => bus["bus_i"], "type" => "lg", "Gf"=> gf, "phases" => [c], "name" => bus["name"])
+    data["fault"][i]["lg"][c] = Dict("bus_i" => bus["bus_i"], "gf"=> gf)
 end
 
 function add_mc_fault_data!(data::Dict{String,Any})
