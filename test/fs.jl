@@ -1,6 +1,6 @@
 @testset "balance fault study" begin
     @testset "7-bus Fault Example" begin
-        data = FS.parse_file("../test/data/trans/B7FaultExample.raw")
+        data = PMs.parse_file("../test/data/trans/B7FaultExample.raw", import_all=true)
 
         # use flat start
         for (i,b) in data["bus"]
@@ -9,7 +9,7 @@
         end
 
         # neglect line charging
-        for (k,br) in net["branch"]
+        for (k,br) in data["branch"]
             br["b_fr"] = 0
             br["b_to"] = 0
         end        
