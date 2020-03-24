@@ -1,21 +1,14 @@
-# RONM Protection
+# PowerModelsProtection
 
-Repository for protection constraints/fault studies for the RONM project
+Fault study for PowerModels and PowerModelsDistribution
+In the future this will also include optimal protection coordation formulations and possibly also protection coordination constraints for optimal switching problems
 
 ## Modeling Assumptions
 
-### Balanced
 * Generators are modeled as voltage sources behind an impedance. For synchronous generation, this is the subtransient reactance $X_d''$. For inverters, this is currently a virtual resistance. A more accurate model for inverters will take into account their
 current limits
 * Loads are neglected
-* Faults are modeled as a resistance to ground. Any number of faults can be applied simulataneously at the same or different buses
-
-### Unbalanced
-
-
-## Contents
-* ```fault-flat.jl```: Balanced fault study formulation.
-* ```fault-flat-unbalanced.jl```: Unbalanced fault study formulation.
+* Faults are modeled as an admittance matrix
 
 ## TODO
 
@@ -26,7 +19,7 @@ In roughly decreasing order of priority
 - [x] Set reference bus as constant voltage. Only want to do this for grid connected cases. 
 - [ ] Handle delta-connected generators, this should just be multiplying Xg'' by 3
 - [ ] Read Rg and Xg from PTI RAW33
-- [ ] How to disable the reference bus constraint for islanded microgrids?
+- [x] How to disable the reference bus constraint for islanded microgrids? - Just set reference buses to PQ or PV
 - [ ] Convenience function to enumerate faults over all nodes
 - [ ] Add unit tests for B7Fault
 - [ ] Add unit tests for Kersting IEEE 13-bus fault study

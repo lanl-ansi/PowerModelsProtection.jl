@@ -38,15 +38,19 @@ mpc.gencost = [
 ];
 
 %%----- Fault Study Data ----%%
-%column_names% bus gf
+%% the fault impedence in pu TODO make the types
+%column_names% bus gf type
 mpc.fault = {
-	1	10
+	1	.1	'3p'
 };
 
-%column_names%  rg xg
-mpc.gen_fault = {
-	0.0	0.1
+%% the gen subtransient impedance
+%column_names%  bus rs xs
+mpc.gensub = {
+	4	0.0	0.1
 };
 
+%% solve power flow 
+mpc.pf = 'false';
 
 
