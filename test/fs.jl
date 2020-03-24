@@ -15,7 +15,7 @@
         end        
 
         data["fault"] = Dict{String, Any}()
-        data["fault"]["1"] = Dict("bus" => "3", "gf" => 10000)
+        data["fault"]["1"] = Dict("bus" => 3, "gf" => 10000)
         study_results = FS.run_fault_study(data, ipopt_solver)
         result = study_results["1"]
         solution = result["solution"]
