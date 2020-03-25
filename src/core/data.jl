@@ -78,14 +78,13 @@ function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, re
 end
 
 function add_mc_fault_data!(data::Dict{String,Any})
-    # data["fault"] = Dict{String, Any}()
-    # data["fault"]["1"] = Dict("type" => "lg", "bus" => "701", "phases" => [2], "gr" => .00001)
-    
+    get_active_phases!(data)
     if !haskey(data, "fault")
         add_mc_fault_study!(data)
     else
         add_mc_fault!(data)
     end
+    delete!(data, "bus_phases")
 end
 
 function add_mc_fault!(data::Dict{String,Any})
