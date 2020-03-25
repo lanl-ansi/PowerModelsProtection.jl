@@ -7,7 +7,8 @@ function run_fault_study(data::Dict{String,Any}, solver; kwargs...)
         data["active_fault"] = fault
         result = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
         # println(result)
-        solution["$i"] = result
+        busi = fault["bus"]
+        solution["$busi"] = result
     end
     return solution
 end
