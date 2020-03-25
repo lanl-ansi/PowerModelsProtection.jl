@@ -113,13 +113,14 @@ end
 function add_mc_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     get_fault_buses!(data)
-    println(data["fault_buses"])
     for (i, bus) in data["bus"]
         if i in data["fault_buses"]
             data["fault"][i] = Dict{String, Any}()
-            add_lg_fault!(data, bus, i)
-            add_ll_fault!(data, bus, i)
-            add_3p_fault!(data, bus, i)
+            add_lg_fault_study!(data, bus, i)
+            add_ll_fault_study!(data, bus, i)
+            add_llg_fault_study!(data, bus, i)
+            add_3p_fault_study!(data, bus, i)
+            add_3pg_fault_study!(data, bus, i)
         end
     end
     delete!(data, "fault_buses")
@@ -148,7 +149,7 @@ function add_ll_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String,
     Gf[j,k] = -gf
     Gf[k,k] = gf
     Gf[k,j] = -gf
-    data["fault"][i]["ll"][index] = Dict("bus_i" => bus["bus_i"], "type" => "ll", "Gf"=> Gf, "phases" => [j, k])
+    data["fault"][i]["ll"][index] = Dict("bus_i" => bus["bus_i"], "type" => "ll", "Gf"=> Gf, "phases" => [j, k], "name" => bus["name"])
 end
 
 function add_3p_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, phases, phase_resistance)
@@ -166,7 +167,7 @@ function add_3p_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String,
                 end
             end
         end
-        data["fault"][i]["3p"][1] = Dict("bus_i" => bus["bus_i"], "type" => "3p", "Gf"=> Gf, "phases" => [1,2,3])
+        data["fault"][i]["3p"][1] = Dict("bus_i" => bus["bus_i"], "type" => "3p", "Gf"=> Gf, "phases" => [1,2,3], "name" => bus["name"])
     end
 end
 
@@ -177,17 +178,14 @@ function add_llg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String
     gpp = gp * gp/gtot
     gpg = gp * gf/gtot
     data["fault"][i]["llg"] = Dict{Int, Any}()
-    ncnd = length(data["bus_phases"][bus["bus_i"]])
-    if ncnd == 3
-        j = phases[1]
-        k = phases[2]
-        Gf = zeros(3, 3)
-        Gf[j,j] = gpp + gpg
-        Gf[j,k] = -gpp
-        Gf[k,k] = gpp + gpg
-        Gf[k,j] = -gpp
-        data["fault"][i]["llg"][1] = Dict("bus_i" => bus["bus_i"], "type" => "llg", "Gf"=> Gf, "phases" => [j, k])
-    end
+    j = phases[1]
+    k = phases[2]
+    Gf = zeros(3, 3)
+    Gf[j,j] = gpp + gpg
+    Gf[j,k] = -gpp
+    Gf[k,k] = gpp + gpg
+    Gf[k,j] = -gpp
+    data["fault"][i]["llg"][1] = Dict("bus_i" => bus["bus_i"], "type" => "llg", "Gf"=> Gf, "phases" => [j, k], "name" => bus["name"])
 end
 
 
@@ -210,11 +208,11 @@ function add_3pg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String
                 end
             end
         end
-        data["fault"][i]["3pg"][1] = Dict("bus_i" => bus["bus_i"], "type" => "3pg", "Gf"=> Gf, "phases" => [1,2,3])
+        data["fault"][i]["3pg"][1] = Dict("bus_i" => bus["bus_i"], "type" => "3pg", "Gf"=> Gf, "phases" => [1,2,3], "name" => bus["name"])
     end
 end
 
-function add_lg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; resistance=0.0001)
+function add_lg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; resistance=0.0001)
     gf = max(1/resistance, 1e-6)
     ncnd = 3
     data["fault"][i]["lg"] = Dict{Int, Any}()
@@ -222,12 +220,12 @@ function add_lg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String;
     for c in data["bus_phases"][bus["bus_i"]]
         Gf = zeros(ncnd, ncnd)
         Gf[c,c] = gf
-        data["fault"][i]["lg"][index] = Dict("bus_i" => bus["bus_i"], "type" => "lg", "Gf"=> Gf, "phases" => [c])
+        data["fault"][i]["lg"][index] = Dict("bus_i" => bus["bus_i"], "type" => "lg", "Gf"=> Gf, "phases" => [c], "name" => bus["name"])
         index += 1
     end
 end
 
-function add_ll_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; phase_resistance=0.0001)
+function add_ll_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; phase_resistance=0.0001)
     gf = max(1/phase_resistance, 1e-6)
     data["fault"][i]["ll"] = Dict{Int, Any}()
     ncnd = length(data["bus_phases"][bus["bus_i"]])
@@ -239,13 +237,34 @@ function add_ll_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String;
             Gf[j,k] = -gf
             Gf[k,k] = gf
             Gf[k,j] = -gf
-            data["fault"][i]["ll"][index] = Dict("bus_i" => bus["bus_i"], "type" => "ll", "Gf"=> Gf, "phases" => [j, k])
+            data["fault"][i]["ll"][index] = Dict("bus_i" => bus["bus_i"], "type" => "ll", "Gf"=> Gf, "phases" => [j, k], "name" => bus["name"])
             index += 1
         end
     end
 end
 
-function add_3p_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; phase_resistance=0.0001)
+function add_llg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001, phase_resistance=0.0001)
+    gp = max(1/phase_resistance, 1e-6)
+    gf = max(1/resistance, 1e-6)
+    gtot = 2 * gp + gf
+    gpp = gp * gp/gtot
+    gpg = gp * gf/gtot
+    data["fault"][i]["llg"] = Dict{Int, Any}()
+    ncnd = length(data["bus_phases"][bus["bus_i"]])
+    index = 1
+    for j = 1:ncnd 
+        for k = j+1:ncnd
+            Gf = zeros(3, 3)
+            Gf[j,j] = gpp + gpg
+            Gf[j,k] = -gpp
+            Gf[k,k] = gpp + gpg
+            Gf[k,j] = -gpp
+            data["fault"][i]["llg"][1] = Dict("bus_i" => bus["bus_i"], "type" => "llg", "Gf"=> Gf, "phases" => [j, k], "name" => bus["name"])
+        end
+    end
+end
+
+function add_3p_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; phase_resistance=0.0001)
     gf = max(1/phase_resistance, 1e-6)
     data["fault"][i]["3p"] = Dict{Int, Any}()
     ncnd = length(data["bus_phases"][bus["bus_i"]])
@@ -260,7 +279,30 @@ function add_3p_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String;
                 end
             end
         end
-        data["fault"][i]["3p"][1] = Dict("bus_i" => bus["bus_i"], "type" => "3p", "Gf"=> Gf, "phases" => [1,2,3])
+        data["fault"][i]["3p"][1] = Dict("bus_i" => bus["bus_i"], "type" => "3p", "Gf"=> Gf, "phases" => [1,2,3], "name" => bus["name"])
+    end
+end
+
+function add_3pg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001, phase_resistance=0.0001)
+    gp = max(1/phase_resistance, 1e-6)
+    gf = max(1/resistance, 1e-6)
+    gtot = 3 * gp + gf
+    gpp = gp * gp/gtot
+    gpg = gp * gf/gtot
+    data["fault"][i]["3pg"] = Dict{Int, Any}()
+    ncnd = length(data["bus_phases"][bus["bus_i"]])
+    if ncnd == 3
+        Gf = zeros(3, 3)
+        for j = 1:3
+            for k = 1:3
+                if j != k
+                    Gf[j,k] = -gpp
+                else
+                    Gf[j,k] = 2*gpp + gpg
+                end
+            end
+        end
+        data["fault"][i]["3pg"][1] = Dict("bus_i" => bus["bus_i"], "type" => "3pg", "Gf"=> Gf, "phases" => [1,2,3], "name" => bus["name"])
     end
 end
 
