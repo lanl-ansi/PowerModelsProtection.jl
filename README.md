@@ -20,7 +20,7 @@ In roughly decreasing order of priority
 - [ ] Handle delta-connected generators, this should just be multiplying Xg'' by 3
 - [ ] Read Rg and Xg from PTI RAW33
 - [x] How to disable the reference bus constraint for islanded microgrids? - Just set reference buses to PQ or PV
-- [ ] Convenience function to enumerate faults over all nodes
+- [x] Convenience function to enumerate faults over all nodes
 - [ ] Add unit tests for B7Fault
 - [ ] Add unit tests for Kersting IEEE 13-bus fault study
 - [ ] Add LICENSE.md - check with Russell first on this
@@ -29,6 +29,7 @@ In roughly decreasing order of priority
 - [ ] change "bus" field in fault objects to "fault_bus" to follow PowerModels conventions
 - [ ] Parse OpenDSS fault objects in PowerModelsDistribution/io/parse_pmd.jl
 - [ ] Inverter interfaced generation/storage
+- [ ] Calculate operation times for supported protection devices in solution_builder 
 - [ ] Induction motor contribution during faults
 - [ ] Transformer winding faults
 - [x] Sequential powerflow -> fault study formulation?
