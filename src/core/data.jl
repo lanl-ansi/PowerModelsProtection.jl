@@ -10,13 +10,13 @@ function check_pf!(data::Dict{String,Any}, solver)
 end
 
 function add_pf_data!(data::Dict{String,Any}, solver)
-    if haskey(data, "multiconductor") && data["multiconductor"] == true
-        if haskey(data, "method") && data["method"] == "PMs"
+    if haskey(data, "multiconductor") && (data["multiconductor"] == true)
+        if haskey(data, "method") && (data["method"] == "PMs")
             result = _PMs.run_mc_pf(data, _PMs.ACPPowerModel, solver)
             add_pf_data!(data, result)
         end
     else
-        if haskey(data, "method") && data["method"] == "PMs"
+        if haskey(data, "method") && (data["method"] == "PMs")
             result = _PMD.run_pf(data, _PMs.ACPPowerModel, solver)
             add_pf_data!(data, result)
         end
@@ -35,13 +35,11 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
 end
 
 function add_fault_data!(data::Dict{String,Any})
-    get_active_phases!(data)
-    if !haskey(data, "fault")
-        add_fault_study!(data)
-    else
+    if haskey(data, "fault")
         add_fault!(data)
+    else
+        add_fault_study!(data)
     end
-    delete!(data, "bus_phases")
 end
 
 function add_fault!(data::Dict{String,Any})
@@ -49,9 +47,8 @@ function add_fault!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     for (k, fault) in hold
         for (i, bus) in data["bus"]
-            if bus["name"] == fault["bus"]
-                !haskey(data["fault"], i) ? data["fault"][i] = Dict{String, Any}() : nothing
-                add_fault!(data, bus, i, fault["gr"])
+            if bus["index"] == fault["bus"]
+                add_fault!(data, bus, i, fault["r"])
             end
         end
     end
@@ -74,15 +71,17 @@ end
 
 function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001)
     gf = max(1/resistance, 1e-6)
-    data["fault"][i]["lg"][c] = Dict("bus_i" => bus["bus_i"], "gf"=> gf)
+    haskey(data["fault"], i) || (data["fault"][i] = Dict{Int, Any}())
+    index = length(keys(data["fault"][i])) + 1
+    data["fault"][i][index] = Dict("bus_i" => bus["bus_i"], "gf"=> gf)
 end
 
 function add_mc_fault_data!(data::Dict{String,Any})
     get_active_phases!(data)
-    if !haskey(data, "fault")
-        add_mc_fault_study!(data)
-    else
+    if haskey(data, "fault")
         add_mc_fault!(data)
+    else
+        add_mc_fault_study!(data)
     end
     delete!(data, "bus_phases")
 end
@@ -93,7 +92,7 @@ function add_mc_fault!(data::Dict{String,Any})
     for (k, fault) in hold
         for (i, bus) in data["bus"]
             if bus["name"] == fault["bus"]
-                !haskey(data["fault"], i) ? data["fault"][i] = Dict{String, Any}() : nothing
+                haskey(data["fault"], i) || (data["fault"][i] = Dict{String, Any}())
                 if fault["type"] == "lg"
                     add_lg_fault!(data, bus, i, fault["phases"], fault["gr"])
                 elseif fault["type"] == "ll"
@@ -129,8 +128,8 @@ end
 function add_lg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, phases, resistance)
     gf = max(1/resistance, 1e-6)
     ncnd = 3
-    !haskey(data["fault"][i], "lg") ? data["fault"][i]["lg"] = Dict{Int, Any}() : nothing
-    length(keys(data["fault"][i]["lg"])) > 0 ? index = length(keys(data["fault"][i]["lg"])) + 1 : index = 1
+    haskey(data["fault"][i], "lg") || (data["fault"][i]["lg"] = Dict{Int, Any}())
+    index = length(keys(data["fault"][i]["lg"])) + 1
     c = phases[1]
     Gf = zeros(ncnd, ncnd)
     Gf[c,c] = gf
@@ -140,8 +139,8 @@ end
 function add_ll_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, phases, phase_resistance)
     gf = max(1/phase_resistance, 1e-6)
     ncnd = 3
-    !haskey(data["fault"][i], "ll") ? data["fault"][i]["ll"] = Dict{Int, Any}() : nothing
-    length(keys(data["fault"][i]["ll"])) > 0 ? index = length(keys(data["fault"][i]["ll"])) + 1 : index = 1
+    haskey(data["fault"][i], "ll") || (data["fault"][i]["ll"] = Dict{Int, Any}())
+    index = length(keys(data["fault"][i]["ll"])) + 1
     j = phases[1]
     k = phases[2]
     Gf = zeros(3, 3)
@@ -309,16 +308,16 @@ end
 function get_active_phases!(data::Dict{String,Any})
     bus = Dict{Int64, Any}()
     for (i, branch) in data["branch"]
-        !haskey(bus, branch["t_bus"]) ? bus[branch["t_bus"]] = [] : nothing
-        !haskey(bus, branch["f_bus"]) ? bus[branch["f_bus"]] = [] : nothing
-        length(branch["active_phases"]) > length(bus[branch["t_bus"]]) ? bus[branch["t_bus"]] = branch["active_phases"] : nothing 
-        length(branch["active_phases"]) > length(bus[branch["f_bus"]]) ? bus[branch["f_bus"]] = branch["active_phases"] : nothing 
+        haskey(bus, branch["t_bus"]) || (bus[branch["t_bus"]] = [])
+        haskey(bus, branch["f_bus"]) || (bus[branch["f_bus"]] = [])
+        length(branch["active_phases"]) > length(bus[branch["t_bus"]]) && (bus[branch["t_bus"]] = branch["active_phases"])
+        length(branch["active_phases"]) > length(bus[branch["f_bus"]]) && (bus[branch["f_bus"]] = branch["active_phases"])
     end
     for (i, transformer) in data["transformer"]
-        !haskey(bus, transformer["t_bus"]) ? bus[transformer["t_bus"]] = [] : nothing
-        !haskey(bus, transformer["f_bus"]) ? bus[transformer["f_bus"]] = [] : nothing
-        length(transformer["active_phases"]) > length(bus[transformer["t_bus"]]) ? bus[transformer["t_bus"]] = transformer["active_phases"] : nothing 
-        length(transformer["active_phases"]) > length(bus[transformer["f_bus"]]) ? bus[transformer["f_bus"]] = transformer["active_phases"] : nothing 
+        haskey(bus, transformer["t_bus"]) || (bus[transformer["t_bus"]] = [])
+        haskey(bus, transformer["f_bus"]) || (bus[transformer["f_bus"]] = [])
+        length(transformer["active_phases"]) > length(bus[transformer["t_bus"]]) && (bus[transformer["t_bus"]] = transformer["active_phases"])
+        length(transformer["active_phases"]) > length(bus[transformer["f_bus"]]) && (bus[transformer["f_bus"]] = transformer["active_phases"])
     end
     data["bus_phases"] = bus
 end

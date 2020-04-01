@@ -11,7 +11,8 @@ function constraint_gen_voltage_drop(pm::_PMs.AbstractIVRModel, n::Int, i, bus_i
 end
 
 function constraint_fault_current(pm::_PMs.AbstractPowerModel; nw::Int=pm.cnw)
-    bus = _PMs.ref(pm, nw, :active_fault, "bus")
+    println(_PMs.ref(pm, nw, :active_fault))
+    bus = _PMs.ref(pm, nw, :active_fault, "bus_i")
     g = _PMs.ref(pm, nw, :active_fault, "gf")
     vr = _PMs.var(pm, nw, :vr, bus)
     vi = _PMs.var(pm, nw, :vi, bus)

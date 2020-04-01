@@ -2,13 +2,14 @@
 ""
 function run_fault_study(data::Dict{String,Any}, solver; kwargs...)
     check_pf!(data, solver)
+    add_fault_data!(data)
     solution = Dict{String, Any}()
-    for (i,fault) in data["fault"]
-        data["active_fault"] = fault
-        result = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
-        # println(result)
-        busi = fault["bus"]
-        solution["$busi"] = result
+    for (i,bus) in data["fault"] 
+        solution[i] = Dict{Int64, Any}()
+        for (f,fault) in bus
+            data["active_fault"] = fault
+            solution[i][f] = _PMs.run_model(data, _PMs.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
+        end
     end
     return solution
 end
