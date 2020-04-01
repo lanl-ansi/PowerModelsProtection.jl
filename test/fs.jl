@@ -17,7 +17,7 @@
         data["fault"] = Dict{String, Any}()
         data["fault"]["1"] = Dict("bus" => 3, "r" => 0.0001)
         study_results = FS.run_fault_study(data, ipopt_solver)
-        result = study_results["1"]
+        result = study_results["3"][1]
         solution = result["solution"]
 
         @test result["termination_status"] == PMs.LOCALLY_SOLVED
