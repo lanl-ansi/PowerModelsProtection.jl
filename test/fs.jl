@@ -22,7 +22,7 @@
 
         @test result["termination_status"] == PMs.LOCALLY_SOLVED
 
-        bus = result["solution"]["bus"]["3"]
+        bus = result["solution"]["bus"]["1"]
         @test isapprox(abs(bus["vr"] + 1im*bus["vi"]), 0.201545; atol = 1e-5)
         
         bus = result["solution"]["bus"]["2"]
