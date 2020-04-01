@@ -15,14 +15,14 @@
         end        
 
         data["fault"] = Dict{String, Any}()
-        data["fault"]["1"] = Dict("bus" => 3, "gf" => 10000)
+        data["fault"]["1"] = Dict("bus" => 3, "r" => 0.0001)
         study_results = FS.run_fault_study(data, ipopt_solver)
         result = study_results["1"]
         solution = result["solution"]
 
         @test result["termination_status"] == PMs.LOCALLY_SOLVED
 
-        bus = result["solution"]["bus"]["1"]
+        bus = result["solution"]["bus"]["3"]
         @test isapprox(abs(bus["vr"] + 1im*bus["vi"]), 0.201545; atol = 1e-5)
         
         bus = result["solution"]["bus"]["2"]

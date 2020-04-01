@@ -17,22 +17,24 @@ In roughly decreasing order of priority
 - [x] Finish mc implementation
 - [x] Add LLG faults to add_fault! function
 - [x] Set reference bus as constant voltage. Only want to do this for grid connected cases. 
-- [ ] Handle delta-connected generators, this should just be multiplying Xg'' by 3
-- [ ] Read Rg and Xg from PTI RAW33
+- [x] Read Rg and Xg from PTI RAW33
 - [x] How to disable the reference bus constraint for islanded microgrids? - Just set reference buses to PQ or PV
-- [ ] Convenience function to enumerate faults over all nodes
-- [ ] Add unit tests for B7Fault
-- [ ] Add unit tests for Kersting IEEE 13-bus fault study
+- [x] Convenience function to enumerate faults over all nodes
+- [x] Add unit tests for B7Fault
+- [x] Push to lanl-ansi/PowerModelsFaultStudy.jl
+- [x] Sequential powerflow -> fault study formulation?
+- [x] Convenience function to add faults, particularly for unbalanced faults?
+- [ ] Finish adding unit tests for modified IEEE 34-bus 
 - [ ] Add LICENSE.md - check with Russell first on this
-- [ ] Push to lanl-ansi/PowerModelsFaultStudy.jl
+- [ ] Use strings instead of ints for indexing faults in solution. JSON only supports string keys for dict objects
+- [ ] Inverter interfaced generation/storage
+- [ ] Handle delta-connected generators, this should just be multiplying Xg'' by 3
 - [ ] Add "status" field to fault objects
 - [ ] change "bus" field in fault objects to "fault_bus" to follow PowerModels conventions
 - [ ] Parse OpenDSS fault objects in PowerModelsDistribution/io/parse_pmd.jl
-- [ ] Inverter interfaced generation/storage
 - [ ] Induction motor contribution during faults
 - [ ] Transformer winding faults
-- [x] Sequential powerflow -> fault study formulation?
-- [x] Convenience function to add faults, particularly for unbalanced faults?
+- [ ] Add unit tests for Kersting IEEE 13-bus fault study
 
 
 ## LLG Fault Model
