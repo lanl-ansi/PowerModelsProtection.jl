@@ -1,9 +1,10 @@
 @testset "unbalance fault study" begin
-    # @testset "3-bus case" begin
+    @testset "3-bus case" begin
     #     # result = FS.run_mc_fault_study("../test/data/dist/13Bus/IEEE13NodeCkt.dss", ipopt_solver)
-    #     # result = FS.run_mc_fault_study("../test/data/dist/ut_trans_2w_yy.dss", ipopt_solver)
+        result = FS.run_mc_fault_study("../test/data/dist/ut_trans_2w_yy.dss", ipopt_solver)
     #     result = FS.run_mc_fault_study("../test/data/dist/34Bus/Run_IEEE34Mod1.dss", ipopt_solver)
-    # end 
+    end 
+
     # test compared to results from opendss 
     @testset "34-bus fault study from opendss" begin
         @testset "bus 808 all fault test" begin

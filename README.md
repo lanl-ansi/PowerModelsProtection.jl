@@ -32,6 +32,7 @@ In roughly decreasing order of priority
 - [ ] Add "status" field to fault objects
 - [ ] change "bus" field in fault objects to "fault_bus" to follow PowerModels conventions
 - [ ] Parse OpenDSS fault objects in PowerModelsDistribution/io/parse_pmd.jl
+- [ ] Calculate operation times for supported protection devices in solution_builder 
 - [ ] Induction motor contribution during faults
 - [ ] Transformer winding faults
 - [ ] Add unit tests for Kersting IEEE 13-bus fault study
