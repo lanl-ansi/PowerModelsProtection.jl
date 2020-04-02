@@ -1,4 +1,5 @@
-
+using Pkg
+Pkg.activate("../julia_venv")
 include("../src/PowerModelsProtection.jl")
 const FS = PowerModelsProtection
 

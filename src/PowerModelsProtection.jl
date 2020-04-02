@@ -1,5 +1,7 @@
 module PowerModelsProtection
-    
+    using Pkg
+    Pkg.activate("../julia_venv")
+
     import JuMP
     import Memento
 

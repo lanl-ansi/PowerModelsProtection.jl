@@ -52,14 +52,12 @@ function add_fault!(data::Dict{String,Any})
             end
         end
     end
-    println(data["fault"])
 end
 
 function add_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     get_active_phases!(data)
     get_fault_buses!(data)
-    println(data["fault_buses"])
     for (i, bus) in data["bus"]
         if i in data["fault_buses"]
             data["fault"][i] = Dict{String, Any}()
