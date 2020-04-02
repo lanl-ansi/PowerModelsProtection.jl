@@ -1,7 +1,4 @@
 module PowerModelsProtection
-    using Pkg
-    Pkg.activate("../julia_venv")
-
     import JuMP
     import Memento
 
@@ -10,15 +7,18 @@ module PowerModelsProtection
     import PowerModelsDistribution
     import MathOptInterface
 
-    const _PMs = PowerModels
+    const _IM = InfrastructureModels
+    const _PM = PowerModels
     const _PMD = PowerModelsDistribution
+
+    import InfrastructureModels: ids, ref, var, con, sol, nw_ids, nws, ismultinetwork
+
     const MOI = MathOptInterface
 
     function __init__()
         global _LOGGER = Memento.getlogger(PowerModels)
     end
 
-    # include("core/ref.jl")
     include("core/variable.jl")
     include("core/constraint_template.jl")
     include("core/constraint.jl")
@@ -35,4 +35,4 @@ module PowerModelsProtection
     #include("prob/pf.jl")
 
     include("core/export.jl")  # must be last include to properly export functions
-end 
+end

@@ -1,5 +1,6 @@
+""
 function parse_matpower(file::String)
-    pm_data = _PMs.parse_file(file)
+    pm_data = _PM.parse_file(file)
     pm_data["method"] = "PMs"
     if haskey(pm_data, "gensub")
         for (i,gen) in pm_data["gensub"]
@@ -16,5 +17,3 @@ function parse_matpower(file::String)
     end
     return pm_data
 end
-
-
