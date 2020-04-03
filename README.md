@@ -51,6 +51,7 @@ In roughly decreasing order of priority
 * [ ] Induction motor contribution during faults
 * [ ] Transformer winding faults
 * [ ] Add unit tests for Kersting IEEE 13-bus fault study
+* [ ] Use Distributed package to speed up the fault studies
 
 ## LLG Fault Model
 
