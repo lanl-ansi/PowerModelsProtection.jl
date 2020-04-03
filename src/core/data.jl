@@ -1,7 +1,8 @@
 
+""
 function check_pf!(data::Dict{String,Any}, solver)
     if haskey(data, "pf")
-        if data["pf"] == "true" 
+        if data["pf"] == "true"
             add_pf_data!(data, solver)
         end
     else
@@ -9,20 +10,24 @@ function check_pf!(data::Dict{String,Any}, solver)
     end
 end
 
+
+""
 function add_pf_data!(data::Dict{String,Any}, solver)
     if haskey(data, "multiconductor") && (data["multiconductor"] == true)
         if haskey(data, "method") && (data["method"] == "PMs")
-            result = _PMs.run_mc_pf(data, _PMs.ACPPowerModel, solver)
+            result = _PM.run_mc_pf(data, _PM.ACPPowerModel, solver)
             add_pf_data!(data, result)
         end
     else
         if haskey(data, "method") && (data["method"] == "PMs")
-            result = _PMD.run_pf(data, _PMs.ACPPowerModel, solver)
+            result = _PMD.run_pf(data, _PM.ACPPowerModel, solver)
             add_pf_data!(data, result)
         end
     end
 end
 
+
+""
 function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     if result["primal_status"] == MOI.FEASIBLE_POINT
         for (i, bus) in result["solution"]["bus"]
@@ -34,6 +39,8 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     end
 end
 
+
+""
 function add_fault_data!(data::Dict{String,Any})
     if haskey(data, "fault")
         add_fault!(data)
@@ -42,6 +49,8 @@ function add_fault_data!(data::Dict{String,Any})
     end
 end
 
+
+""
 function add_fault!(data::Dict{String,Any})
     hold = deepcopy(data["fault"])
     data["fault"] = Dict{String, Any}()
@@ -54,6 +63,8 @@ function add_fault!(data::Dict{String,Any})
     end
 end
 
+
+""
 function add_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     get_active_phases!(data)
@@ -67,6 +78,8 @@ function add_fault_study!(data::Dict{String,Any})
     delete!(data, "fault_buses")
 end
 
+
+""
 function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001)
     gf = max(1/resistance, 1e-6)
     haskey(data["fault"], i) || (data["fault"][i] = Dict{Int, Any}())
@@ -74,6 +87,8 @@ function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, re
     data["fault"][i][index] = Dict("bus_i" => bus["bus_i"], "gf"=> gf)
 end
 
+
+""
 function add_mc_fault_data!(data::Dict{String,Any})
     get_active_phases!(data)
     if haskey(data, "fault")
@@ -84,6 +99,8 @@ function add_mc_fault_data!(data::Dict{String,Any})
     delete!(data, "bus_phases")
 end
 
+
+""
 function add_mc_fault!(data::Dict{String,Any})
     hold = deepcopy(data["fault"])
     data["fault"] = Dict{String, Any}()
@@ -107,6 +124,8 @@ function add_mc_fault!(data::Dict{String,Any})
     end
 end
 
+
+""
 function add_mc_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     get_fault_buses!(data)
@@ -123,6 +142,8 @@ function add_mc_fault_study!(data::Dict{String,Any})
     delete!(data, "fault_buses")
 end
 
+
+""
 function add_lg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, phases, resistance)
     gf = max(1/resistance, 1e-6)
     ncnd = 3
@@ -134,6 +155,8 @@ function add_lg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String,
     data["fault"][i]["lg"][index] = Dict("bus_i" => bus["bus_i"], "type" => "lg", "Gf"=> Gf, "phases" => [c], "name" => bus["name"])
 end
 
+
+""
 function add_ll_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, phases, phase_resistance)
     gf = max(1/phase_resistance, 1e-6)
     ncnd = 3
@@ -149,6 +172,8 @@ function add_ll_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String,
     data["fault"][i]["ll"][index] = Dict("bus_i" => bus["bus_i"], "type" => "ll", "Gf"=> Gf, "phases" => [j, k], "name" => bus["name"])
 end
 
+
+""
 function add_3p_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, phases, phase_resistance)
     gf = max(1/phase_resistance, 1e-6)
     data["fault"][i]["3p"] = Dict{Int, Any}()
@@ -168,6 +193,8 @@ function add_3p_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String,
     end
 end
 
+
+""
 function add_llg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, phases, resistance=0.0001, phase_resistance=0.0001)
     gp = max(1/phase_resistance, 1e-6)
     gf = max(1/resistance, 1e-6)
@@ -186,6 +213,7 @@ function add_llg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String
 end
 
 
+""
 function add_3pg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, phases, resistance=0.0001, phase_resistance=0.0001)
     gp = max(1/phase_resistance, 1e-6)
     gf = max(1/resistance, 1e-6)
@@ -209,6 +237,8 @@ function add_3pg_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String
     end
 end
 
+
+""
 function add_lg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; resistance=0.0001)
     gf = max(1/resistance, 1e-6)
     ncnd = 3
@@ -222,12 +252,14 @@ function add_lg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::S
     end
 end
 
+
+""
 function add_ll_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; phase_resistance=0.0001)
     gf = max(1/phase_resistance, 1e-6)
     data["fault"][i]["ll"] = Dict{Int, Any}()
     ncnd = length(data["bus_phases"][bus["bus_i"]])
     index = 1
-    for j = 1:ncnd 
+    for j = 1:ncnd
         for k = j+1:ncnd
             Gf = zeros(3, 3)
             Gf[j,j] = gf
@@ -240,6 +272,8 @@ function add_ll_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::S
     end
 end
 
+
+""
 function add_llg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001, phase_resistance=0.0001)
     gp = max(1/phase_resistance, 1e-6)
     gf = max(1/resistance, 1e-6)
@@ -249,7 +283,7 @@ function add_llg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::
     data["fault"][i]["llg"] = Dict{Int, Any}()
     ncnd = length(data["bus_phases"][bus["bus_i"]])
     index = 1
-    for j = 1:ncnd 
+    for j = 1:ncnd
         for k = j+1:ncnd
             Gf = zeros(3, 3)
             Gf[j,j] = gpp + gpg
@@ -261,6 +295,8 @@ function add_llg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::
     end
 end
 
+
+""
 function add_3p_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String; phase_resistance=0.0001)
     gf = max(1/phase_resistance, 1e-6)
     data["fault"][i]["3p"] = Dict{Int, Any}()
@@ -280,6 +316,8 @@ function add_3p_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::S
     end
 end
 
+
+""
 function add_3pg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001, phase_resistance=0.0001)
     gp = max(1/phase_resistance, 1e-6)
     gf = max(1/resistance, 1e-6)
@@ -303,6 +341,8 @@ function add_3pg_fault_study!(data::Dict{String,Any}, bus::Dict{String,Any}, i::
     end
 end
 
+
+""
 function get_active_phases!(data::Dict{String,Any})
     bus = Dict{Int64, Any}()
     for (i, branch) in data["branch"]
@@ -320,6 +360,8 @@ function get_active_phases!(data::Dict{String,Any})
     data["bus_phases"] = bus
 end
 
+
+""
 function get_fault_buses!(data::Dict{String,Any})
     hold = []
     for (i, bus) in data["bus"]
@@ -329,4 +371,3 @@ function get_fault_buses!(data::Dict{String,Any})
     end
     data["fault_buses"] = hold
 end
-

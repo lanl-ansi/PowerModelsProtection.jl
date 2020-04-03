@@ -1,5 +1,4 @@
-
-
+""
 function parse_file(file::String)
     filetype = split(lowercase(file), '.')[end]
     if filetype == "m"

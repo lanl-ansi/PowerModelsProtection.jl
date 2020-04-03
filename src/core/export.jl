@@ -18,3 +18,26 @@ for sym in names(@__MODULE__, all=true)
     end
     @eval export $sym
 end
+
+# the follow items are also exported for user-friendlyness when calling
+# `using PowerModelsProtection`
+
+# so that users do not need to import JuMP to use a solver with PowerModelsProtection
+import JuMP: with_optimizer
+export with_optimizer
+
+import MathOptInterface: TerminationStatusCode
+export TerminationStatusCode
+
+import MathOptInterface: ResultStatusCode
+export ResultStatusCode
+
+for status_code_enum in [TerminationStatusCode, ResultStatusCode]
+    for status_code in instances(status_code_enum)
+        @eval import MathOptInterface: $(Symbol(status_code))
+        @eval export $(Symbol(status_code))
+    end
+end
+
+# InfrastructureModels Exports
+export ids, ref, var, con, sol, nw_ids, nws, ismultinetwork
