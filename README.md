@@ -39,8 +39,8 @@ In roughly decreasing order of priority
 * [x] Push to lanl-ansi/PowerModelsFaultStudy.jl
 * [x] Sequential powerflow -> fault study formulation?
 * [x] Convenience function to add faults, particularly for unbalanced faults?
-* [ ] Finish adding unit tests for modified IEEE 34-bus
-* [ ] Add LICENSE.md - check with Russell first on this
+* [x] Finish adding unit tests for modified IEEE 34-bus
+* [x] Add LICENSE.md - check with Russell first on this
 * [ ] Use strings instead of ints for indexing faults in solution. JSON only supports string keys for dict objects
 * [ ] Inverter interfaced generation/storage
 * [ ] Handle delta-connected generators, this should just be multiplying Xg'' by 3
