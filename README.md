@@ -11,6 +11,20 @@ current limits
 * Loads are neglected
 * Faults are modeled as an admittance matrix
 
+## Usage Example (Balanced Case)
+
+```julia
+using PowerModels, PowerModelsProtection, Ipopt
+net = PowerModels.parse_file("case5.raw", import_all=true)
+solver = JuMP.with_optimizer(Ipopt.Optimizer)
+
+net["fault"] = Dict()
+net["fault"]["1"] = Dict("bus"=>2, "r"=>0.0001)
+
+results = PowerModelsProtection.run_fault_study(net, solver )
+print(results)
+```
+
 ## TODO
 
 In roughly decreasing order of priority
@@ -63,19 +77,6 @@ In roughly decreasing order of priority
 ```
 
 Objective is `sum((crg[g] - crg0[c])^2 + (cig[g] - cig0[c])^2 for g in inverter_gens)`
-
-## Usage Example
-```julia
-using PowerModels, PowerModelsProtection, Ipopt
-net = PowerModels.parse_file("case5.raw", import_all=true)
-solver = JuMP.with_optimizer(Ipopt.Optimizer)
-
-net["fault"] = Dict()
-net["fault"]["1"] = Dict("bus"=>2, "r"=>0.0001)
-
-results = PowerModelsProtection.run_fault_study(net, solver )
-print(results)
-```
 
 ## License
 
