@@ -19,12 +19,28 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
     crg =  var(pm, n, :crg, i)
     cig =  var(pm, n, :cig, i)
 
-    JuMP.@constraint(pm.model, pg == vrg * crg - vig * cig)
-    JuMP.@constraint(pm.model, qg == vrg * cig + vig * crg) 
-end
+    
+    if pg > 0
+        JuMP.@constraint(pm.model, pg >= vrg * crg - vig * cig)
+        JuMP.@constraint(pm.model, 0  <= vrg * crg - vig * cig)
+    elseif pg < 0
+        JuMP.@constraint(pm.model, pg <= vrg * crg - vig * cig)
+        JuMP.@constraint(pm.model, 0  >= vrg * crg - vig * cig)
+    else
+        JuMP.@constraint(pm.model, 0 == vrg * crg - vig * cig)
+    end
 
+    if qg > 0
+        JuMP.@constraint(pm.model, qg >= vrg * cig + vig * crg)
+        JuMP.@constraint(pm.model, 0  <= vrg * cig + vig * crg)
+    elseif qg < 0
+        JuMP.@constraint(pm.model, qg <= vrg * cig + vig * crg)
+        JuMP.@constraint(pm.model, 0  >= vrg * cig + vig * crg)
+    else
+        JuMP.@constraint(pm.model, 0 == vrg * cig + vig * crg)
+    end
 
-""
+"McCormick relaxation of inverter in PQ mode"
 function constraint_pq_inverter_relaxed(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg)
     vrg = var(pm, n, :vr, bus_id)
     vig = var(pm, n, :vi, bus_id)
@@ -32,9 +48,16 @@ function constraint_pq_inverter_relaxed(pm::_PM.AbstractIVRModel, n::Int, i, bus
     crg =  var(pm, n, :crg, i)
     cig =  var(pm, n, :cig, i)
 
+    pg1 =  var(pm, n, :pg1, i)
+    pg2 =  var(pm, n, :pg2, i)
+    qg1 =  var(pm, n, :qg1, i)
+    qg2 =  var(pm, n, :qg2, i)
+
     InfrastructureModels.relaxation_product(pm.model, vrg, crg, pg1)
-    InfrastructureModels.relaxation_product(pm.model, vrg, crg, pg1)
-    JuMP.@constraint(pm.model, pg == pg1 + pg2)
+    InfrastructureModels.relaxation_product(pm.model, vig, cig, pg2)
+    InfrastructureModels.relaxation_product(pm.model, vrg, cig, qg1)
+    InfrastructureModels.relaxation_product(pm.model, vig, crg, qg2)
+    JuMP.@constraint(pm.model, pg == pg1 - pg2)
     JuMP.@constraint(pm.model, qg == qg1 + qg2)
 end
 
