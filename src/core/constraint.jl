@@ -12,6 +12,35 @@ end
 
 
 ""
+function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg)
+    vrg = var(pm, n, :vr, bus_id)
+    vig = var(pm, n, :vi, bus_id)
+
+    crg =  var(pm, n, :crg, i)
+    cig =  var(pm, n, :cig, i)
+
+    JuMP.@constraint(pm.model, pg == vrg * crg - vig * cig)
+    JuMP.@constraint(pm.model, qg == vrg * cig + vig * crg) 
+end
+
+
+""
+function constraint_pq_inverter_relaxed(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg)
+    vrg = var(pm, n, :vr, bus_id)
+    vig = var(pm, n, :vi, bus_id)
+
+    crg =  var(pm, n, :crg, i)
+    cig =  var(pm, n, :cig, i)
+
+    InfrastructureModels.relaxation_product(pm.model, vrg, crg, pg1)
+    InfrastructureModels.relaxation_product(pm.model, vrg, crg, pg1)
+    JuMP.@constraint(pm.model, pg == pg1 + pg2)
+    JuMP.@constraint(pm.model, qg == qg1 + qg2)
+end
+
+
+
+""
 function constraint_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     bus = ref(pm, nw, :active_fault, "bus_i")
     g = ref(pm, nw, :active_fault, "gf")

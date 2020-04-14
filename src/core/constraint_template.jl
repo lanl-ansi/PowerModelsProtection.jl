@@ -1,6 +1,10 @@
 ""
 function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
+        if gen["inverter"]
+            continue
+        end
+
         i = gen["index"]
         bus_id = gen["gen_bus"]
 
@@ -14,6 +18,24 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
         vgi = vm * sin(va)
 
         constraint_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi)
+    end
+end
+
+
+""
+function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+    for (k,gen) in ref(pm, nw, :gen)
+        if !gen["inverter"]
+            continue
+        end
+
+        i = gen["index"]
+        bus_id = gen["gen_bus"]
+
+        pg = gen["pg"]
+        qg= gen["qg"]
+
+        constraint_pq_inverter(pm, nw, i, bus_id, pg, qg)
     end
 end
 
