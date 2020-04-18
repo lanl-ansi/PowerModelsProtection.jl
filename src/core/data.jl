@@ -371,3 +371,26 @@ function get_fault_buses!(data::Dict{String,Any})
     end
     data["fault_buses"] = hold
 end
+
+
+# ""
+# function is_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+#     gen = ref(pm, nw, :gen, i)
+
+#     if !haskey(gen, "inverter")
+#         return false
+#     end
+
+#     if gen["inverter"] == 0
+#         return false
+#     end
+
+#     bus_id = gen["gen_bus"]
+#     bus = ref(pm, nw, :bus, bus_id)
+
+#     if bus["bus_type"] == 1
+#         return true
+#     else
+#         return false
+#     end
+# end

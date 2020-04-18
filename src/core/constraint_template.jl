@@ -1,11 +1,34 @@
 ""
+function is_pq_inverter(pm, i, nw)
+    gen = ref(pm, nw, :gen, i)
+
+    if !haskey(gen, "inverter")
+        return false
+    end
+
+    if gen["inverter"] == 0
+        return false
+    end
+
+    bus_id = gen["gen_bus"]
+    bus = ref(pm, nw, :bus, bus_id)
+
+    if bus["bus_type"] == 1
+        return true
+    else
+        return false
+    end
+end
+
+""
 function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
-        if gen["inverter"]
+        i = gen["index"]
+
+        if is_pq_inverter(pm, i, nw)
             continue
         end
 
-        i = gen["index"]
         bus_id = gen["gen_bus"]
 
         r = gen["zr"]
@@ -25,11 +48,12 @@ end
 ""
 function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
-        if !gen["inverter"]
+        i = gen["index"]
+
+        if !is_pq_inverter(pm, i, nw)
             continue
         end
 
-        i = gen["index"]
         bus_id = gen["gen_bus"]
 
         pg = gen["pg"]

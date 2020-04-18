@@ -19,29 +19,14 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
     crg =  var(pm, n, :crg, i)
     cig =  var(pm, n, :cig, i)
 
+    kg = var(pm, n, :kg, i) # generator loading
     
-    if pg > 0
-        JuMP.@constraint(pm.model, pg >= vrg * crg - vig * cig)
-        JuMP.@constraint(pm.model, 0  <= vrg * crg - vig * cig)
-    elseif pg < 0
-        JuMP.@constraint(pm.model, pg <= vrg * crg - vig * cig)
-        JuMP.@constraint(pm.model, 0  >= vrg * crg - vig * cig)
-    else
-        JuMP.@constraint(pm.model, 0 == vrg * crg - vig * cig)
-    end
-
-    if qg > 0
-        JuMP.@constraint(pm.model, qg >= vrg * cig + vig * crg)
-        JuMP.@constraint(pm.model, 0  <= vrg * cig + vig * crg)
-    elseif qg < 0
-        JuMP.@constraint(pm.model, qg <= vrg * cig + vig * crg)
-        JuMP.@constraint(pm.model, 0  >= vrg * cig + vig * crg)
-    else
-        JuMP.@constraint(pm.model, 0 == vrg * cig + vig * crg)
-    end
+    JuMP.@constraint(pm.model, kg*pg == vrg * crg - vig * cig)
+    JuMP.@constraint(pm.model, kg*qg == vrg * cig + vig * crg)
+end
 
 "McCormick relaxation of inverter in PQ mode"
-function constraint_pq_inverter_relaxed(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg)
+function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg)
     vrg = var(pm, n, :vr, bus_id)
     vig = var(pm, n, :vi, bus_id)
 
@@ -57,8 +42,8 @@ function constraint_pq_inverter_relaxed(pm::_PM.AbstractIVRModel, n::Int, i, bus
     InfrastructureModels.relaxation_product(pm.model, vig, cig, pg2)
     InfrastructureModels.relaxation_product(pm.model, vrg, cig, qg1)
     InfrastructureModels.relaxation_product(pm.model, vig, crg, qg2)
-    JuMP.@constraint(pm.model, pg == pg1 - pg2)
-    JuMP.@constraint(pm.model, qg == qg1 + qg2)
+    JuMP.@constraint(pm.model, kg*pg == pg1 - pg2)
+    JuMP.@constraint(pm.model, kg*qg == qg1 + qg2)
 end
 
 
