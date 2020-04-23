@@ -39,8 +39,8 @@ In roughly decreasing order of priority
 * [x] Push to lanl-ansi/PowerModelsFaultStudy.jl
 * [x] Sequential powerflow -> fault study formulation?
 * [x] Convenience function to add faults, particularly for unbalanced faults?
-* [ ] Finish adding unit tests for modified IEEE 34-bus
-* [ ] Add LICENSE.md - check with Russell first on this
+* [x] Finish adding unit tests for modified IEEE 34-bus
+* [x] Add LICENSE.md - check with Russell first on this
 * [ ] Use strings instead of ints for indexing faults in solution. JSON only supports string keys for dict objects
 * [ ] Inverter interfaced generation/storage
 * [ ] Handle delta-connected generators, this should just be multiplying Xg'' by 3
@@ -51,6 +51,7 @@ In roughly decreasing order of priority
 * [ ] Induction motor contribution during faults
 * [ ] Transformer winding faults
 * [ ] Add unit tests for Kersting IEEE 13-bus fault study
+* [ ] Use Distributed package to speed up the fault studies
 
 ## LLG Fault Model
 
@@ -77,6 +78,13 @@ In roughly decreasing order of priority
 ```
 
 Objective is `sum((crg[g] - crg0[c])^2 + (cig[g] - cig0[c])^2 for g in inverter_gens)`
+
+## Contributers in Alphabetical Order
+* Art Barnes
+* David Fobes
+* Jose Tabarez
+
+Thanks to Frederik Geth for his current-flow formulation on which this package is based
 
 ## License
 
