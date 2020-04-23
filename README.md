@@ -25,33 +25,8 @@ results = PowerModelsProtection.run_fault_study(net, solver )
 print(results)
 ```
 
-## TODO
+_TODO section has moved to issues_
 
-In roughly decreasing order of priority
-
-* [x] Finish mc implementation
-* [x] Add LLG faults to add_fault! function
-* [x] Set reference bus as constant voltage. Only want to do this for grid connected cases.
-* [x] Read Rg and Xg from PTI RAW33
-* [x] How to disable the reference bus constraint for islanded microgrids? - Just set reference buses to PQ or PV
-* [x] Convenience function to enumerate faults over all nodes
-* [x] Add unit tests for B7Fault
-* [x] Push to lanl-ansi/PowerModelsFaultStudy.jl
-* [x] Sequential powerflow -> fault study formulation?
-* [x] Convenience function to add faults, particularly for unbalanced faults?
-* [x] Finish adding unit tests for modified IEEE 34-bus
-* [x] Add LICENSE.md - check with Russell first on this
-* [ ] Use strings instead of ints for indexing faults in solution. JSON only supports string keys for dict objects
-* [ ] Inverter interfaced generation/storage
-* [ ] Handle delta-connected generators, this should just be multiplying Xg'' by 3
-* [ ] Add "status" field to fault objects
-* [ ] change "bus" field in fault objects to "fault_bus" to follow PowerModels conventions
-* [ ] Parse OpenDSS fault objects in PowerModelsDistribution/io/parse_pmd.jl
-* [ ] Calculate operation times for supported protection devices in solution_builder
-* [ ] Induction motor contribution during faults
-* [ ] Transformer winding faults
-* [ ] Add unit tests for Kersting IEEE 13-bus fault study
-* [ ] Use Distributed package to speed up the fault studies
 
 ## LLG Fault Model
 
