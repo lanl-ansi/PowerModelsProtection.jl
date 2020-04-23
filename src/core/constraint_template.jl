@@ -10,14 +10,11 @@ function is_pq_inverter(pm, i, nw)
         return false
     end
 
-    bus_id = gen["gen_bus"]
-    bus = ref(pm, nw, :bus, bus_id)
-
-    if bus["bus_type"] == 1
-        return true
-    else
-        return false
+    if !haskey(gen, "pq_mode")
+    	return false
     end
+
+    return gen["pq_mode"] == 1
 end
 
 ""
