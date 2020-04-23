@@ -79,6 +79,13 @@ In roughly decreasing order of priority
 
 Objective is `sum((crg[g] - crg0[c])^2 + (cig[g] - cig0[c])^2 for g in inverter_gens)`
 
+## Contributers in Alphabetical Order
+* Art Barnes
+* David Fobes
+* Jose Tabarez
+
+Thanks to Frederik Geth for his current-flow formulation on which this package is based
+
 ## License
 
 This code is provided under a BSD license as part of the Multi-Infrastructure Control and Optimization Toolkit (MICOT) project, LA-CC-13-108.
