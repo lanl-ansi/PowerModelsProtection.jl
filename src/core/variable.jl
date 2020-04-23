@@ -13,6 +13,33 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
     _PM.variable_gen_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PM.variable_gen_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     variable_gen_loading(pm, nw=nw, report=report; kwargs...)
+
+
+    # store active and reactive power expressions for use in objective + post processing
+    pg = Dict()
+    qg = Dict()
+
+    for (i,gen) in ref(pm, nw, :gen)
+        busid = gen["gen_bus"]
+        vr = var(pm, nw, :vr, busid)
+        vi = var(pm, nw, :vi, busid)
+        crg = var(pm, nw, :crg, i)
+        cig = var(pm, nw, :cig, i)
+        pg[i] = JuMP.@NLexpression(pm.model, vr*crg  + vi*cig)
+        qg[i] = JuMP.@NLexpression(pm.model, vi*crg  - vr*cig)
+    end
+
+    var(pm, nw)[:pg] = pg
+    var(pm, nw)[:qg] = qg
+    report && _PM.sol_component_value(pm, nw, :gen, :pg, ids(pm, nw, :gen), pg)
+    report && _PM.sol_component_value(pm, nw, :gen, :qg, ids(pm, nw, :gen), qg)
+
+    if bounded
+        for (i,gen) in ref(pm, nw, :gen)
+            _PM.constraint_gen_active_power_limits(pm, i, nw=nw)
+            _PM.constraint_gen_reactive_power_limits(pm, i, nw=nw)
+        end
+    end
 end
 
 

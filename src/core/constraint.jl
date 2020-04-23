@@ -12,17 +12,19 @@ end
 
 
 ""
-function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg)
-    vrg = var(pm, n, :vr, bus_id)
-    vig = var(pm, n, :vi, bus_id)
+function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg0, qg0, cmax)
+    vr = var(pm, n, :vr, bus_id)
+    vi = var(pm, n, :vi, bus_id)
 
     crg =  var(pm, n, :crg, i)
     cig =  var(pm, n, :cig, i)
 
     kg = var(pm, n, :kg, i) # generator loading
     
-    JuMP.@constraint(pm.model, kg*pg == vrg * crg - vig * cig)
-    JuMP.@constraint(pm.model, kg*qg == vrg * cig + vig * crg)
+    JuMP.@NLconstraint(pm.model, kg*pg0 == vr*crg - vi*cig)
+    JuMP.@NLconstraint(pm.model, kg*qg0 == vi*crg + vr*cig)
+    #JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
+    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
 "McCormick relaxation of inverter in PQ mode"

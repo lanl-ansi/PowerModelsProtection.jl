@@ -27,6 +27,8 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
     variable_branch_current(pm, bounded = false)
     variable_gen(pm, bounded = false)
 
+    objective_max_inverter_power(pm)
+
     constraint_gen_voltage_drop(pm)
     constraint_pq_inverter(pm)
 

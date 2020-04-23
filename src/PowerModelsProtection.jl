@@ -24,6 +24,7 @@ module PowerModelsProtection
     include("core/constraint.jl")
     include("core/data.jl")
     include("core/ref.jl")
+    include("core/objective.jl")
     include("core/solution.jl")
 
     include("io/common.jl")
