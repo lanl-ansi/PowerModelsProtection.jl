@@ -37,13 +37,46 @@ _TODO section has moved to issues_
 
 ## Inverter Fault Models
 
-### Virtual Resistance Model
+### Grid-Following Inverter
+
+#### Balanced
+
+`k*p = vr*cr - vi*ci`
+`k*q = vr*ci + vi*cr`
+
+where `k` is a decision variable ranging from 0 to 1
+
+### Unbalanced
+
+An inverter under unbalanced conditions will operate 
+at a fixed power factor _averaged across all phases_
+while injecting only positive-sequence current. 
+This sounds ugly, but the constraints don't appear
+to be too bad.
+
+Given
+`a = ar + ai = exp(j*2*pi/3) = -1/2 + j*sqrt(3/2`
+`a^2 = a2r + j*a2i = exp(j*4*pi/3) = -1/2 - j*sqrt(3/2`
+
+`car = c1r`
+`cai = c1i`
+`cbr = a2r*c1r + a2i*c1i`
+`cbi = a2r*c1i + a2i*c2r`
+`ccr = ar*c1r + ai*c1i`
+`cci = ar*c1i + ai*c1i`
+
+`k*p = var*car + vbr*cbr + vcr*ccr - vai*cai - vbi*cbi - vci*cci`
+`k*q = var*cai + vbr*cbi + vcr*cci + vai*car + vbi*cbr + vci*ccr`
+
+### Grid-Forming Inverter
+
+#### Virtual Resistance Model
 
 `vr`, `vi` set from inverter node voltage base power flow
 `rs = 0.8 pu`, gives `1.3 pu` current into a short
 `xs = 0 pu`
 
-### Current Limiting Model
+#### Current Limiting Model
 
 `vr0`, `vi0` set from inverter node voltage from base power flow
 `rs` or `xs` = small number, 0.01 - 0.1
