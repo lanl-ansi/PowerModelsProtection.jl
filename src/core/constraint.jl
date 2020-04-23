@@ -12,7 +12,7 @@ end
 
 
 ""
-function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg0, qg0, cmax)
+function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -21,9 +21,8 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg0
 
     kg = var(pm, n, :kg, i) # generator loading
     
-    JuMP.@NLconstraint(pm.model, kg*pg0 == vr*crg - vi*cig)
-    JuMP.@NLconstraint(pm.model, kg*qg0 == vi*crg + vr*cig)
-    #JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
+    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg - vi*cig)
+    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg + vr*cig)
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
@@ -137,6 +136,49 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus
     for c in _PM.conductor_ids(pm; nw=n)
         JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c]*crg[c] + x[c]*cig[c])
         JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c]*cig[c] - x[c]*crg[c])
+    end
+end
+
+
+""
+function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+    ar = -1/2
+    ai = sqrt(3)/2
+    a2r = -1/2
+    a2i = -sqrt(3)/2
+
+    vr = var(pm, n, :vr, bus_id)
+    vi = var(pm, n, :vi, bus_id)
+
+    crg =  var(pm, n, :crg, i)
+    cig =  var(pm, n, :cig, i)
+
+    c1rg =  var(pm, n, :c1rg, i)
+    c1ig =  var(pm, n, :c1ig, i)
+
+    kg = var(pm, n, :kg, i) # generator loading
+
+    cnds = _PMs.conductor_ids(pm; nw=n)
+    ncnds = length(cnds)
+
+    # Phase A
+    JuMP.@constraint(pm.model, crg[1] == c1rg)
+    JuMP.@constraint(pm.model, cri[1] == c1ig)
+
+    # Phase B
+    JuMP.@constraint(pm.model, crg[2] == a2r*c1rg - a2i*c1ig)
+    JuMP.@constraint(pm.model, cig[2] == a2r*c1ig + a2i*c1rg)
+
+    # Phase C
+    JuMP.@constraint(pm.model, crg[3] == ar*c1rg - ai*c1ig)
+    JuMP.@constraint(pm.model, cig[3] == ar*c1ig + ai*c1rg)
+
+    # Power Factor
+    JuMP.@NLconstraint(pm.model, kg*pg == sum(vr[c]*crg[c] - vi[c]*cig[c] for c in cnds)
+    JuMP.@NLconstraint(pm.model, kg*qg == sum(vi[c]*crg[c] + vr[c]*cig[c] for c in cnds)
+
+    for c in cnds
+        JuMP.@NLconstraint(pm.model, cmax^2 >= crg[c]^2 + cig[c]^2) 
     end
 end
 

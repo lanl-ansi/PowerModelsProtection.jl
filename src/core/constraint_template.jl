@@ -105,6 +105,30 @@ end
 
 
 ""
+function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+    for (k,gen) in ref(pm, nw, :gen)
+        i = gen["index"]
+
+        if !is_pq_inverter(pm, i, nw)
+            continue
+        end
+
+        bus_id = gen["gen_bus"]
+
+        pg = gen["pg"]
+        qg= gen["qg"]
+
+        smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
+        cmax = 1.1*smax/3
+        println("cmax = $cmax")
+        #cmax = 2
+
+        constraint_mc_pq_inverter(pm, nw, i, bus_id, pg, qg, cmax)
+    end
+end
+
+
+""
 function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)["bus_i"]
     bus_arcs = ref(pm, nw, :bus_arcs, i)
