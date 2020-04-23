@@ -5,7 +5,7 @@
 % - clipping cost functions using ncost
 % - linear objective function
 
-function mpc = case5
+function mpc = case5_fault
 mpc.version = '2';
 mpc.baseMVA = 100.0;
 

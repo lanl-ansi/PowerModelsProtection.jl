@@ -25,8 +25,7 @@ end
 function build_fault_study(pm::_PM.AbstractPowerModel)
     _PM.variable_voltage(pm, bounded = false)
     variable_branch_current(pm, bounded = false)
-    _PM.variable_gen(pm, bounded = false)
-    variable_generator_loading(pm, bounded = true)
+    variable_gen(pm, bounded = false)
 
     constraint_gen_voltage_drop(pm)
     constraint_pq_inverter(pm)
