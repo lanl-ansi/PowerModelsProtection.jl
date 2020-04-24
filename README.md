@@ -80,16 +80,17 @@ Constant power factor constraints:
 
 #### Current Limiting Model
 
-`vr0`, `vi0` set from inverter node voltage from base power flow
-`rs` or `xs` = small number, 0.01 - 0.1
-`crg0`, `cig0` set from inverter current injection in base power flow
+This model assumes that 
+`vm`, `va` set from inverter node voltage from base power flow
 
 ```julia
--cmax <= crg <= cmax
--cmax <= cig <= cmax
+vr[c] = kg[c]*vm[c]*cos(va[c])
+vi[c] = kg[c]*vm[c]*sin(va[c])
+-cmax <= crg[c] <= cmax for c in cnds
+-cmax <= cig[c] <= cmax for c in cnds
 ```
 
-Objective is `sum((crg[g] - crg0[c])^2 + (cig[g] - cig0[c])^2 for g in inverter_gens)`
+Objective is `sum( sum((vr[c] - vm[c]*cos(va[c]))^2 + (vi[c] - vm[c]*sin(va[c]))^2 for c in cnd) for g in inverter_gens)`
 
 ## Contributers in Alphabetical Order
 * Art Barnes
