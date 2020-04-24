@@ -92,13 +92,16 @@ vi[c] = kg[c]*vm[c]*sin(va[c])
 
 Objective is `sum( sum((vr[c] - vm[c]*cos(va[c]))^2 + (vi[c] - vm[c]*sin(va[c]))^2 for c in cnd) for g in inverter_gens)`
 
-## Contributers in Alphabetical Order
-* Art Barnes
-* David Fobes
-* Jose Tabarez
+#### Current Limiting Model with Droop
 
-Thanks to Frederik Geth for his current-flow formulation on which this package is based
+Constraints
 
-## License
+```
+Vg0 = V0 + zg*Ig0
+V = kg*Vg0 - Z*Ig
+|Ig| <= Igmax
+```
+
+Objective is `sum( (vg - vg0)^2 for g in inverter_gens)`
 
 This code is provided under a BSD license as part of the Multi-Infrastructure Control and Optimization Toolkit (MICOT) project, LA-CC-13-108.
