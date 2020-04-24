@@ -1,51 +1,19 @@
-! Annotated Master file for the IEEE 123-bus test case.
-!
-! This file is meant to be invoked from the Compile command in the "Run_IEEE123Bus.DSS"  file.
-! 
-! Note: DSS commands, property names, etc., are NOT case sensitive. Capitalize as you please.
-! You should always do a "Clear" before making a new circuit:
-
 Clear
 
-! INSTANTIATE A NEW CIRCUIT AND DEFINE A STIFF 4160V SOURCE
-! The new circuit is called "ieee123"
-! This creates a Vsource object connected to "sourcebus". This is now the active circuit element, so
-! you can simply continue to edit its property value. 
-! 
-! The ~ is just shorthad for "more" for the New or Edit commands
 
 New object=circuit.ieee123
-~ basekv=115  pu=1.00 R1=0.7673 X1=4.7852  R0=0.3474 X0=8.518 !R1=1.4777  X1=11.5996 R0=4.7288 X0=21.106
+!~ basekv=4.16 Bus1=150 pu=1.00 R1=0 X1=0.0001 R0=0 X0=0.0001
+!~ basekv=66.00 bus1=SourceBus pu=1.02 R1=0.6 X1=3.0 R0=0.3 X0=5.0 !Based on Diamond
+~ basekv=66.00 bus1=SourceBus pu=1.02 R1=4 X1=15 R0=13 X0=40 !Based on Toquerville
 
-New Transformer.Sub Buses=[Sourcebus 150] Conns=[Delta Wye] kVs=[115 4.16]  kVAs=[5000 5000] XHL=8  %R=1
+New Transformer.Sub phases=3  windings=2  buses=(SourceBus, 150)  conns=(delta wye)  sub=y
+~ kvs=(66, 4.16)  kvas=(10000 10000)  xhl=7.6  sub=y wdg=1  %r=.35 wdg=2  %r=.35
 
-! 3-PHASE GANGED REGULATOR AT HEAD OF FEEDER (KERSTING ASSUMES NO IMPEDANCE IN THE REGULATOR)
-! the first line defines the 3-phase transformer to be controlled by the regulator control.
-! The 2nd line defines the properties of the regulator control according to the test case
 
-new transformer.reg1a phases=3 windings=2 buses=[150 150r] conns=[wye wye] kvs=[4.16 4.16] kvas=[10000 10000] XHL=.00001 %LoadLoss=0.00001 ppm=0.0
+new transformer.reg1a phases=3 windings=2 buses=[150 150r] conns=[wye wye] kvs=[4.16 4.16] kvas=[5000 5000] XHL=.001 %LoadLoss=0.00001 ppm=0.0
 new regcontrol.creg1a transformer=reg1a winding=2 vreg=120 band=2 ptratio=20 ctprim=700 R=3 X=7.5
 
-! REDIRECT INPUT STREAM TO FILE CONTAINING DEFINITIONS OF LINECODES
-! This file defines the line impedances is a similar manner to the description in the test case.
-
 Redirect        IEEELinecodes.DSS
-
-! LINE DEFINITIONS
-! Lines are defined by referring to a "linecode" that contains the impedances per unit length
-! So the only properties required are the LineCode name and Length.  Units are assumed to match the definition
-! since no units property is defined in either the Linecodes file or this file.
-! Note that it is not necessary to explicitly specify the node connections for the 3-phase lines
-! unless they are not ".1.2.3". However, they are spelled out here for clarity.
-! The DSS assumes .1.2.3.0.0 ... for connections of 3 or more phases.
-! Likewise, .1 is not necessary for 1-phase lines connected to phase 1. However, if it is connected
-! to any other phase, it must be specified. For completeness, everything is spelled out here.
-!
-! Note that it is recommended that the "units=" property be used here and in the Linecode definition as well
-! to avoid confusion in the future
-
-! *** Original *** New Line.L115   Phases=3 Bus1=149.1.2.3  Bus2=1.1.2.3    LineCode=1    Length=0.4
-! Since the default is 3-phase, the definition of this line can be simpler:
 
 New Line.L115            Bus1=149        Bus2=1          LineCode=1    Length=0.4
 
@@ -129,7 +97,7 @@ New Line.L77    Phases=3 Bus1=76.1.2.3   Bus2=86.1.2.3   LineCode=3    Length=0.
 New Line.L78    Phases=3 Bus1=77.1.2.3   Bus2=78.1.2.3   LineCode=6    Length=0.1
 New Line.L79    Phases=3 Bus1=78.1.2.3   Bus2=79.1.2.3   LineCode=6    Length=0.225
 New Line.L80    Phases=3 Bus1=78.1.2.3   Bus2=80.1.2.3   LineCode=6    Length=0.475
-New Line.L81    Phases=3 Bus1=80.1.2.3   Bus2=81.1.2.3   LineCode=6    Length=0.475
+New Line.L81    Phases=3 Bus1=80.1.2.3   Bus2=81.1.2.3   LineCode=6    Length=0.175
 New Line.L82    Phases=3 Bus1=81.1.2.3   Bus2=82.1.2.3   LineCode=6    Length=0.25
 New Line.L83    Phases=1 Bus1=81.3       Bus2=84.3       LineCode=11   Length=0.675
 New Line.L84    Phases=3 Bus1=82.1.2.3   Bus2=83.1.2.3   LineCode=6    Length=0.25
@@ -168,74 +136,93 @@ New Line.L116   Phases=3 Bus1=152.1.2.3  Bus2=52.1.2.3   LineCode=1    Length=0.
 New Line.L117   Phases=3 Bus1=160r.1.2.3 Bus2=67.1.2.3   LineCode=6    Length=0.35
 
 
-
 ! NORMALLY CLOSED SWITCHES ARE DEFINED AS SHORT LINES
 ! Could also be defned by setting the Switch=Yes property
 
-New Line.Sw1    phases=3  Bus1=150r   Bus2=149    r1=1e-6 r0=1e-6 x1=0.000 x0=0.000 c1=0.000 c0=0.000
-New Line.Sw2    phases=3  Bus1=13     Bus2=152    r1=1e-6 r0=1e-6 x1=0.000 x0=0.000 c1=0.000 c0=0.000
-New Line.Sw3    phases=3  Bus1=18     Bus2=135    r1=1e-6 r0=1e-6 x1=0.000 x0=0.000 c1=0.000 c0=0.000
-New Line.Sw4    phases=3  Bus1=60     Bus2=160    r1=1e-6 r0=1e-6 x1=0.000 x0=0.000 c1=0.000 c0=0.000
-New Line.Sw5    phases=3  Bus1=97     Bus2=197    r1=1e-6 r0=1e-6 x1=0.000 x0=0.000 c1=0.000 c0=0.000
-New Line.Sw6    phases=3  Bus1=61     Bus2=61s    r1=1e-6 r0=1e-6 x1=0.000 x0=0.000 c1=0.000 c0=0.000
+New Line.Sw1    phases=3  Bus1=150r   Bus2=149    r1=1e-3 r0=1e-3 x1=0.000 x0=0.000 c1=0.000 c0=0.000 Length=0.001
+New Line.Sw2    phases=3  Bus1=13     Bus2=152    r1=1e-3 r0=1e-3 x1=0.000 x0=0.000 c1=0.000 c0=0.000 Length=0.001
+New Line.Sw3    phases=3  Bus1=18     Bus2=135    r1=1e-3 r0=1e-3 x1=0.000 x0=0.000 c1=0.000 c0=0.000 Length=0.001
+New Line.Sw4    phases=3  Bus1=60     Bus2=160    r1=1e-3 r0=1e-3 x1=0.000 x0=0.000 c1=0.000 c0=0.000 Length=0.001
+New Line.Sw5    phases=3  Bus1=97     Bus2=197    r1=1e-3 r0=1e-3 x1=0.000 x0=0.000 c1=0.000 c0=0.000 Length=0.001
+New Line.Sw6    phases=3  Bus1=61     Bus2=61s    r1=1e-3 r0=1e-3 x1=0.000 x0=0.000 c1=0.000 c0=0.000 Length=0.001
+New Line.Sw7    phases=3  Bus1=151    Bus2=300   r1=1e-3 r0=1e-3  x1=0.000 x0=0.000 c1=0.000 c0=0.000 Length=0.001
 
-! NORMALLY OPEN SWITCHES; DEFINED AS SHORT LINE TO OPEN BUS SO WE CAN SEE OPEN POINT VOLTAGES. 
-! COULD ALSO BE DEFINED AS DISABLED OR THE TERMINCAL COULD BE OPENED AFTER BEING DEFINED
+! Configuration 1
+!Edit line.sw3 enabled=false
 
-New Line.Sw7    phases=3  Bus1=151    Bus2=300_OPEN   r1=1e-6 r0=1e-6  x1=0.000 x0=0.000 c1=0.000 c0=0.000
-New Line.Sw8    phases=1  Bus1=54.1   Bus2=94_OPEN.1  r1=1e-6 r0=1e-6  x1=0.000 x0=0.000 c1=0.000 c0=0.000
+! Configuration 2
+!Edit line.Sw7 enabled=false
+
+! Configuration 3
+!Edit line.sw4 enabled=false
+
+! Configuration 4
+!Edit line.sw2 enabled=false
 
 ! LOAD TRANSFORMER AT 61s/610
 ! This is a 150 kVA Delta-Delta stepdown from 4160V to 480V.
 
 New Transformer.XFM1  Phases=3   Windings=2 Xhl=2.72
-~ wdg=1 bus=61s       conn=Delta kv=4.16    kva=150    %r=0.635
+~ wdg=1 bus=61s       conn=delta kV=4.16    kva=150    %r=0.635
 ~ wdg=2 bus=610       conn=Delta kv=0.48    kva=150    %r=0.635
 
 ! CAPACITORS
-! Capacitors are 2-terminal devices. The 2nd terminal (Bus2=...) defaults to all phases
-! connected to ground (Node 0). Thus, it need not be specified if a Y-connected or L-N connected
-! capacitor is desired
 
-!New Capacitor.C83       Bus1=83      Phases=3     kVAR=600     kV=4.16
-!New Capacitor.C88a      Bus1=88.1    Phases=1     kVAR=50      kV=2.402
-!New Capacitor.C90b      Bus1=90.2    Phases=1     kVAR=50      kV=2.402
-!New Capacitor.C92c      Bus1=92.3    Phases=1     kVAR=50      kV=2.402
+New Capacitor.C83       Bus1=83      Phases=3     kVAR=600     kV=4.16
+New Capacitor.C88a      Bus1=88.1    Phases=1     kVAR=50      kV=2.402
+New Capacitor.C90b      Bus1=90.2    Phases=1     kVAR=50      kV=2.402
+New Capacitor.C92c      Bus1=92.3    Phases=1     kVAR=50      kV=2.402
+
 
 !REGULATORS - REDIRECT TO DEFINITIONS FILE
-! This file contains definitions for the remainder of regulators on the feeder:
-
 Redirect IEEE123Regulators.DSS
 
 ! SPOT LOADS -- REDIRECT INPUT STREAM TO LOAD DEFINITIONS FILE
-
-!Redirect IEEE123Loads.DSS
-
-! All devices in the test feeder are now defined.
-!
-! Many of the voltages are reported in per unit, so it is important to establish the base voltages at each bus so
-! that we can compare with the result with greater ease.
-! We will let the DSS compute the voltage bases by doing a zero-load power flow.
-! There are only two voltage bases in the problem: 4160V and 480V. These must be expressed in kV
-
-transformer.reg1a.Taps=[1.0 1.0]
-transformer.reg2a.Taps=[1.0 1.0] 
-transformer.reg3a.Taps=[1.0 1.0] 
-transformer.reg4a.Taps=[1.0 1.0]
-transformer.reg3c.Taps=[1.0 1.0]
-transformer.reg4b.Taps=[1.0 1.0]
-transformer.reg4c.Taps=[1.0 1.0]
-
-Set Controlmode=OFF
-
-
+Redirect IEEE123Loads.DSS
 
 Set VoltageBases = [4.16, 0.48]    ! ARRAY OF VOLTAGES IN KV
 CalcVoltageBases  ! PERFORMS ZERO LOAD POWER FLOW TO ESTIMATE VOLTAGE BASES
+
+RegControl.creg1a.maxtapchange=1  Delay=15  !Allow only one tap change per solution. This one moves first
+RegControl.creg2a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+RegControl.creg3a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+RegControl.creg4a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+RegControl.creg3c.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+RegControl.creg4b.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+RegControl.creg4c.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+
+! The default maximum control iterations is 10. With so many regulators each moving only one tap at a time,
+! this is insufficient for the 123-bus test case, which will need 15 control iterations for the initial solution.
+! Therefore, the 'MaxControlIter' option is set to 30 to be safe.
+
+Set MaxControlIter=30
+
+! Solve executes the solution for the present solution mode, which is "snapshot".
+
+New EnergyMeter.Feeder Line.sw1 1
+
 solve
+Buscoords Buscoords.dat   ! load in bus coordinates
 
+new relay.1 monitoredObj=line.L115
+new relay.2 monitoredObj=line.L12
+new relay.3 monitoredObj=line.sw2
+new relay.4 monitoredObj=line.L13
+new relay.5 monitoredObj=line.L19
+new relay.6 monitoredObj=line.sw3
+new relay.7 monitoredObj=line.L55
+new relay.8 monitoredObj=line.sw4
+new relay.9 monitoredObj=line.L67
+new relay.10 monitoredObj=line.sw5
+new relay.11 monitoredObj=line.sw7
 
-
-solve mode=faultstudy
-show f
+New PVSystem.1 phases=3 bus1=8.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+New PVSystem.2 phases=3 bus1=18.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=840 kVA=700 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+New PVSystem.3 phases=3 bus1=28.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+New PVSystem.4 phases=3 bus1=48.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=1200 kVA=1000 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+New PVSystem.5 phases=3 bus1=61.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+New PVSystem.6 phases=3 bus1=79.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+New PVSystem.7 phases=3 bus1=95.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=1200 kVA=1000 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+New PVSystem.8 phases=3 bus1=100.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+New PVSystem.9 phases=3 bus1=108.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
 
