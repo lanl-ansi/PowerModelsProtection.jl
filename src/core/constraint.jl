@@ -27,7 +27,7 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
 end
 
 "McCormick relaxation of inverter in PQ mode"
-function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg)
+function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vrg = var(pm, n, :vr, bus_id)
     vig = var(pm, n, :vi, bus_id)
 
@@ -45,6 +45,7 @@ function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, b
     InfrastructureModels.relaxation_product(pm.model, vig, crg, qg2)
     JuMP.@constraint(pm.model, kg*pg == pg1 - pg2)
     JuMP.@constraint(pm.model, kg*qg == qg1 + qg2)
+    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
 
@@ -174,8 +175,8 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, 
     JuMP.@constraint(pm.model, cig[3] == ar*c1ig + ai*c1rg)
 
     # Power Factor
-    JuMP.@NLconstraint(pm.model, kg*pg == sum(vr[c]*crg[c] - vi[c]*cig[c] for c in cnds)
-    JuMP.@NLconstraint(pm.model, kg*qg == sum(vi[c]*crg[c] + vr[c]*cig[c] for c in cnds)
+    JuMP.@NLconstraint(pm.model, kg*pg == sum(vr[c]*crg[c] - vi[c]*cig[c] for c in cnds))
+    JuMP.@NLconstraint(pm.model, kg*qg == sum(vi[c]*crg[c] + vr[c]*cig[c] for c in cnds))
 
     for c in cnds
         JuMP.@NLconstraint(pm.model, cmax^2 >= crg[c]^2 + cig[c]^2) 
