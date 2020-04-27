@@ -26,6 +26,15 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
+""
+function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vm, va, cmax)
+    crg =  var(pm, n, :crg, i)
+    cig =  var(pm, n, :cig, i)
+
+    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
+end
+
+
 "McCormick relaxation of inverter in PQ mode"
 function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vrg = var(pm, n, :vr, bus_id)
