@@ -82,54 +82,7 @@ function variable_mc_generation(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounde
     _PMD.variable_mc_generation_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     variable_gen_positive_sequence_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     variable_gen_positive_sequence_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-
-    var(pm, nw)[:crg_bus] = Dict{Int, Any}()
-    var(pm, nw)[:cig_bus] = Dict{Int, Any}()
 end
 
-"variable: `c1rg[j]` for `j` in `gen`"
-function variable_gen_positive_sequence_current_real(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true)
-    c1rg = var(pm, nw)[:c1rg] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :gen)], base_name="$(nw)_c1rg",
-        start = _PM.comp_start_value(ref(pm, nw, :gen, i), "c1rg_start")
-    )
 
-    if bounded
-        bus = ref(pm, nw, :bus)
-        for (i, g) in ref(pm, nw, :gen)
-            vmin = bus[g["gen_bus"]]["vmin"]
-            @assert vmin > 0
-            s = sqrt(max(abs(g["pmax"]), abs(g["pmin"]))^2 + max(abs(g["qmax"]), abs(g["qmin"]))^2)
-            ub = s/vmin
-
-            JuMP.set_lower_bound(c1rg[i], -ub)
-            JuMP.set_upper_bound(c1rg[i],  ub)
-        end
-    end
-
-    report && _PM.sol_component_value(pm, nw, :gen, :c1rg, ids(pm, nw, :gen), c1rg)
-end
-
-"variable: `c1ig[j]` for `j` in `gen`"
-function variable_gen_positive_sequence_current_imaginary(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true)
-    c1ig = var(pm, nw)[:c1ig] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :gen)], base_name="$(nw)_c1ig",
-        start = _PM.comp_start_value(ref(pm, nw, :gen, i), "c1ig_start")
-    )
-
-    if bounded
-        bus = ref(pm, nw, :bus)
-        for (i, g) in ref(pm, nw, :gen)
-            vmin = bus[g["gen_bus"]]["vmin"]
-            @assert vmin > 0
-            s = sqrt(max(abs(g["pmax"]), abs(g["pmin"]))^2 + max(abs(g["qmax"]), abs(g["qmin"]))^2)
-            ub = s/vmin
-
-            JuMP.set_lower_bound(c1ig[i], -ub)
-            JuMP.set_upper_bound(c1ig[i],  ub)
-        end
-    end
-
-    report && _PM.sol_component_value(pm, nw, :gen, :c1ig, ids(pm, nw, :gen), c1ig)
-end
 
