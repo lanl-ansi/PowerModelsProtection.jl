@@ -19,11 +19,26 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
     crg =  var(pm, n, :crg, i)
     cig =  var(pm, n, :cig, i)
 
-    kg = var(pm, n, :kg, i) # generator loading
+    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
     
     JuMP.@NLconstraint(pm.model, kg*pg == vr*crg - vi*cig)
     JuMP.@NLconstraint(pm.model, kg*qg == vi*crg + vr*cig)
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
+end
+
+""
+function constraint_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+    vr = var(pm, n, :vr, bus_id)
+    vi = var(pm, n, :vi, bus_id)
+
+    crg =  var(pm, n, :crg, i)
+    cig =  var(pm, n, :cig, i)
+
+    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
+    
+    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg - vi*cig)
+    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg + vr*cig)
+    JuMP.@NLconstraint(pm.model, cmax^2 == crg^2 + cig^2) 
 end
 
 ""
@@ -183,6 +198,43 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, 
     # Current limit
     for c in cnds
         JuMP.@NLconstraint(pm.model, cmax^2 >= crg[c]^2 + cig[c]^2) 
+    end
+end
+
+
+""
+function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+    ar = -1/2
+    ai = sqrt(3)/2
+    a2r = -1/2
+    a2i = -sqrt(3)/2
+
+    vr = var(pm, n, :vr, bus_id)
+    vi = var(pm, n, :vi, bus_id)
+
+    crg =  var(pm, n, :crg, i)
+    cig =  var(pm, n, :cig, i)
+
+    kg = var(pm, n, :kg, i) # generator loading
+
+    cnds = _PMs.conductor_ids(pm; nw=n)
+    ncnds = length(cnds)
+
+    # Zero-Sequence
+    JuMP.@constraint(pm.model, sum(crg[c] for c in cnds) == 0)
+    JuMP.@constraint(pm.model, sum(cig[c] for c in cnds) == 0)
+
+    # Negative-Sequence
+    JuMP.@constraint(pm.model, crg[1] + a2r*crg[2] - a2i*cig[2] + ar*crg[3] - ai*cig[3] == 0)
+    JuMP.@constraint(pm.model, cig[1] + a2r*cig[2] + a2i*crg[2] + ar*cig[3] + ai*crg[3] == 0)
+
+    # Power Factor
+    JuMP.@NLconstraint(pm.model, kg*pg == sum(vr[c]*crg[c] - vi[c]*cig[c] for c in cnds))
+    JuMP.@NLconstraint(pm.model, kg*qg == sum(vi[c]*crg[c] + vr[c]*cig[c] for c in cnds))
+
+    # Current limit
+    for c in cnds
+        JuMP.@NLconstraint(pm.model, cmax^2 == crg[c]^2 + cig[c]^2) 
     end
 end
 
