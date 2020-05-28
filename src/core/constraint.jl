@@ -21,8 +21,8 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
 
     kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
     
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg - vi*cig)
-    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg + vr*cig)
+    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig)
+    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg - vr*cig)
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
@@ -36,8 +36,8 @@ function constraint_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, 
 
     kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
     
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg - vi*cig)
-    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg + vr*cig)
+    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig)
+    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg - vr*cig)
     JuMP.@NLconstraint(pm.model, cmax^2 == crg^2 + cig^2) 
 end
 

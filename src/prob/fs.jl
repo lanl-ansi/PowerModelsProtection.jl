@@ -27,7 +27,24 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
     variable_branch_current(pm, bounded = false)
     variable_gen(pm, bounded = false)
 
-    objective_max_inverter_power(pm)
+    has_pq_gens = false
+    has_v_gens = false
+
+    for (n, nw_ref) in nws(pm)
+        for (i,gen) in nw_ref[:gen]
+            if gen["pq_mode"] == 1
+                has_pq_gens = true
+            end
+
+            if gen["v_mode"] == 1
+                has_v_gens = true
+            end
+        end
+    end
+
+    if has_pq_gens || has_v_gens
+        objective_max_inverter_power(pm)
+    end
 
     constraint_gen_voltage_drop(pm)
     constraint_pq_inverter(pm)
