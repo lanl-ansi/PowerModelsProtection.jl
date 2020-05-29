@@ -48,6 +48,7 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
 
     constraint_gen_voltage_drop(pm)
     constraint_pq_inverter(pm)
+    # constraint_i_inverter(pm)
 
     constraint_fault_current(pm)
 

@@ -17,7 +17,7 @@ function objective_max_inverter_power(pm::_PM.AbstractIVRModel; report::Bool=tru
         	  		  (var(pm, n, :vr, i) - bus["vm"]*cos(bus["va"]))^2 
         	  		+ (var(pm, n, :vi, i) - bus["vm"]*sin(bus["va"]))^2 
         	  	for (i,bus) in v_gen_buses(nw_ref))
-            - 100*sum( var(pm, n, :kg, i) for (i,gen) in pq_gens(nw_ref) ) 
+            - sum( var(pm, n, :kg, i) for (i,gen) in pq_gens(nw_ref) ) 
         for (n, nw_ref) in nws(pm))
     )
 end

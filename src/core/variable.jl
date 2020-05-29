@@ -12,7 +12,7 @@ end
 function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
     _PM.variable_gen_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PM.variable_gen_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    variable_gen_loading(pm, nw=nw, report=report; kwargs...)
+    variable_gen_loading(pm, nw=nw, bounded=bounded,report=report; kwargs...)
 
 
     # store active and reactive power expressions for use in objective + post processing
@@ -34,7 +34,7 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
     report && _PM.sol_component_value(pm, nw, :gen, :pg, ids(pm, nw, :gen), pg)
     report && _PM.sol_component_value(pm, nw, :gen, :qg, ids(pm, nw, :gen), qg)
 
-    if bounded
+    if bounded && false
         for (i,gen) in ref(pm, nw, :gen)
             _PM.constraint_gen_active_power_limits(pm, i, nw=nw)
             _PM.constraint_gen_reactive_power_limits(pm, i, nw=nw)
@@ -52,7 +52,10 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
 
     for (i, gen) in ref(pm, nw, :gen)
         JuMP.set_lower_bound(kg[i], 0)
-        JuMP.set_upper_bound(kg[i], 1)
+
+        # if bounded
+        #     JuMP.set_upper_bound(kg[i], 1)
+        # end
     end
 
     report && _PM.sol_component_value(pm, nw, :gen, :kg, ids(pm, nw, :gen), kg)
