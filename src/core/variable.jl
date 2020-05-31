@@ -23,8 +23,8 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
         busid = gen["gen_bus"]
         smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
         cmax = 1.1*smax
-        cmax = 10*smax
-        cmax = 0.8
+        # cmax = 10*smax
+        # cmax = 0.8
 
         vr = var(pm, nw, :vr, busid)
         vi = var(pm, nw, :vi, busid)
@@ -67,7 +67,7 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
         JuMP.set_lower_bound(kg[i], 0)
 
         if bounded || true
-            JuMP.set_upper_bound(kg[i], 1)
+            JuMP.set_upper_bound(kg[i], 2)
         end
     end
 

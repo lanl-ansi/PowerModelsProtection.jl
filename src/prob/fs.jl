@@ -46,7 +46,7 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
         objective_max_inverter_power(pm)
     end
 
-    constraint_gen_voltage_drop(pm)
+    # constraint_gen_voltage_drop(pm)
     constraint_pq_inverter(pm)
     # constraint_i_inverter(pm)
 
