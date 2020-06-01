@@ -67,7 +67,7 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
         JuMP.set_lower_bound(kg[i], 0)
 
         if bounded || true
-            JuMP.set_upper_bound(kg[i], 2)
+            JuMP.set_upper_bound(kg[i], 1)
         end
     end
 
