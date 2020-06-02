@@ -42,7 +42,7 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
         end
     end
 
-    if has_pq_gens || has_v_gens || true
+    if has_pq_gens || has_v_gens
         objective_max_inverter_power(pm)
     end
 
