@@ -1,6 +1,6 @@
 @testset "balance fault study" begin
     @testset "7-bus Fault Example" begin
-        data = PM.parse_file("../test/data/trans/case5.raw", import_all=true)
+        data = PM.parse_file("../test/data/trans/case5_fault.m", import_all=true)
 
         # use flat start
         for (i,b) in data["bus"]

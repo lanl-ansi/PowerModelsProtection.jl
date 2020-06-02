@@ -1,7 +1,31 @@
 ""
+function is_pq_inverter(pm, i, nw)
+    gen = ref(pm, nw, :gen, i)
+
+    if !haskey(gen, "inverter")
+        return false
+    end
+
+    if gen["inverter"] == 0
+        return false
+    end
+
+    if !haskey(gen, "pq_mode")
+    	return false
+    end
+
+    return gen["pq_mode"] == 1
+end
+
+""
 function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
         i = gen["index"]
+
+        if is_pq_inverter(pm, i, nw)
+            continue
+        end
+
         bus_id = gen["gen_bus"]
 
         r = gen["zr"]
@@ -14,6 +38,30 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
         vgi = vm * sin(va)
 
         constraint_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi)
+    end
+end
+
+
+""
+function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+    for (k,gen) in ref(pm, nw, :gen)
+        i = gen["index"]
+
+        if !is_pq_inverter(pm, i, nw)
+            continue
+        end
+
+        bus_id = gen["gen_bus"]
+
+        pg = gen["pg"]
+        qg= gen["qg"]
+
+        smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
+        cmax = 1.1*smax
+        println("cmax = $cmax")
+        #cmax = 2
+
+        constraint_pq_inverter(pm, nw, i, bus_id, pg, qg, cmax)
     end
 end
 
@@ -57,6 +105,21 @@ end
 
 
 ""
+function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    index = pm.ref[:nw][nw][:solar][i]
+    gen = pm.ref[:nw][nw][:gen][index]
+
+    cmax = gen["i_max"]
+    if gen["solar_max"] < gen["kva"] * gen["pf"]
+        pmax = gen["solar_max"]
+    else
+        pmax = gen["kva"] * gen["pf"]
+    end
+    constraint_mc_pq_inverter(pm, nw, index, i, pmax, 0.0, cmax)
+end
+
+
+""
 function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)["bus_i"]
     bus_arcs = ref(pm, nw, :bus_arcs, i)
@@ -67,7 +130,7 @@ function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::I
 
     bus_gs = Dict(k => ref(pm, nw, :shunt, k, "gs") for k in bus_shunts)
     bus_bs = Dict(k => ref(pm, nw, :shunt, k, "bs") for k in bus_shunts)
-
+    
     if bus != ref(pm, nw, :active_fault, "bus_i")
         constraint_mc_current_balance(pm, nw, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
     else
@@ -81,7 +144,7 @@ function constraint_mc_generation(pm::_PM.AbstractPowerModel, id::Int; nw::Int=p
     generator = ref(pm, nw, :gen, id)
     bus = ref(pm, nw, :bus, generator["gen_bus"])
 
-    if generator["conn"]=="wye"
+    if get(generator, "configuration", _PMD.WYE) == _PMD.WYE
         constraint_mc_generation_wye(pm, nw, id, bus["index"]; report=report, bounded=bounded)
     else
         constraint_mc_generation_delta(pm, nw, id, bus["index"]; report=report, bounded=bounded)
