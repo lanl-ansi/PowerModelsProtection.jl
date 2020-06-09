@@ -178,51 +178,42 @@ New Capacitor.C92c      Bus1=92.3    Phases=1     kVAR=50      kV=2.402
 Redirect IEEE123Regulators.DSS
 
 ! SPOT LOADS -- REDIRECT INPUT STREAM TO LOAD DEFINITIONS FILE
-Redirect IEEE123Loads.DSS
+!Redirect IEEE123Loads.DSS
 
-Set VoltageBases = [4.16, 0.48]    ! ARRAY OF VOLTAGES IN KV
-CalcVoltageBases  ! PERFORMS ZERO LOAD POWER FLOW TO ESTIMATE VOLTAGE BASES
 
-RegControl.creg1a.maxtapchange=1  Delay=15  !Allow only one tap change per solution. This one moves first
-RegControl.creg2a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
-RegControl.creg3a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
-RegControl.creg4a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
-RegControl.creg3c.maxtapchange=1  Delay=30  !Allow only one tap change per solution
-RegControl.creg4b.maxtapchange=1  Delay=30  !Allow only one tap change per solution
-RegControl.creg4c.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+!RegControl.creg1a.maxtapchange=1  Delay=15  !Allow only one tap change per solution. This one moves first
+!RegControl.creg2a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+!RegControl.creg3a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+!RegControl.creg4a.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+!RegControl.creg3c.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+!RegControl.creg4b.maxtapchange=1  Delay=30  !Allow only one tap change per solution
+!RegControl.creg4c.maxtapchange=1  Delay=30  !Allow only one tap change per solution
 
 ! The default maximum control iterations is 10. With so many regulators each moving only one tap at a time,
 ! this is insufficient for the 123-bus test case, which will need 15 control iterations for the initial solution.
 ! Therefore, the 'MaxControlIter' option is set to 30 to be safe.
 
-Set MaxControlIter=30
+!Set MaxControlIter=30
 
 ! Solve executes the solution for the present solution mode, which is "snapshot".
 
 New EnergyMeter.Feeder Line.sw1 1
 
+!Buscoords Buscoords.dat   ! load in bus coordinates
+
+
+Set VoltageBases = [4.16, 0.48]    ! ARRAY OF VOLTAGES IN KV
+CalcVoltageBases  ! PERFORMS ZERO LOAD POWER FLOW TO ESTIMATE VOLTAGE BASES
 solve
-Buscoords Buscoords.dat   ! load in bus coordinates
 
-new relay.1 monitoredObj=line.L115
-new relay.2 monitoredObj=line.L12
-new relay.3 monitoredObj=line.sw2
-new relay.4 monitoredObj=line.L13
-new relay.5 monitoredObj=line.L19
-new relay.6 monitoredObj=line.sw3
-new relay.7 monitoredObj=line.L55
-new relay.8 monitoredObj=line.sw4
-new relay.9 monitoredObj=line.L67
-new relay.10 monitoredObj=line.sw5
-new relay.11 monitoredObj=line.sw7
+!batchedit load..* enable=false
+!batchedit capacitor..* enabled=false
+new fault.test phases=3 bus1=21.1.2.3 r=.005 enabled=true
 
-New PVSystem.1 phases=3 bus1=8.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.2 phases=3 bus1=18.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=840 kVA=700 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.3 phases=3 bus1=28.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.4 phases=3 bus1=48.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=1200 kVA=1000 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.5 phases=3 bus1=61.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.6 phases=3 bus1=79.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.7 phases=3 bus1=95.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=1200 kVA=1000 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.8 phases=3 bus1=100.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.9 phases=3 bus1=108.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
+Solve mode=snap
+
+set mode=dynamic controlmode=time
+set stepsize=.0002s
+number=800
+solve
 
