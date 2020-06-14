@@ -12,7 +12,7 @@ end
 
 
 ""
-function constraint_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+function constraint_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -21,13 +21,14 @@ function constraint_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
 
     kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
     
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig)
-    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg - vr*cig)
+    # this is equivalent to having a real voltage drop vs in series with the inverter
+    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig + vs*crg)
+    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg - vr*cig - vs*cig)
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
 ""
-function constraint_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cm)
+function constraint_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, pg, qg, cm)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -36,7 +37,8 @@ function constraint_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, 
 
     kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
     
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig)
+    # this is equivalent to having a resistance in series with the inverter
+    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig + r*crg^2 + r*cig^2)
     JuMP.@NLconstraint(pm.model, kg*qg == vi*crg - vr*cig)
     JuMP.@NLconstraint(pm.model, cm^2 == crg^2 + cig^2) 
 end
