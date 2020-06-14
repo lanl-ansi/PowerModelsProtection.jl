@@ -23,7 +23,7 @@ end
 
 ""
 function build_fault_study(pm::_PM.AbstractPowerModel)
-    _PM.variable_voltage(pm, bounded = false)
+    _PM.variable_bus_voltage(pm, bounded = false)
     variable_branch_current(pm, bounded = false)
     variable_gen(pm, bounded = false)
 

@@ -9,6 +9,20 @@ function ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
         nw_id = parse(Int, n)
         nw_ref = ref[:nw][nw_id]
         nw_ref[:active_fault] = data["active_fault"]
+    end
+end
+
+""
+function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+    if _IM.ismultinetwork(data)
+        nws_data = data["nw"]
+    else
+        nws_data = Dict("0" => data)
+    end
+    for (n, nw_data) in nws_data
+        nw_id = parse(Int, n)
+        nw_ref = ref[:nw][nw_id]
+        nw_ref[:active_fault] = data["active_fault"]
         println(keys(ref[:nw][nw_id]))
         nw_ref[:active_fault]["bus_i"] = ref[:nw][nw_id][:bus_lookup][nw_ref[:active_fault]["bus_i"]]
     end

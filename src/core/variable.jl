@@ -44,34 +44,15 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
 
     var(pm, nw)[:pg] = pg
     var(pm, nw)[:qg] = qg
-    report && _PM.sol_component_value(pm, nw, :gen, :pg, ids(pm, nw, :gen), pg)
-    report && _PM.sol_component_value(pm, nw, :gen, :qg, ids(pm, nw, :gen), qg)
+    report && _IM.sol_component_value(pm, nw, :gen, :pg, ids(pm, nw, :gen), pg)
+    report && _IM.sol_component_value(pm, nw, :gen, :qg, ids(pm, nw, :gen), qg)
 
     if bounded 
         for (i,gen) in ref(pm, nw, :gen)
-            _PM.constraint_gen_active_power_limits(pm, i, nw=nw)
-            _PM.constraint_gen_reactive_power_limits(pm, i, nw=nw)
+            _IM.constraint_gen_active_power_limits(pm, i, nw=nw)
+            _IM.constraint_gen_reactive_power_limits(pm, i, nw=nw)
         end
     end
-end
-
-
-"variable: `pg[j]` for `j` in `gen`"
-function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true)
-    kg = var(pm, nw)[:kg] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :gen)], base_name="$(nw)_kg",
-        start = _PM.comp_start_value(ref(pm, nw, :gen, i), "kg_start")
-    )
-
-    for (i, gen) in ref(pm, nw, :gen)
-        JuMP.set_lower_bound(kg[i], 0)
-
-        if bounded || true
-            JuMP.set_upper_bound(kg[i], 1)
-        end
-    end
-
-    report && _PM.sol_component_value(pm, nw, :gen, :kg, ids(pm, nw, :gen), kg)
 end
 
 
@@ -87,7 +68,7 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
         JuMP.set_upper_bound(kg[i], 1)
     end
 
-    report && _PM.sol_component_value(pm, nw, :gen, :kg, ids(pm, nw, :gen), kg)
+    report && _IM.sol_component_value(pm, nw, :gen, :kg, ids(pm, nw, :gen), kg)
 end
 
 
