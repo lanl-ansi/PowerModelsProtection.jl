@@ -1,4 +1,5 @@
-using PowerModelsProtection
+# using PowerModelsProtection
+include("../src/PowerModelsProtection.jl")
 const FS = PowerModelsProtection
 
 import Memento
@@ -20,10 +21,13 @@ import JSON
 
 using Test
 using LinearAlgebra
+using MathOptInterface
+
+const MOI = JuMP.MathOptInterface
 
 ipopt_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 
 @testset "PowerModelsProtection" begin
-    include("fs.jl")
+    # include("fs.jl")
     include("fsmc.jl")
 end

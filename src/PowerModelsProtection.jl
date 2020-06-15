@@ -31,9 +31,9 @@ module PowerModelsProtection
     include("io/matpower.jl")
     include("io/opendss.jl")
 
+    include("prob/common.jl")
     include("prob/fs.jl")
     include("prob/fs_mc.jl")
-    #include("prob/pf.jl")
 
     include("core/export.jl")  # must be last include to properly export functions
 end

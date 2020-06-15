@@ -81,24 +81,28 @@ Constant power factor constraints:
 
 #### Current Limiting Model
 
-`vr0`, `vi0` set from inverter node voltage from base power flow
-`rs` or `xs` = small number, 0.01 - 0.1
-`crg0`, `cig0` set from inverter current injection in base power flow
+This model assumes that 
+`vm`, `va` set from inverter node voltage from base power flow
 
 ```julia
--cmax <= crg <= cmax
--cmax <= cig <= cmax
+vr[c] = kg[c]*vm[c]*cos(va[c])
+vi[c] = kg[c]*vm[c]*sin(va[c])
+-cmax <= crg[c] <= cmax for c in cnds
+-cmax <= cig[c] <= cmax for c in cnds
 ```
 
-Objective is `sum((crg[g] - crg0[c])^2 + (cig[g] - cig0[c])^2 for g in inverter_gens)`
+Objective is `sum( sum((vr[c] - vm[c]*cos(va[c]))^2 + (vi[c] - vm[c]*sin(va[c]))^2 for c in cnd) for g in inverter_gens)`
 
-## Contributers in Alphabetical Order
-* Art Barnes
-* David Fobes
-* Jose Tabarez
+#### Current Limiting Model with Droop
 
-Thanks to Frederik Geth for his current-flow formulation on which this package is based
+Constraints
 
-## License
+```
+Vg0 = V0 + zg*Ig0
+V = kg*Vg0 - Z*Ig
+|Ig| <= Igmax
+```
+
+Objective is `sum( (vg - vg0)^2 for g in inverter_gens)`
 
 This code is provided under a BSD license as part of the Multi-Infrastructure Control and Optimization Toolkit (MICOT) project, LA-CC-13-108.

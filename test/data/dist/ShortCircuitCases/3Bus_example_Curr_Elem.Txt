@@ -1,0 +1,64 @@
+
+CIRCUIT ELEMENT CURRENTS
+
+(Currents into element from indicated bus)
+
+Power Delivery Elements
+
+  Bus     Phase    Magnitude, A     Angle      (Real)   +j  (Imag)
+
+ELEMENT = "Vsource.SOURCE"
+SOURCEBUS     1           35.477 /_    0.8 =     35.474 +j    0.4798
+SOURCEBUS     2           35.477 /_ -119.2 =    -17.321 +j   -30.961
+SOURCEBUS     3           35.523 /_  120.8 =    -18.176 +j    30.521
+------------
+SOURCEBUS     0           35.477 /_ -179.2 =    -35.474 +j   -0.4798
+SOURCEBUS     0           35.477 /_   60.8 =     17.321 +j    30.961
+SOURCEBUS     0           35.523 /_  -59.2 =     18.176 +j   -30.521
+
+ELEMENT = "Line.OHLINE"
+SOURCEBUS     1           35.477 /_ -179.2 =    -35.474 +j   -0.4798
+SOURCEBUS     2           35.477 /_   60.8 =     17.321 +j    30.961
+SOURCEBUS     3           35.523 /_  -59.2 =     18.176 +j   -30.521
+------------
+PRIMARY       1           35.477 /_    0.8 =     35.474 +j   0.48424
+PRIMARY       2           35.477 /_ -119.2 =    -17.317 +j   -30.963
+PRIMARY       3           35.523 /_  120.8 =     -18.18 +j    30.519
+
+ELEMENT = "Line.QUAD"
+PRIMARY       1         0.046633 /_    5.9 =    0.04639 +j   0.00476
+PRIMARY       2         0.046634 /_ -114.1 =  -0.019074 +j -0.042555
+PRIMARY       3        0.0044566 /_ -149.6 =  -0.0038448 +j -0.0022535
+------------
+LOADBUS       1          0.04642 /_ -179.6 =  -0.046419 +j -0.00030378
+LOADBUS       2         0.046421 /_   60.4 =   0.022948 +j  0.040352
+LOADBUS       3      2.2737E-013 /_  180.0 =  -2.2737E-013 +j         0
+
+ELEMENT = "Line.PV_LINE"
+PV_BUS        1           35.523 /_    0.8 =      35.52 +j   0.49348
+PV_BUS        2           35.523 /_ -119.2 =    -17.333 +j   -31.008
+PV_BUS        3           35.523 /_  120.8 =    -18.187 +j    30.514
+------------
+PRIMARY       1           35.523 /_ -179.2 =     -35.52 +j    -0.489
+PRIMARY       2           35.523 /_   60.8 =     17.336 +j    31.006
+PRIMARY       3           35.523 /_  -59.2 =     18.183 +j   -30.517
+
+ELEMENT = "Fault.TEST"
+LOADBUS       1          0.04642 /_    0.4 =   0.046419 +j 0.00030378
+LOADBUS       2         0.046421 /_ -119.6 =  -0.022948 +j -0.040352
+------------
+LOADBUS       0          0.04642 /_ -179.6 =  -0.046419 +j -0.00030378
+LOADBUS       0         0.046421 /_   60.4 =   0.022948 +j  0.040352
+
+= = = = = = = = = = = = = = = = = = =  = = = = = = = = = = =  = =
+
+Power Conversion Elements
+
+  Bus     Phase    Magnitude, A     Angle      (Real)   +j  (Imag)
+
+ELEMENT = "PVSystem.PV1"
+PV_BUS        1           35.523 /_ -179.2 =     -35.52 +j  -0.49348
+PV_BUS        2           35.523 /_   60.8 =     17.333 +j    31.008
+PV_BUS        3           35.523 /_  -59.2 =     18.187 +j   -30.514
+PV_BUS        0      4.8265E-008 /_ -179.2 =  -4.826E-008 +j -6.7049E-010
+

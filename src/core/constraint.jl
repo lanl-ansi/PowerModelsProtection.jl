@@ -168,39 +168,54 @@ end
 
 
 ""
-function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
-    ar = -1/2
-    ai = sqrt(3)/2
-    a2r = -1/2
-    a2i = -sqrt(3)/2
+function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
+    ar = -1/6
+    ai = sqrt(3)/6
+    a2r = -1/6
+    a2i = -sqrt(3)/6
 
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
+    vr = var(pm, nw, :vr, bus_id)
+    vi = var(pm, nw, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  var(pm, nw, :crg, i)
+    cig =  var(pm, nw, :cig, i)
 
-    kg = var(pm, n, :kg, i) # generator loading
+    b = var(pm, nw, :c_limit, bus_id)
+    p_int = var(pm, nw, :p_int, bus_id)
+    q_int = var(pm, nw, :q_int, bus_id) 
+    crg_pos= var(pm, nw, :crg_pos, bus_id)
+    cig_pos = var(pm, nw, :cig_pos, bus_id)
 
-    cnds = _PMs.conductor_ids(pm; nw=n)
-    ncnds = length(cnds)
+    cnds = _PM.conductor_ids(pm; nw=nw)
+    ncnds = length(cnds)   
 
+    
     # Zero-Sequence
     JuMP.@constraint(pm.model, sum(crg[c] for c in cnds) == 0)
     JuMP.@constraint(pm.model, sum(cig[c] for c in cnds) == 0)
 
     # Negative-Sequence
-    JuMP.@constraint(pm.model, crg[1] + a2r*crg[2] - a2i*cig[2] + ar*crg[3] - ai*cig[3] == 0)
-    JuMP.@constraint(pm.model, cig[1] + a2r*cig[2] + a2i*crg[2] + ar*cig[3] + ai*crg[3] == 0)
+    JuMP.@constraint(pm.model, .333*crg[1] + a2r*crg[2] - a2i*cig[2] + ar*crg[3] - ai*cig[3] == 0)
+    JuMP.@constraint(pm.model, .333*cig[1] + a2r*cig[2] + a2i*crg[2] + ar*cig[3] + ai*crg[3] == 0)
+
+    # Positive-Sequence
+    JuMP.@constraint(pm.model, .333*crg[1] + ar*crg[2] - ai*cig[2] + a2r*crg[3] - a2i*cig[3] == crg_pos)
+    JuMP.@constraint(pm.model, .333*cig[1] + ar*cig[2] + ai*crg[2] + a2r*cig[3] + a2i*crg[3] == cig_pos)
+
+    JuMP.@NLconstraint(pm.model, crg_pos^2 + cig_pos^2 >= cmax^2 * b)
+    JuMP.@NLconstraint(pm.model, crg_pos^2 + cig_pos^2 <= cmax^2)
+    JuMP.@NLconstraint(pm.model, p_int * (1 - b) == 0.0)
+    JuMP.@constraint(pm.model, q_int <= 0.00001)
 
     # Power Factor
-    JuMP.@NLconstraint(pm.model, kg*pg == sum(vr[c]*crg[c] - vi[c]*cig[c] for c in cnds))
-    JuMP.@NLconstraint(pm.model, kg*qg == sum(vi[c]*crg[c] + vr[c]*cig[c] for c in cnds))
+    JuMP.@NLconstraint(pm.model, pg == sum(vr[c]*crg[c] + vi[c]*cig[c] for c in cnds) + b*p_int)
+    JuMP.@NLconstraint(pm.model, 0.0 == sum(vi[c]*crg[c] - vr[c]*cig[c] for c in cnds))
 
     # Current limit
     for c in cnds
         JuMP.@NLconstraint(pm.model, cmax^2 >= crg[c]^2 + cig[c]^2) 
     end
+
 end
 
 
@@ -244,6 +259,7 @@ end
 ""
 function constraint_mc_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     bus = ref(pm, nw, :active_fault, "bus_i")
+
     Gf = ref(pm, nw, :active_fault, "Gf")
 
     vr = var(pm, nw, :vr, bus)
