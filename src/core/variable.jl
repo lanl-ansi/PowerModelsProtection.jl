@@ -65,7 +65,7 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
 
     for (i, gen) in ref(pm, nw, :gen)
         JuMP.set_lower_bound(kg[i], 0)
-        JuMP.set_upper_bound(kg[i], 1)
+        JuMP.set_upper_bound(kg[i], 100)
     end
 
     report && _IM.sol_component_value(pm, nw, :gen, :kg, ids(pm, nw, :gen), kg)
@@ -99,6 +99,41 @@ function variable_mc_generation(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounde
     # _PM.var(pm, nw)[:qg] = Dict{Int, Any}()
 end
 
+""
+function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+    c = var(pm, nw)[:c_limit] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen)], base_name="$(nw)_c_limit_$(i)",
+        start = .5
+    )
+    for i in ids(pm, nw, :gen)
+        JuMP.set_lower_bound(c[i], 0)
+        JuMP.set_upper_bound(c[i], 1)
+    end
+
+    p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen)], base_name="$(nw)_p_int_$(i)",
+        start = 0
+    )
+    for i in ids(pm, nw, :gen)
+        gen = pm.ref[:nw][nw][:gen][i]
+        JuMP.set_lower_bound(p_int[i], 0)
+        JuMP.set_upper_bound(p_int[i], gen["pmax"])
+    end
+
+    q_int = var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen)], base_name="$(nw)_q_int_$(i)",
+        start = 0
+    )
+    for i in ids(pm, nw, :gen)
+        gen = pm.ref[:nw][nw][:gen][i]
+        qmax = max(abs(gen["qmin"]), abs(gen["qmax"]))
+        JuMP.set_lower_bound(q_int[i], 0)
+        JuMP.set_upper_bound(q_int[i], qmax)
+    end
+end
+
+
+""
 function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     c = var(pm, nw)[:c_limit] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :solar)], base_name="$(nw)_c_limit_$(i)",
