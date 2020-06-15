@@ -87,7 +87,7 @@ function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
         println("cm = $cm")
         #cmax = 2
 
-        constraint_i_inverter(pm, nw, i, bus_id, r, pg, qg, cm)
+        constraint_pf_inverter_vs(pm, nw, i, bus_id, r, pg, qg, cm)
     end
 end
 
