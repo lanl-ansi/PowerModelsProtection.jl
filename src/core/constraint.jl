@@ -61,7 +61,9 @@ function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_i
     
     # JuMP.@NLconstraint(pm.model, vr == kg*crg)
     # JuMP.@NLconstraint(pm.model, vi == kg*cig)
-    println("Limiting max current to $cmax")
+    _IM.relaxation_product(pm.model, kg, crg, vr)    
+    _IM.relaxation_product(pm.model, kg, cig, vi)
+    println("Limiting max current for gen $i at $bus_id to $cmax")
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
@@ -120,10 +122,10 @@ function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, b
     qg1 =  var(pm, n, :qg1, i)
     qg2 =  var(pm, n, :qg2, i)
 
-    InfrastructureModels.relaxation_product(pm.model, vrg, crg, pg1)
-    InfrastructureModels.relaxation_product(pm.model, vig, cig, pg2)
-    InfrastructureModels.relaxation_product(pm.model, vrg, cig, qg1)
-    InfrastructureModels.relaxation_product(pm.model, vig, crg, qg2)
+    _IM.relaxation_product(pm.model, vrg, crg, pg1)
+    _IM.relaxation_product(pm.model, vig, cig, pg2)
+    _IM.relaxation_product(pm.model, vrg, cig, qg1)
+    _IM.relaxation_product(pm.model, vig, crg, qg2)
     JuMP.@constraint(pm.model, kg*pg == pg1 - pg2)
     JuMP.@constraint(pm.model, kg*qg == qg1 + qg2)
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 

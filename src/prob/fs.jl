@@ -23,9 +23,9 @@ end
 
 ""
 function build_fault_study(pm::_PM.AbstractPowerModel)
-    _PM.variable_bus_voltage(pm, bounded = false)
+    _PM.variable_bus_voltage(pm, bounded = true)
     variable_branch_current(pm, bounded = false)
-    variable_gen(pm, bounded = false)
+    variable_gen(pm, bounded = false) # inverter currents are always bounded
     # variable_pq_inverter(pm)
 
     has_pq_gens = false

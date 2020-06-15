@@ -23,6 +23,7 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
         busid = gen["gen_bus"]
         smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
         cmax = 1.1*smax
+        # cm = 0.1*smax
         # cmax = 10*smax
         # cmax = 0.8
 
@@ -32,6 +33,8 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
         cig = var(pm, nw, :cig, i)
 
         if gen["inverter"] == 1 && gen["pq_mode"] == 1
+            println("crg limits for gen $i: [-$cmax, $cmax]")
+            println("cig limits for gen $i: [-$cmax, $cmax]")            
             JuMP.set_lower_bound(crg, -cmax)
             JuMP.set_upper_bound(crg, cmax)
             JuMP.set_lower_bound(cig, -cmax)
@@ -49,8 +52,8 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
 
     if bounded 
         for (i,gen) in ref(pm, nw, :gen)
-            _IM.constraint_gen_active_power_limits(pm, i, nw=nw)
-            _IM.constraint_gen_reactive_power_limits(pm, i, nw=nw)
+            _PM.constraint_gen_active_bounds(pm, i, nw=nw)
+            _PM.constraint_gen_reactive_bounds(pm, i, nw=nw)
         end
     end
 end
@@ -63,9 +66,13 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
         start = _PM.comp_start_value(ref(pm, nw, :gen, i), "kg_start")
     )
 
+
+
     for (i, gen) in ref(pm, nw, :gen)
+        kmax = max(1.1/gen["pg"], 10)
+        println("Setting k limits for $i: [0, $kmax]")        
         JuMP.set_lower_bound(kg[i], 0)
-        JuMP.set_upper_bound(kg[i], 100)
+        JuMP.set_upper_bound(kg[i], kmax)
     end
 
     report && _IM.sol_component_value(pm, nw, :gen, :kg, ids(pm, nw, :gen), kg)

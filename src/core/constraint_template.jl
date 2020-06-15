@@ -59,6 +59,7 @@ function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 
         smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
         cm = 1.1*smax
+        # cm = 0.1*smax
         println("cm = $cm")
         #cmax = 2
 

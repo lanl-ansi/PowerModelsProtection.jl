@@ -35,7 +35,7 @@ mpc.gencost = [
 %	fbus	tbus	r	x	b	rateA	rateB	rateC	ratio	angle	status	angmin	angmax
 mpc.branch = [
 	2	 3	 0.00108	 0.0108	 0.01852	 4260	 4260	 4260	 0.0	  0.0	 1	 -30.0	 30.0;
-	2	 4	 0.00297	 0.0297	 0.00674	 4260	 4260	 4260	 1.05	  1.0	 1	 -30.0	 30.0;	
+	3	 4	 0.00297	 0.0297	 0.00674	 4260	 4260	 4260	 1.05	  1.0	 1	 -30.0	 30.0;	
 ];
 
 %% generator fault data
