@@ -97,8 +97,8 @@ function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x
     cig =  var(pm, n, :cig, i)
     
     # add a voltage drop so we don't need to worry about infeasibility near a short s
-    JuMP.@constraint(pm.model, vr_to == vgr - r * crg + x * cig)
-    JuMP.@constraint(pm.model, vi_to == vgi - r * cig - x * crg)
+    # JuMP.@constraint(pm.model, vr_to == vgr - r * crg + x * cig)
+    # JuMP.@constraint(pm.model, vi_to == vgi - r * cig - x * crg)
 
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
