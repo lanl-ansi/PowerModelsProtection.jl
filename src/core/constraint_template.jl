@@ -18,6 +18,25 @@ function is_pq_inverter(pm, i, nw)
 end
 
 ""
+function is_v_inverter(pm, i, nw)
+    gen = ref(pm, nw, :gen, i)
+
+    if !haskey(gen, "inverter")
+        return false
+    end
+
+    if gen["inverter"] == 0
+        return false
+    end
+
+    if !haskey(gen, "pq_mode")
+    	return false
+    end
+
+    return gen["pq_mode"] == 1
+end
+
+""
 function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
         i = gen["index"]
@@ -58,15 +77,15 @@ function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
         qg= gen["qg"]
 
         smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
-        cm = 1.1*smax
+        cmax = 1.1*smax
         # cm = 0.1*smax
-        println("cm = $cm")
+        println("cmax = $cmax")
         #cmax = 2
 
         # vs = 0.1
-        constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cm)
-        # constraint_unity_pf_inverter_rs(pm, nw, i, bus_id, r, pg, qg, cm)
-        # constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cm)
+        constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cmax)
+        # constraint_unity_pf_inverter_rs(pm, nw, i, bus_id, r, pg, qg, cmax)
+        # constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cmax)
     end
 end
 
@@ -91,7 +110,45 @@ function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
         println("cm = $cm")
         #cmax = 2
 
-        constraint_pf_inverter_vs(pm, nw, i, bus_id, r, pg, qg, cm)
+        constraint_i_inverter_vs(pm, nw, i, bus_id, r, pg, qg, cm)
+    end
+end
+
+""
+function constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+    for (k,gen) in ref(pm, nw, :gen)
+        i = gen["index"]
+
+        if !is_v_inverter(pm, i, nw)
+            continue
+        end
+
+        bus_id = gen["gen_bus"]
+        bus = ref(pm, nw, :bus, bus_id)
+
+        vm = ref(pm, :bus, bus_id, "vm")
+        va = ref(pm, :bus, bus_id, "va")
+
+        vgr = vm * cos(va)
+        vgi = vm * sin(va)        
+
+        r = gen["zr"]
+        pg = gen["pg"]
+        qg = gen["qg"]
+
+        cm = abs(gen["pg"] + 1im*gen["qg"])/bus["vm"]
+        
+        println("cm = $cm")
+        #cmax = 2
+
+        smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
+        cmax = 1.1*smax
+        # cm = 0.1*smax
+        println("cmax = $cmax")
+        #cmax = 2
+
+        # vs = 0.1
+        constraint_v_inverter(pm, nw, i, bus_id, vm, va, cmax)
     end
 end
 

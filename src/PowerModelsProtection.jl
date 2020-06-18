@@ -22,6 +22,7 @@ module PowerModelsProtection
     include("core/variable.jl")
     include("core/constraint_template.jl")
     include("core/constraint.jl")
+    include("core/constraint_inverter.jl")
     include("core/data.jl")
     include("core/ref.jl")
     include("core/objective.jl")
