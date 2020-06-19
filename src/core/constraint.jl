@@ -178,11 +178,20 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, 
     crg =  var(pm, nw, :crg, i)
     cig =  var(pm, nw, :cig, i)
 
-    b = var(pm, nw, :c_limit, bus_id)
     p_int = var(pm, nw, :p_int, bus_id)
     q_int = var(pm, nw, :q_int, bus_id) 
+    p_delta = var(pm, nw, :p_delta, bus_id)
+    q_delta = var(pm, nw, :q_delta, bus_id)
     crg_pos= var(pm, nw, :crg_pos, bus_id)
     cig_pos = var(pm, nw, :cig_pos, bus_id)
+    vrg_pos= var(pm, nw, :vrg_pos, bus_id)
+    vig_pos = var(pm, nw, :vig_pos, bus_id)
+    crg_pos_int = var(pm, nw, :crg_pos_int, bus_id)
+    cig_pos_int = var(pm, nw, :cig_pos_int, bus_id)
+    crg_pos_delta = var(pm, nw, :crg_pos_delta, bus_id)
+    cig_pos_delta = var(pm, nw, :cig_pos_delta, bus_id)
+    crg_pos_max = var(pm, nw, :crg_pos_max, bus_id)
+    cig_pos_max = var(pm, nw, :cig_pos_max, bus_id)
 
     cnds = _PM.conductor_ids(pm; nw=nw)
     ncnds = length(cnds)   
@@ -199,20 +208,31 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, 
     # Positive-Sequence
     JuMP.@constraint(pm.model, .333*crg[1] + ar*crg[2] - ai*cig[2] + a2r*crg[3] - a2i*cig[3] == crg_pos)
     JuMP.@constraint(pm.model, .333*cig[1] + ar*cig[2] + ai*crg[2] + a2r*cig[3] + a2i*crg[3] == cig_pos)
+    JuMP.@constraint(pm.model, .333*vr[1] + ar*vr[2] - ai*vi[2] + a2r*vr[3] - a2i*vi[3] == vrg_pos)
+    JuMP.@constraint(pm.model, .333*vi[1] + ar*vi[2] + ai*vr[2] + a2r*vi[3] + a2i*vr[3] == vig_pos)
 
-    JuMP.@NLconstraint(pm.model, crg_pos^2 + cig_pos^2 >= cmax^2 * b)
-    JuMP.@NLconstraint(pm.model, crg_pos^2 + cig_pos^2 <= cmax^2)
-    JuMP.@NLconstraint(pm.model, p_int * (1 - b) == 0.0)
-    JuMP.@constraint(pm.model, q_int <= 0.00001)
+    JuMP.@NLconstraint(pm.model, crg_pos^2 + cig_pos^2 <= crg_pos_max^2 + cig_pos_max^2)
+    JuMP.@NLconstraint(pm.model, crg_pos * crg_pos_max >= 0.0)
+    JuMP.@NLconstraint(pm.model, cig_pos * cig_pos_max >= 0.0)
+    JuMP.@NLconstraint(pm.model, crg_pos^2 + cig_pos^2 <= crg_pos_int^2 + cig_pos_int^2)
 
-    # Power Factor
-    JuMP.@NLconstraint(pm.model, pg == sum(vr[c]*crg[c] + vi[c]*cig[c] for c in cnds) + b*p_int)
-    JuMP.@NLconstraint(pm.model, 0.0 == sum(vi[c]*crg[c] - vr[c]*cig[c] for c in cnds))
+    JuMP.@NLconstraint(pm.model, pg/3 == vrg_pos*crg_pos + vig_pos*cig_pos + p_int)
+    JuMP.@NLconstraint(pm.model, 0.0 == vig_pos*crg_pos - vrg_pos*cig_pos + q_int)
+    JuMP.@NLconstraint(pm.model, pg/3 == vrg_pos*crg_pos_int + vig_pos*cig_pos_int)
+    JuMP.@NLconstraint(pm.model, 0.0 == vig_pos*crg_pos_int - vrg_pos*cig_pos_int)
+    # Imax real and imaginary parts 
+    JuMP.@NLconstraint(pm.model, 0.0 == crg_pos_max*cig_pos_int - cig_pos_max*crg_pos_int)
+    JuMP.@NLconstraint(pm.model, crg_pos_max^2 + cig_pos_max^2 == cmax^2)
+    JuMP.@NLconstraint(pm.model, crg_pos_max * crg_pos_int >= 0.0)
+    JuMP.@NLconstraint(pm.model, cig_pos_max * cig_pos_int >= 0.0)
 
-    # Current limit
-    for c in cnds
-        JuMP.@NLconstraint(pm.model, cmax^2 >= crg[c]^2 + cig[c]^2) 
-    end
+    JuMP.@NLconstraint(pm.model, p_int * p_delta >= 0.0)
+
+    JuMP.@NLconstraint(pm.model, p_int == vrg_pos*crg_pos_int + vig_pos*cig_pos_int - vrg_pos*crg_pos - vig_pos*cig_pos)
+    JuMP.@NLconstraint(pm.model, q_int == vig_pos*crg_pos_int - vrg_pos*cig_pos_int - vig_pos*crg_pos + vrg_pos*cig_pos)
+
+    JuMP.@NLconstraint(pm.model, p_delta == vrg_pos*crg_pos + vig_pos*cig_pos - vrg_pos*crg_pos_max - vig_pos*cig_pos_max)
+    JuMP.@NLconstraint(pm.model, q_delta == vig_pos*crg_pos - vrg_pos*cig_pos - vig_pos*crg_pos_max + vrg_pos*cig_pos_max)
 
 end
 
