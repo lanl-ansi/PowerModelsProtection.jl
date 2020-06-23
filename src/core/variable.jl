@@ -32,7 +32,7 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
         crg = var(pm, nw, :crg, i)
         cig = var(pm, nw, :cig, i)
 
-        if gen["inverter"] == 1 && gen["pq_mode"] == 1
+        if gen["inverter"] == 1 && gen["inverter_mode"] == "pq"
             println("crg limits for gen $i: [-$cmax, $cmax]")
             println("cig limits for gen $i: [-$cmax, $cmax]")            
             JuMP.set_lower_bound(crg, -cmax)

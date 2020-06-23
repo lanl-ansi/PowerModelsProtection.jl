@@ -21,11 +21,11 @@ function is_pq_inverter(pm, i, nw)
         return false
     end
 
-    if !haskey(gen, "pq_mode")
+    if !haskey(gen, "inverter_mode")
     	return false
     end
 
-    return gen["pq_mode"] == 1
+    return gen["inverter_mode"] == "pq"
 end
 
 ""
@@ -40,15 +40,11 @@ function is_v_inverter(pm, i, nw)
         return false
     end
 
-    if !haskey(gen, "v_mode")
+    if !haskey(gen, "inverter_mode")
     	return false
     end
 
-    if haskey(gen, "pq_mode") 
-        return !(gen["pq_mode"] == 1)
-    end
-
-    return gen["v_mode"] == 1
+    return gen["pq_mode"] == "v"
 end
 
 ""

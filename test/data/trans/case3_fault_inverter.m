@@ -39,8 +39,8 @@ mpc.branch = [
 ];
 
 %% generator fault data
-%column_names% zr	zx	inverter pq_mode v_mode
+%column_names% zr	zx	inverter inverter_mode
 mpc.gen_fault = [
-	0.05		0.00	1	0	1;
-	0.00		0.15	0	0	0;
+	0.05		0.00	1	'pq';
+	0.00		0.15	0	'';
 ];
