@@ -1,4 +1,4 @@
-""
+"Constraints for fault current contribution of inverter in grid-following mode with pseudo-binary for current-limiting"
 function constraint_unity_pf_inverter_disjunctive(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -21,7 +21,7 @@ function constraint_unity_pf_inverter_disjunctive(pm::_PM.AbstractIVRModel, nw, 
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
-""
+"Constraints for fault current contribution of inverter in grid-following mode with a real voltage drop to handle low-zero terminal voltages"
 function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
@@ -37,7 +37,7 @@ function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, 
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
-""
+"Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor"
 function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
@@ -47,6 +47,7 @@ function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_i
 
     kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
     
+    # I think this can be generalized to arbitrary power factors by multiplying k with alpha + j*beta
     # JuMP.@NLconstraint(pm.model, vr == kg*crg)
     # JuMP.@NLconstraint(pm.model, vi == kg*cig)
     _IM.relaxation_product(pm.model, kg, crg, vr)    
@@ -55,7 +56,7 @@ function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_i
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
-""
+"Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor with a series resistance to handle low-zero terminal voltages"
 function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, pg, qg, cm)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
@@ -72,7 +73,7 @@ function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i, bu
     JuMP.@NLconstraint(pm.model, cm^2 >= crg^2 + cig^2) 
 end
 
-""
+"Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly"
 function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cm)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
@@ -88,7 +89,7 @@ function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, v
     JuMP.@NLconstraint(pm.model, cm^2 == crg^2 + cig^2) 
 end
 
-""
+"Constraints for fault current contribution of inverter in grid-forming mode"
 function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, cmax)
     vr_to = var(pm, n, :vr, bus_id)
     vi_to = var(pm, n, :vi, bus_id)
@@ -102,8 +103,10 @@ function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x
 
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
- 
-"McCormick relaxation of inverter in PQ mode"
+
+# adding the complex multiplier to constraint_unity_pf_inverter should do the same thing as this
+# with potentially better performance under low terminal voltages
+"McCormick relaxation of constraints for fault current contribution of inverter in grid-following mode"
 function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vrg = var(pm, n, :vr, bus_id)
     vig = var(pm, n, :vi, bus_id)
