@@ -85,7 +85,7 @@ function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 
         r = gen["zr"]
         pg = gen["pg"]
-        qg= gen["qg"]
+        qg = gen["qg"]
 
         smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
         cmax = 1.1*smax
@@ -94,7 +94,8 @@ function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
         #cmax = 2
 
         # vs = 0.1
-        constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cmax)
+        # constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cmax)
+        constraint_pq_inverter(pm, nw, i, bus_id, pg, qg, cmax)
         # constraint_unity_pf_inverter_rs(pm, nw, i, bus_id, r, pg, qg, cmax)
         # constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cmax)
     end

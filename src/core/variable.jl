@@ -137,6 +137,34 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
         JuMP.set_lower_bound(q_int[i], 0)
         JuMP.set_upper_bound(q_int[i], qmax)
     end
+
+    cmax = Dict()
+
+    for i in ids(pm, nw, :gen)
+        gen = pm.ref[:nw][nw][:gen][i]
+        phat = max(abs(gen["pmax"]), abs(gen["pmin"]))
+        qhat = max(abs(gen["qmax"]), abs(gen["qmin"]))
+        smax = abs(complex(phat, qhat))
+        cmax[i] = 1.1*smax    
+    end
+
+    scrg = var(pm, nw)[:scrg] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen)], base_name="$(nw)_scrg_$(i)",
+        start = 0
+    )
+    for i in ids(pm, nw, :gen)
+        JuMP.set_lower_bound(scrg[i], -cmax[i])
+        JuMP.set_upper_bound(scrg[i], cmax[i])
+    end    
+
+    scig = var(pm, nw)[:scig] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :gen)], base_name="$(nw)_scig_$(i)",
+        start = 0
+    )
+    for i in ids(pm, nw, :gen)
+        JuMP.set_lower_bound(scig[i], -cmax[i])
+        JuMP.set_upper_bound(scig[i], cmax[i])
+    end        
 end
 
 

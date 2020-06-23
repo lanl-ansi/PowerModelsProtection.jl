@@ -56,6 +56,39 @@ function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_i
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
+"Constraints for fault current contribution of inverter in grid-following mode operating at arbitrary power factor"
+function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+    vr = var(pm, n, :vr, bus_id)
+    vi = var(pm, n, :vi, bus_id)
+
+    crg =  var(pm, n, :crg, i)
+    cig =  var(pm, n, :cig, i)
+
+    sg = complex(pg, qg) # complex power
+    ag = abs(sg) # apparent power
+    ug = sg/ag # normalized power
+
+    alpha = real(ug)
+    beta = imag(ug)
+
+    println("alpha + j*beta = $alpha + j$beta")
+    
+    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
+
+    # scaled real & imag current
+    scrg =  var(pm, n, :scrg, i)
+    scig =  var(pm, n, :scig, i)
+
+    # inverter current scaled by a real amount
+    _IM.relaxation_product(pm.model, kg, crg, scrg)
+    _IM.relaxation_product(pm.model, kg, cig, scig)
+    JuMP.@constraint(pm.model, vr == alpha*scrg - beta*scig)
+    JuMP.@constraint(pm.model, vi == alpha*scig + beta*scrg)
+    
+    println("Limiting max current for pq inverter $i at $bus_id to $cmax")
+    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
+end
+
 "Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor with a series resistance to handle low-zero terminal voltages"
 function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, pg, qg, cm)
     vr = var(pm, n, :vr, bus_id)
