@@ -1,5 +1,8 @@
 # PowerModelsProtection
 
+[![Build Status](https://travis-ci.org/lanl-ansi/PowerModelsProtection.jl.svg?branch=master)](https://travis-ci.org/lanl-ansi/PowerModelsProtection.jl)
+[![codecov](https://codecov.io/gh/lanl-ansi/PowerModelsProtection.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/lanl-ansi/PowerModelsProtection.jl)
+
 Fault study for PowerModels and PowerModelsDistribution
 
 In the future this will also include optimal protection coordation formulations and possibly also protection coordination constraints for optimal switching problems
