@@ -18,6 +18,7 @@ jobs:
         - julia --project=. -e '
             using Pkg; 
             Pkg.instantiate(); 
+            Pkg.add("Coverage");
             using Coverage;
             Codecov.submit(process_folder());'
       after_success: skip
