@@ -80,10 +80,16 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
     scig =  var(pm, n, :scig, i)
 
     # inverter current scaled by a real amount
-    _IM.relaxation_product(pm.model, kg, crg, scrg)
-    _IM.relaxation_product(pm.model, kg, cig, scig)
-    JuMP.@constraint(pm.model, vr == alpha*scrg - beta*scig)
-    JuMP.@constraint(pm.model, vi == alpha*scig + beta*scrg)
+    # _IM.relaxation_product(pm.model, kg, crg, scrg)
+    # _IM.relaxation_product(pm.model, kg, cig, scig)
+    # JuMP.@constraint(pm.model, vr == alpha*scrg - beta*scig)
+    # JuMP.@constraint(pm.model, vi == alpha*scig + beta*scrg)
+
+    JuMP.@NLconstraint(pm.model, vr == alpha*kg*crg - beta*kg*cig)
+    JuMP.@NLconstraint(pm.model, vi == alpha*kg*cig + beta*kg*crg)
+
+    # _IM.relaxation_product(pm.model, kg, crg, vi)    
+    # JuMP.@constraint(pm.model, crg == 0)
     
     println("Limiting max current for pq inverter $i at $bus_id to $cmax")
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 

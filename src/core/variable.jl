@@ -69,7 +69,7 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
 
 
     for (i, gen) in ref(pm, nw, :gen)
-        kmax = max(1.1/gen["pg"], 10)
+        kmax = max(1.1/gen["pg"], 2)
         println("Setting k limits for $i: [0, $kmax]")        
         JuMP.set_lower_bound(kg[i], 0)
         JuMP.set_upper_bound(kg[i], kmax)
