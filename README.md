@@ -28,7 +28,6 @@ results = PowerModelsProtection.run_fault_study(net, solver )
 print(results)
 ```
 
-<<<<<<< HEAD
 ## TODO
 
 _TODO section has moved to issues_
