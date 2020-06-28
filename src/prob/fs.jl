@@ -43,13 +43,17 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
         end
     end
 
-    if has_pq_gens || has_v_gens
+    if has_pq_gens && !has_v_gens
         objective_max_inverter_power(pm)
+    elseif !has_pq_gens && has_v_gens
+        objective_min_inverter_voltage_regulation(pm)
+    elseif has_pq_gens && has_v_gens
+        objective_min_inverter_error(pm)
     end
 
     constraint_gen_voltage_drop(pm)
     constraint_pq_inverter(pm)
-    # constraint_v_inverter(pm)
+    constraint_v_inverter(pm)
 
     constraint_fault_current(pm)
 

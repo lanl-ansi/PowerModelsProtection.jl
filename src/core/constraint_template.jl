@@ -44,7 +44,7 @@ function is_v_inverter(pm, i, nw)
     	return false
     end
 
-    return gen["pq_mode"] == "v"
+    return gen["inverter_mode"] == "v"
 end
 
 ""
