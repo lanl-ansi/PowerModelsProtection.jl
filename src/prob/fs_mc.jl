@@ -3,7 +3,9 @@ function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
     # check_pf!(data, solver)
     add_mc_fault_data!(data)
     solution = Dict{String, Any}()
-    for (i,bus) in data["fault"]
+    faults = deepcopy(data["fault"])
+    delete!(data, "fault")
+    for (i,bus) in faults
         solution[i] = Dict{String,Any}()
         for (j,type) in bus
             solution[i][j] = Dict{Int64,Any}()

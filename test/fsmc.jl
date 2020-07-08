@@ -118,5 +118,23 @@
         @test result["loadbus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
         @test isapprox(result["loadbus"]["3p"][1]["solution"]["fault"]["currents"]["pv_line"][1], 35.523; atol = 1e0)
     end
+    
+    @testset "3-bus pv fault test" begin
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
+        data["fault"] = Dict{String, Any}()
+        data["fault"]["1"] = Dict("type" => "3p", "bus" => "pv_bus", "phases" => [1,2,3], "gr" => .0005)
+        result = FS.run_mc_fault_study(data, ipopt_solver)
+        @test result["pv_bus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
+        data["fault"] = Dict{String, Any}()
+        data["fault"]["1"] = Dict("type" => "lg", "bus" => "pv_bus", "phases" => [1], "gr" => .0005)
+        result = FS.run_mc_fault_study(data, ipopt_solver)
+        @test result["pv_bus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
+        data["fault"] = Dict{String, Any}()
+        data["fault"]["1"] = Dict("type" => "ll", "bus" => "pv_bus", "phases" => [1,2], "gr" => .0005)
+        result = FS.run_mc_fault_study(data, ipopt_solver)
+        @test result["pv_bus"]["ll"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+    end
  
 end
