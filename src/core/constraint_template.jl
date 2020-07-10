@@ -60,12 +60,28 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 
         r = gen["zr"]
         x = gen["zx"]
+        z = r + 1im*x
+
+        p = gen["pg"]
+        q = gen["qg"]
+        s = p + 1im*q
 
         vm = ref(pm, :bus, bus_id, "vm")
         va = ref(pm, :bus, bus_id, "va")
+        v = vm*exp(1im*va)
 
+        vr = real(v)
+        vi = imag(v)
         vgr = vm * cos(va)
         vgi = vm * sin(va)
+        println("vgr = $vgr, vr = $vr, vgi = $vgi, vi = $vi")
+
+        c = conj(s/v)
+        vg = v + 0.0*z*c # add an option here to disable pre-computed voltage drop
+        vgr = real(vg)
+        vgi = imag(vg)
+        println("Compensated vg: vgr = $vgr, vgi = $vgi")
+
 
         constraint_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi)
     end
