@@ -11,7 +11,7 @@ function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
             solution[i][j] = Dict{Int64,Any}()
             for (f,fault) in type
                 data["active_fault"] = fault
-                solution[i][j][f] = run_mc_model(data, _PM.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_mc_fault!, ref_add_solar!], kwargs...)
+                solution[i][j][f] = run_mc_model(data, _PM.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!, ref_add_solar!], kwargs...)
             end
         end
     end

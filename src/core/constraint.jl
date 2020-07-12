@@ -191,7 +191,25 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus
 end
 
 
+""
+function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
+    ar = -1/6
+    ai = sqrt(3)/6
+    a2r = -1/6
+    a2i = -sqrt(3)/6
 
+    vr = var(pm, nw, :vr, bus_id)
+    vi = var(pm, nw, :vi, bus_id)
+
+    crg =  var(pm, nw, :crg, i)
+    cig =  var(pm, nw, :cig, i)
+
+    p_int = var(pm, nw, :p_int, bus_id)
+    q_int = var(pm, nw, :q_int, bus_id) 
+    crg_pos= var(pm, nw, :crg_pos, bus_id)
+    cig_pos = var(pm, nw, :cig_pos, bus_id)
+    vrg_pos= var(pm, nw, :vrg_pos, bus_id)
+    vig_pos = var(pm, nw, :vig_pos, bus_id)
     crg_pos_max = var(pm, nw, :crg_pos_max, bus_id)
     cig_pos_max = var(pm, nw, :cig_pos_max, bus_id)
     z = var(pm, nw, :z, bus_id)

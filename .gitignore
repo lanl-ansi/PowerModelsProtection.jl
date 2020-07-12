@@ -7,3 +7,10 @@ deps/deps.jl
 docs/build
 
 Manifest.toml
+/src/core/constraint_jose.jl
+/src/core/ref_jose.jl
+/src/core/variable_jose.jl
+/src/prob/fs_mc_jose.jl
+/test/fs_mc_jose.jl
+/test/test_output.txt
+/test/test_output_no_pv.txt

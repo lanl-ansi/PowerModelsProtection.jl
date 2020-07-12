@@ -1,4 +1,4 @@
-gi"copies from PowerModels and PowerModelsDistribution without power vars"
+"copies from PowerModels and PowerModelsDistribution without power vars"
 function variable_branch_current(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
     _PM.variable_branch_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PM.variable_branch_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
