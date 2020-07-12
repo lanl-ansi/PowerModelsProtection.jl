@@ -11,94 +11,6 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id
 end
 
 
-"Constrain pq inverter to operate at fixed pf and within power/current limits. Requires objective term"
-function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
-
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
-
-    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
-    
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg - vi*cig)
-    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg + vr*cig)
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
-end
-
-""
-function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
-    vr = var(pm, nw, :vr, bus_id)
-    vi = var(pm, nw, :vi, bus_id)
-
-    crg =  var(pm, nw, :crg, i)
-    cig =  var(pm, nw, :cig, i)
-
-    p_int = var(pm, nw, :p_int, bus_id)
-    q_int = var(pm, nw, :q_int, bus_id) 
-    crg_max = var(pm, nw, :crg_pos_max, bus_id)
-    cig_max = var(pm, nw, :cig_pos_max, bus_id)
-    z = var(pm, nw, :z, bus_id)
-
-    JuMP.@NLconstraint(pm.model, 0.0 == crg_max*cig - cig_max*crg)
-    JuMP.@NLconstraint(pm.model, crg_max^2 + cig_max^2 == cmax^2)
-    JuMP.@NLconstraint(pm.model, crg_max * crg >= 0.0)
-    JuMP.@NLconstraint(pm.model, cig_max * cig >= 0.0)
-    JuMP.@NLconstraint(pm.model, crg^2 + cig^2 <= cmax^2)
-    JuMP.@NLconstraint(pm.model, (crg^2 + cig^2 - cmax^2)*z >= 0.0)
-    JuMP.@NLconstraint(pm.model, p_int == vrg*crg + vig*cig)
-    JuMP.@NLconstraint(pm.model, 0.0 == vig*crg - vrg*cig)
-    JuMP.@NLconstraint(pm.model, p_int <= pg/3)
-    JuMP.@NLconstraint(pm.model, p_int >= (1-z) * pg/3)
-end
-
-""
-function constraint_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
-
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
-
-    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
-    
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg - vi*cig)
-    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg + vr*cig)
-    JuMP.@NLconstraint(pm.model, cmax^2 == crg^2 + cig^2) 
-end
-
-""
-function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vm, va, cmax)
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
-
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
-end
-
-
-"McCormick relaxation of inverter in PQ mode"
-function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
-    vrg = var(pm, n, :vr, bus_id)
-    vig = var(pm, n, :vi, bus_id)
-
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
-
-    pg1 =  var(pm, n, :pg1, i)
-    pg2 =  var(pm, n, :pg2, i)
-    qg1 =  var(pm, n, :qg1, i)
-    qg2 =  var(pm, n, :qg2, i)
-
-    InfrastructureModels.relaxation_product(pm.model, vrg, crg, pg1)
-    InfrastructureModels.relaxation_product(pm.model, vig, cig, pg2)
-    InfrastructureModels.relaxation_product(pm.model, vrg, cig, qg1)
-    InfrastructureModels.relaxation_product(pm.model, vig, crg, qg2)
-    JuMP.@constraint(pm.model, kg*pg == pg1 - pg2)
-    JuMP.@constraint(pm.model, kg*qg == qg1 + qg2)
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
-end
-
-
 
 ""
 function constraint_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
@@ -187,43 +99,6 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus
     for c in _PM.conductor_ids(pm; nw=n)
         JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c]*crg[c] + x[c]*cig[c])
         JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c]*cig[c] - x[c]*crg[c])
-    end
-end
-
-
-""
-function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
-    ar = -1/2
-    ai = sqrt(3)/2
-    a2r = -1/2
-    a2i = -sqrt(3)/2
-
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
-
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
-
-    kg = var(pm, n, :kg, i) # generator loading
-
-    cnds = _PMs.conductor_ids(pm; nw=n)
-    ncnds = length(cnds)
-
-    # Zero-Sequence
-    JuMP.@constraint(pm.model, sum(crg[c] for c in cnds) == 0)
-    JuMP.@constraint(pm.model, sum(cig[c] for c in cnds) == 0)
-
-    # Negative-Sequence
-    JuMP.@constraint(pm.model, crg[1] + a2r*crg[2] - a2i*cig[2] + ar*crg[3] - ai*cig[3] == 0)
-    JuMP.@constraint(pm.model, cig[1] + a2r*cig[2] + a2i*crg[2] + ar*cig[3] + ai*crg[3] == 0)
-
-    # Power Factor
-    JuMP.@NLconstraint(pm.model, kg*pg == sum(vr[c]*crg[c] - vi[c]*cig[c] for c in cnds))
-    JuMP.@NLconstraint(pm.model, kg*qg == sum(vi[c]*crg[c] + vr[c]*cig[c] for c in cnds))
-
-    # Current limit
-    for c in cnds
-        JuMP.@NLconstraint(pm.model, cmax^2 == crg[c]^2 + cig[c]^2) 
     end
 end
 

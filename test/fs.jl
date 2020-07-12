@@ -14,6 +14,13 @@
         for (k,br) in data["branch"]
             br["b_fr"] = 0
             br["b_to"] = 0
+            br["tap"] = 1
+            br["shift"] = 0
+        end
+
+        for (k,g) in data["gen"]
+            g["pg"] = 0
+            g["qg"] = 0
         end
 
         data["fault"] = Dict{String, Any}()

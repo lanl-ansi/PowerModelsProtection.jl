@@ -4,10 +4,12 @@ function v_gen_buses(nw_ref)
     return [(i,bus) for (i,bus) in nw_ref[:bus] if i in v_gen_bus_ids]
 end
 
+
 ""
 function pq_gens(nw_ref)
 	return [(i,gen) for (i,gen) in nw_ref[:gen] if gen["inverter_mode"] == "pq"]
 end
+
 
 ""
 function objective_min_inverter_voltage_regulation(pm::_PM.AbstractIVRModel; report::Bool=true)

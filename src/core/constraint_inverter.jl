@@ -56,8 +56,9 @@ function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_i
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
-"Constraints for fault current contribution of inverter in grid-following mode operating at arbitrary power factor"
-function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+
+"Constraints for fault current contribution of inverter in grid-following mode operating at arbitrary power factor. Requires objective term"
+function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -95,6 +96,34 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg,
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
+
+""
+function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
+    vr = var(pm, nw, :vr, bus_id)
+    vi = var(pm, nw, :vi, bus_id)
+
+    crg =  var(pm, nw, :crg, i)
+    cig =  var(pm, nw, :cig, i)
+
+    p_int = var(pm, nw, :p_int, bus_id)
+    q_int = var(pm, nw, :q_int, bus_id) 
+    crg_max = var(pm, nw, :crg_pos_max, bus_id)
+    cig_max = var(pm, nw, :cig_pos_max, bus_id)
+    z = var(pm, nw, :z, bus_id)
+
+    JuMP.@NLconstraint(pm.model, 0.0 == crg_max*cig - cig_max*crg)
+    JuMP.@NLconstraint(pm.model, crg_max^2 + cig_max^2 == cmax^2)
+    JuMP.@NLconstraint(pm.model, crg_max * crg >= 0.0)
+    JuMP.@NLconstraint(pm.model, cig_max * cig >= 0.0)
+    JuMP.@NLconstraint(pm.model, crg^2 + cig^2 <= cmax^2)
+    JuMP.@NLconstraint(pm.model, (crg^2 + cig^2 - cmax^2)*z >= 0.0)
+    JuMP.@NLconstraint(pm.model, p_int == vrg*crg + vig*cig)
+    JuMP.@NLconstraint(pm.model, 0.0 == vig*crg - vrg*cig)
+    JuMP.@NLconstraint(pm.model, p_int <= pg/3)
+    JuMP.@NLconstraint(pm.model, p_int >= (1-z) * pg/3)
+end
+
+
 "Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor with a series resistance to handle low-zero terminal voltages"
 function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, pg, qg, cm)
     vr = var(pm, n, :vr, bus_id)
@@ -130,8 +159,8 @@ end
 
 "Constraints for fault current contribution of inverter in grid-forming mode"
 function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, cmax)
-    vr_to = var(pm, n, :vr, bus_id)
-    vi_to = var(pm, n, :vi, bus_id)
+    # vr_to = var(pm, n, :vr, bus_id)
+    # vi_to = var(pm, n, :vi, bus_id)
 
     crg =  var(pm, n, :crg, i)
     cig =  var(pm, n, :cig, i)
