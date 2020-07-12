@@ -36,31 +36,20 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg,
 
     p_int = var(pm, nw, :p_int, bus_id)
     q_int = var(pm, nw, :q_int, bus_id) 
-    crg_pos= var(pm, nw, :crg_pos, bus_id)
-    cig_pos = var(pm, nw, :cig_pos, bus_id)
-    vrg_pos= var(pm, nw, :vrg_pos, bus_id)
-    vig_pos = var(pm, nw, :vig_pos, bus_id)    
-    crg_pos_max = var(pm, nw, :crg_pos_max, bus_id)
-    cig_pos_max = var(pm, nw, :cig_pos_max, bus_id)
+    crg_max = var(pm, nw, :crg_pos_max, bus_id)
+    cig_max = var(pm, nw, :cig_pos_max, bus_id)
     z = var(pm, nw, :z, bus_id)
 
-    # Fix positive-sequence quantities
-    JuMP.@constraint(pm.model, vr == vrg_pos)
-    JuMP.@constraint(pm.model, vi == vig_pos)
-    JuMP.@constraint(pm.model, crg == crg_pos)
-    JuMP.@constraint(pm.model, cig == cig_pos)
-
-    JuMP.@NLconstraint(pm.model, 0.0 == crg_pos_max*cig_pos - cig_pos_max*crg_pos)
-    JuMP.@NLconstraint(pm.model, crg_pos_max^2 + cig_pos_max^2 == cmax^2)
-    JuMP.@NLconstraint(pm.model, crg_pos_max * crg_pos >= 0.0)
-    JuMP.@NLconstraint(pm.model, cig_pos_max * cig_pos >= 0.0)
-    JuMP.@NLconstraint(pm.model, crg_pos^2 + cig_pos^2 <= cmax^2)
-    JuMP.@NLconstraint(pm.model, (crg_pos^2 + cig_pos^2 - cmax^2)*z >= 0.0)
-    JuMP.@NLconstraint(pm.model, p_int == vrg_pos*crg_pos + vig_pos*cig_pos)
-    JuMP.@NLconstraint(pm.model, 0.0 == vig_pos*crg_pos - vrg_pos*cig_pos)
+    JuMP.@NLconstraint(pm.model, 0.0 == crg_max*cig - cig_max*crg)
+    JuMP.@NLconstraint(pm.model, crg_max^2 + cig_max^2 == cmax^2)
+    JuMP.@NLconstraint(pm.model, crg_max * crg >= 0.0)
+    JuMP.@NLconstraint(pm.model, cig_max * cig >= 0.0)
+    JuMP.@NLconstraint(pm.model, crg^2 + cig^2 <= cmax^2)
+    JuMP.@NLconstraint(pm.model, (crg^2 + cig^2 - cmax^2)*z >= 0.0)
+    JuMP.@NLconstraint(pm.model, p_int == vrg*crg + vig*cig)
+    JuMP.@NLconstraint(pm.model, 0.0 == vig*crg - vrg*cig)
     JuMP.@NLconstraint(pm.model, p_int <= pg/3)
     JuMP.@NLconstraint(pm.model, p_int >= (1-z) * pg/3)
-
 end
 
 ""
