@@ -86,6 +86,8 @@ function variable_mc_generation(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounde
     # _PM.var(pm, nw)[:qg] = Dict{Int, Any}()
 end
 
+
+
 function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :solar)], base_name="$(nw)_p_int_$(i)",
