@@ -29,5 +29,5 @@ ipopt_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 
 @testset "PowerModelsProtection" begin
     # include("fs.jl")
-    include("fsmc.jl")
+    include("fs_mc.jl")
 end
