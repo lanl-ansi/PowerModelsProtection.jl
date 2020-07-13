@@ -164,6 +164,47 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
     end
 end
 
+function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+    p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
+        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_p_int_$(i)",
+        start = 0
+    )
+
+    for (i,gen) in pq_gen_refs(pm, nw)
+        JuMP.set_lower_bound(p_int[i], 0.0)
+        JuMP.set_upper_bound(p_int[i], gen["pmax"])
+    end
+
+    q_int = var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
+        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_q_int_$(i)",
+        start = 0
+    )
+
+    for (i,gen) in pq_gen_refs(pm, nw)
+        JuMP.set_lower_bound(q_int[i], gen["qmin"])
+        JuMP.set_upper_bound(q_int[i], gen["qmax"])
+    end
+
+
+    crg_pos_max= var(pm, nw)[:crg_max] = JuMP.@variable(pm.model,
+        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_crg_pos_max_$(i)",
+        start = 0.0
+    )
+    cig_pos_max = var(pm, nw)[:cig_max] = JuMP.@variable(pm.model,
+        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_cig_pos_max_$(i)",
+        start = 0.0
+    )
+
+    z = var(pm, nw)[:z] = JuMP.@variable(pm.model,
+        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_z_$(i)",
+        start = 0.0
+    )
+    for i in pq_gen_ids(pm, nw)
+        JuMP.set_lower_bound(z[i], 0.0)
+        JuMP.set_upper_bound(z[i], 1.0)
+    end
+end
+
 
 ""
 function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
@@ -238,5 +279,76 @@ function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bound
     end
 end
 
+function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+    p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_p_int_$(i)",
+        start = 0
+    )
+    for i in ids(pm, nw, :solar)
+        index = pm.ref[:nw][nw][:solar][i]
+        gen = pm.ref[:nw][nw][:gen][index]
+        pmax = 0.0
+        if gen["solar_max"] < gen["kva"] * gen["pf"]
+            pmax = gen["solar_max"]
+        else
+            pmax = gen["kva"] * gen["pf"]
+        end
+        JuMP.set_lower_bound(p_int[i], 0.0)
+        JuMP.set_upper_bound(p_int[i], pmax/3)
+    end
+
+    q_int = var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_q_int_$(i)",
+        start = 0
+    )
+    for i in ids(pm, nw, :solar)
+        index = pm.ref[:nw][nw][:solar][i]
+        gen = pm.ref[:nw][nw][:gen][index]
+        pmax = 0.0
+        if gen["solar_max"] < gen["kva"] * gen["pf"]
+            pmax = gen["solar_max"]
+        else
+            pmax = gen["kva"] * gen["pf"]
+        end
+        JuMP.set_lower_bound(q_int[i], 0.0)
+        JuMP.set_upper_bound(q_int[i], pmax/3)
+    end
+
+    crg_pos= var(pm, nw)[:crg_pos] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_crg_pos_$(i)",
+        start = 0.0
+    )
+    cig_pos = var(pm, nw)[:cig_pos] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_cig_pos_$(i)",
+        start = 0.0
+    )  
+
+    vrg_pos= var(pm, nw)[:vrg_pos] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_vrg_pos_$(i)",
+        start = 0.0
+    )
+    vig_pos = var(pm, nw)[:vig_pos] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_vig_pos_$(i)",
+        start = 0.0
+    ) 
+
+    crg_pos_max= var(pm, nw)[:crg_pos_max] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_crg_pos_max_$(i)",
+        start = 0.0
+    )
+    cig_pos_max = var(pm, nw)[:cig_pos_max] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_cig_pos_max_$(i)",
+        start = 0.0
+    )
+
+    z= var(pm, nw)[:z] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_z_$(i)",
+        start = 0.0
+    )
+    for i in ids(pm, nw, :solar)
+        JuMP.set_lower_bound(z[i], 0.0)
+        JuMP.set_upper_bound(z[i], 1.0)
+    end
+end
 
 

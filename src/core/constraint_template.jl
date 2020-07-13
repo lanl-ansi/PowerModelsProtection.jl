@@ -227,6 +227,11 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=p
     constraint_mc_pq_inverter(pm, nw, index, i, pmax, 0.0, cmax)
 end
 
+function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    index = pm.ref[:nw][nw][:solar][i]
+    gen = pm.ref[:nw][nw][:gen][index]
+    constraint_grid_formimg_inverter(pm, nw, index, i, 1.0, 0, gen["kva"], gen["i_max"])
+end
 
 ""
 function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
