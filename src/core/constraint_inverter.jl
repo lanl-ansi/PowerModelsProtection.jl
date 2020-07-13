@@ -298,7 +298,7 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
     JuMP.@NLconstraint(pm.model, (crg_pos^2 + cig_pos^2 - cmax^2)*z >= 0.0)
     JuMP.@NLconstraint(pm.model, p_int == vrg_pos*crg_pos + vig_pos*cig_pos)
     JuMP.@NLconstraint(pm.model, q_int == vig_pos*crg_pos - vrg_pos*cig_pos)
-    JuMP.@NLconstraint(pm.model, p_int^2 + q_int^2 <= smax)
+    JuMP.@NLconstraint(pm.model, p_int^2 + q_int^2 <= (smax/3)^2)
     JuMP.@NLconstraint(pm.model, vrg_pos^2 + vig_pos^2 <= vm)
     JuMP.@NLconstraint(pm.model, vrg_pos^2 + vig_pos^2 >= (1-z) * vm)
     # JuMP.@NLconstraint(pm.model, vig - vrg *tan(va) == 0)
