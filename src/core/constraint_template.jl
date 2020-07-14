@@ -230,7 +230,16 @@ end
 function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar][i]
     gen = pm.ref[:nw][nw][:gen][index]
-    constraint_grid_formimg_inverter(pm, nw, index, i, 1.0, 0, gen["kva"], gen["i_max"])
+    bus_i = gen["gen_bus"]
+    bus = pm.ref[:nw][nw][:bus][bus_i]
+
+    cnds = _PM.conductor_ids(pm; nw=nw)
+    ncnds = length(cnds)  
+
+    vrstar = [bus["vm"][c]*cos(bus["va"][c]) for c in cnds]
+    vistar = [bus["vm"][c]*sin(bus["va"][c]) for c in cnds]    
+    M = 2
+    constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, gen["kva"], gen["i_max"], M)
 end
 
 ""
