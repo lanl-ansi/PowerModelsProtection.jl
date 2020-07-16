@@ -314,11 +314,23 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
     # Add voltage regulation constraints per phase
     # positive sequence voltage constraint won't work as current-limiting
     # faulted phase(s) will introduce imbalance
+    # for c in _PM.conductor_ids(pm; nw=n)
+    #     JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c]*crg[c] + x[c]*cig[c])
+    #     JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c]*cig[c] - x[c]*crg[c])
+    # end
+
     for c in cnds
-        JuMP.@NLconstraint(pm.model, vrstar[c] <= vrg[c] + M*z[c])
-        JuMP.@NLconstraint(pm.model, vrg[c] - M*z[c] <= vrstar[c])        
-        JuMP.@NLconstraint(pm.model, vistar[c] <= vig[c] + M*z[c])
-        JuMP.@NLconstraint(pm.model, vig[c] - M*z[c] <= vistar[c])   
+        JuMP.@NLconstraint(pm.model, vrstar[c] - r[c]*crg[c] + x[c]*cig[c] <= vrg[c] + M*z[c])
+        JuMP.@NLconstraint(pm.model, vrstar[c] - r[c]*crg[c] + x[c]*cig[c] >= vrg[c] - M*z[c])
+        JuMP.@NLconstraint(pm.model, vistar[c] - r[c]*cig[c] - x[c]*crg[c] <= vig[c] + M*z[c])
+        JuMP.@NLconstraint(pm.model, vistar[c] - r[c]*cig[c] - x[c]*crg[c] >= vig[c] - M*z[c])
+    end
+
+    # also constrain v to be along the line between vstar and the origin
+    for c in cnds
+        JuMP.@constraint(pm.model, vr[c]/vrstar[c] = vi[c]/vistar[c])
+        JuMP.@NLconstraint(pm.model, vrstar[c]*vr[c] >= 0.0)
+        JuMP.@NLconstraint(pm.model, vistar[c]*vi[c] >= 0.0)        
     end
 end
 
