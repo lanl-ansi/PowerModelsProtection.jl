@@ -326,11 +326,11 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
         JuMP.@NLconstraint(pm.model, vistar[c] - r[c]*cig[c] - x[c]*crg[c] >= vig[c] - M*z[c])
     end
 
-    # also constrain v to be along the line between vstar and the origin
+    # also constrain v (after virtual impedance) to be along the line between vstar and the origin
     for c in cnds
-        JuMP.@constraint(pm.model, vr[c]/vrstar[c] = vi[c]/vistar[c])
-        JuMP.@NLconstraint(pm.model, vrstar[c]*vr[c] >= 0.0)
-        JuMP.@NLconstraint(pm.model, vistar[c]*vi[c] >= 0.0)        
+        JuMP.@constraint(pm.model, (vr[c] + r[c]*crg[c] - x[c]*cig[c])/vrstar[c] = (vi[c] + r[c]*cig[c] + x[c]*crg[c])/vistar[c])
+        JuMP.@NLconstraint(pm.model, vrstar[c]*(vr[c] + r[c]*crg[c] - x[c]*cig[c]) >= 0.0)
+        JuMP.@NLconstraint(pm.model, vistar[c]*(vi[c] + r[c]*cig[c] + x[c]*crg[c]) >= 0.0)        
     end
 end
 
