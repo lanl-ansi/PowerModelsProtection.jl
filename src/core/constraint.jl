@@ -280,3 +280,23 @@ function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0,
         JuMP.@constraint(pm.model, vi[c] == vi0[c])
     end
 end
+
+function constraint_mc_voltage_magnitude_only(pm::_PM.AbstractIVRModel, n::Int, i, vm)
+    vr = var(pm, n, :vr, i)
+    vi = var(pm, n, :vi, i)
+
+    for c in _PM.conductor_ids(pm; nw=n)
+        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 == vm[c]^2)
+    end
+end
+
+function constraint_mc_theta_ref(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
+    vr = var(pm, n, :vr, i)
+    vi = var(pm, n, :vi, i)
+
+    for c in _PM.conductor_ids(pm; nw=n)
+        JuMP.@constraint(pm.model, vr[c] * vi0[c] == vi[c] * vr0[c])
+        JuMP.@constraint(pm.model, vr[c] * vr0[c] >= 0.0)
+        JuMP.@constraint(pm.model, vi[c] * vi0[c] >= 0.0)
+    end
+end

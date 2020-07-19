@@ -280,75 +280,45 @@ function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bound
 end
 
 function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
-    p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_p_int_$(i)",
+    cnds = _PM.conductor_ids(pm; nw=nw)
+    ncnds = length(cnds)
+
+    # for droop formulation
+    # var(pm, nw)[:r] = Dict(i => JuMP.@variable(pm.model,
+    #            [c in 1:ncnds], base_name="$(nw)_r_$(i)",
+    #            start = 0.0,
+    #            lower_bound = 0.0,
+    #            upper_bound = 1
+    #     ) for i in ids(pm, nw, :solar)
+    # )
+
+    # var(pm, nw)[:x] = Dict(i => JuMP.@variable(pm.model,
+    #            [c in 1:ncnds], base_name="$(nw)_x_$(i)",
+    #            start = 0.0,
+    #            lower_bound = 0.0,
+    #            upper_bound = 1
+    #     ) for i in ids(pm, nw, :solar)
+    # )
+
+    var(pm, nw)[:z] = Dict(i => JuMP.@variable(pm.model,
+               [c in 1:ncnds], base_name="$(nw)_z_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1
+        ) for i in ids(pm, nw, :solar)
+    )
+
+    p = var(pm, nw)[:p] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_p_$(i)",
         start = 0
     )
-    for i in ids(pm, nw, :solar)
-        index = pm.ref[:nw][nw][:solar][i]
-        gen = pm.ref[:nw][nw][:gen][index]
-        pmax = 0.0
-        if gen["solar_max"] < gen["kva"] * gen["pf"]
-            pmax = gen["solar_max"]
-        else
-            pmax = gen["kva"] * gen["pf"]
-        end
-        JuMP.set_lower_bound(p_int[i], 0.0)
-        JuMP.set_upper_bound(p_int[i], pmax/3)
-    end
 
-    q_int = var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_q_int_$(i)",
+    q = var(pm, nw)[:q] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_q_$(i)",
         start = 0
     )
-    for i in ids(pm, nw, :solar)
-        index = pm.ref[:nw][nw][:solar][i]
-        gen = pm.ref[:nw][nw][:gen][index]
-        pmax = 0.0
-        if gen["solar_max"] < gen["kva"] * gen["pf"]
-            pmax = gen["solar_max"]
-        else
-            pmax = gen["kva"] * gen["pf"]
-        end
-        JuMP.set_lower_bound(q_int[i], 0.0)
-        JuMP.set_upper_bound(q_int[i], pmax/3)
-    end
 
-    crg_pos= var(pm, nw)[:crg_pos] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_crg_pos_$(i)",
-        start = 0.0
-    )
-    cig_pos = var(pm, nw)[:cig_pos] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_cig_pos_$(i)",
-        start = 0.0
-    )  
-
-    vrg_pos= var(pm, nw)[:vrg_pos] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_vrg_pos_$(i)",
-        start = 0.0
-    )
-    vig_pos = var(pm, nw)[:vig_pos] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_vig_pos_$(i)",
-        start = 0.0
-    ) 
-
-    crg_pos_max= var(pm, nw)[:crg_pos_max] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_crg_pos_max_$(i)",
-        start = 0.0
-    )
-    cig_pos_max = var(pm, nw)[:cig_pos_max] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_cig_pos_max_$(i)",
-        start = 0.0
-    )
-
-    z= var(pm, nw)[:z] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_z_$(i)",
-        start = 0.0
-    )
-    for i in ids(pm, nw, :solar)
-        JuMP.set_lower_bound(z[i], 0.0)
-        JuMP.set_upper_bound(z[i], 1.0)
-    end
 end
+
 
 

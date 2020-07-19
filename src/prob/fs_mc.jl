@@ -30,13 +30,15 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
     variable_mc_branch_current(pm, bounded=false)
     variable_mc_transformer_current(pm, bounded=false)
-    variable_mc_generation(pm, bounded=false)
+    variable_mc_generation(pm, bounded=false) 
+  
     # variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
 
     for (i,bus) in ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3
-        constraint_mc_ref_bus_voltage(pm, i)
+        # constraint_mc_ref_bus_voltage(pm, i)
+        constraint_mc_voltage_magnitude_only(pm, i)
     end
 
     for id in ids(pm, :gen)

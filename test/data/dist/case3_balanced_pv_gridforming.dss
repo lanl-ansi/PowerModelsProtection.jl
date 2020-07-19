@@ -20,15 +20,15 @@ New linecode.4/0QUAD nphases=3 basefreq=50  ! ohms per 100ft
 
 !Define lines
 
-!New Line.OHLine  bus1=sourcebus.1.2.3  Primary.1.2.3  linecode = 556MCM   length=1  ! 5 mile line
+New Line.OHLine  bus1=sourcebus.1.2.3  Primary.1.2.3  linecode = 556MCM   length=1  ! 5 mile line
 New Line.Quad    Bus1=Primary.1.2.3  loadbus.1.2.3  linecode = 4/0QUAD  length=1   ! 100 ft
 New Line.PV_line    Bus1=PV_bus.1.2.3 Primary.1.2.3  linecode = 4/0QUAD  length=1   ! 100 ft
 
 !Loads - single phase
 
-!New Load.L1 phases=3  bus1=loadbus.1.2.3  Conn=Wye kW=60  kvar=30  model=1 kV=.4
+!New Load.L1 phases=3  bus1=loadbus.1.2.3  Conn=Wye kW=1  kvar=.5  model=1 kV=.4
 
-New PVSystem.PV1 phases=3 bus1=PV_bus.1.2.3 kv=0.4 conn=wye irradiance=1 Pmpp=25 kva=25 pf=1 balanced=true limitcurrent=true vminpu=0.9090909
+New PVSystem.PV1 phases=3 bus1=PV_bus.1.2.3 kv=0.4 conn=wye irradiance=1 Pmpp=25 kva=10 pf=1 balanced=true limitcurrent=true vminpu=0.9090909
 
 
 Set voltagebases=[0.4]

@@ -137,35 +137,48 @@
     #     @test result["pv_bus"]["ll"][1]["termination_status"] == MOI.LOCALLY_SOLVED
     # end
     @testset "3-bus grid forming pv fault test" begin
-        data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
         data["fault"] = Dict{String, Any}()
-        data["fault"]["1"] = Dict("type" => "3p", "bus" => "loadbus", "phases" => [1,2,3], "gr" => 50)
+        data["fault"]["1"] = Dict("type" => "3p", "bus" => "loadbus", "phases" => [2,3], "gr" => 50)
         result = FS.run_mc_fault_study(data, ipopt_solver)
         @test result["loadbus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        i_r = result["loadbus"]["3p"][1]["solution"]["line"]["pv_line"]["cr_fr"]
+        i_i = result["loadbus"]["3p"][1]["solution"]["line"]["pv_line"]["ci_fr"]
+        v_r = result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vr"]
+        v_i = result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vi"]
         for c = 1:3
-            vm = sqrt(result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vr"][c]^2 + result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vi"][c]^2)
-            @test isapprox(vm, 1.0; atol = 1e-3)
+            v = v_r[c] + v_i[c] *im
+            i = i_r[c] + i_i[c] *im
+            println("conductor: ", string(c), " voltage: ", string(abs(v)), "/_", string(angle(v)*180/pi), " current: ", string(abs(i)), "/_", string(angle(i)*180/pi))
         end
-        data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
         data["fault"] = Dict{String, Any}()
-        data["fault"]["1"] = Dict("type" => "3p", "bus" => "loadbus", "phases" => [1,2,3], "gr" => .0005)
+        data["fault"]["1"] = Dict("type" => "ll", "bus" => "loadbus", "phases" => [2,3], "gr" => .00050)
         result = FS.run_mc_fault_study(data, ipopt_solver)
-        @test result["loadbus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test result["loadbus"]["ll"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        i_r = result["loadbus"]["ll"][1]["solution"]["line"]["pv_line"]["cr_fr"]
+        i_i = result["loadbus"]["ll"][1]["solution"]["line"]["pv_line"]["ci_fr"]
+        v_r = result["loadbus"]["ll"][1]["solution"]["bus"]["pv_bus"]["vr"]
+        v_i = result["loadbus"]["ll"][1]["solution"]["bus"]["pv_bus"]["vi"]
         for c = 1:3
-            vm = sqrt(result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vr"][c]^2 + result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vi"][c]^2)
-            println(vm)
+            v = v_r[c] + v_i[c] *im
+            i = i_r[c] + i_i[c] *im
+            println("conductor: ", string(c), " voltage: ", string(abs(v)), "/_", string(angle(v)*180/pi), " current: ", string(abs(i)), "/_", string(angle(i)*180/pi))
         end
-        # @test result["loadbus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
-        # data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
-        # data["fault"] = Dict{String, Any}()
-        # data["fault"]["1"] = Dict("type" => "lg", "bus" => "pv_bus", "phases" => [1], "gr" => .0005)
-        # result = FS.run_mc_fault_study(data, ipopt_solver)
-        # @test result["pv_bus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
-        # data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
-        # data["fault"] = Dict{String, Any}()
-        # data["fault"]["1"] = Dict("type" => "ll", "bus" => "pv_bus", "phases" => [1,2], "gr" => .0005)
-        # result = FS.run_mc_fault_study(data, ipopt_solver)
-        # @test result["pv_bus"]["ll"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
+        data["fault"] = Dict{String, Any}()
+        data["fault"]["1"] = Dict("type" => "lg", "bus" => "loadbus", "phases" => [2], "gr" => .00050)
+        result = FS.run_mc_fault_study(data, ipopt_solver)
+        @test result["loadbus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        i_r = result["loadbus"]["lg"][1]["solution"]["line"]["pv_line"]["cr_fr"]
+        i_i = result["loadbus"]["lg"][1]["solution"]["line"]["pv_line"]["ci_fr"]
+        v_r = result["loadbus"]["lg"][1]["solution"]["bus"]["pv_bus"]["vr"]
+        v_i = result["loadbus"]["lg"][1]["solution"]["bus"]["pv_bus"]["vi"]
+        for c = 1:3
+            v = v_r[c] + v_i[c] *im
+            i = i_r[c] + i_i[c] *im
+            println("conductor: ", string(c), " voltage: ", string(abs(v)), "/_", string(angle(v)*180/pi), " current: ", string(abs(i)), "/_", string(angle(i)*180/pi))
+        end
     end
 
 end

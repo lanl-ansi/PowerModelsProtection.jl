@@ -250,89 +250,164 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, 
     JuMP.@NLconstraint(pm.model, p_int >= (1-z) * pg/3)
 end
 
-function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, M, pmax, cmax)
-    ar = -1/6
-    ai = sqrt(3)/6
-    a2r = -1/6
-    a2i = -sqrt(3)/6
-
+function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, pmax, smax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
     crg =  var(pm, nw, :crg, i)
     cig =  var(pm, nw, :cig, i)
 
-    p = var(pm, nw, :p_int, bus_id)
-    crg_pos= var(pm, nw, :crg_pos, bus_id)
-    cig_pos = var(pm, nw, :cig_pos, bus_id)
-    vrg_pos= var(pm, nw, :vrg_pos, bus_id)
-    vig_pos = var(pm, nw, :vig_pos, bus_id)
-    crg_pos_max = var(pm, nw, :crg_pos_max, bus_id)
-    cig_pos_max = var(pm, nw, :cig_pos_max, bus_id)
     z = var(pm, nw, :z, bus_id)
-
-    cnds = _PM.conductor_ids(pm; nw=nw)
-    ncnds = length(cnds)   
-
+    p = var(pm, nw, :p, bus_id)
+    q = var(pm, nw, :q, bus_id) 
     
-    # Zero-Sequence
-    # Disabling this, assume we have 4 leg inverter topology
-    # JuMP.@constraint(pm.model, sum(crg[c] for c in cnds) == 0)
-    # JuMP.@constraint(pm.model, sum(cig[c] for c in cnds) == 0)
+    cnds = _PM.conductor_ids(pm; nw=nw)
+    ncnds = length(cnds)
 
-    # Negative-Sequence
-    # Removed this - grid forming inverters can inject negative sequence for unbalanced loads
+    vm = [vrstar[c]^2 + vistar[c]^2 for c in 1:ncnds]
 
-    # Positive-Sequence
-    # TODO: get rid of these constraints & replace with power calculation per phase
-    JuMP.@constraint(pm.model, (1/3)*crg[1] + ar*crg[2] - ai*cig[2] + a2r*crg[3] - a2i*cig[3] == crg_pos)
-    JuMP.@constraint(pm.model, (1/3)*cig[1] + ar*cig[2] + ai*crg[2] + a2r*cig[3] + a2i*crg[3] == cig_pos)
-    JuMP.@constraint(pm.model, (1/3)*vr[1] + ar*vr[2] - ai*vi[2] + a2r*vr[3] - a2i*vi[3] == vrg_pos)
-    JuMP.@constraint(pm.model, (1/3)*vi[1] + ar*vi[2] + ai*vr[2] + a2r*vi[3] + a2i*vr[3] == vig_pos)
-
-    JuMP.@NLconstraint(pm.model, 0.0 == crg_pos_max*cig_pos - cig_pos_max*crg_pos)
-    JuMP.@NLconstraint(pm.model, crg_pos_max^2 + cig_pos_max^2 == cmax^2)
-    JuMP.@NLconstraint(pm.model, crg_pos_max * crg_pos >= 0.0)
-    JuMP.@NLconstraint(pm.model, cig_pos_max * cig_pos >= 0.0)
-
-    # handle current limiting on a per-phase basis
-    for c in cnds
+    println(pmax)
+    for c in 1:ncnds
+        # current limits 
         JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
+
+        # terminal voltage mag
+        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[c] * (1+z[c]))
+        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 >= vm[c] * (1-z[c]))
+
+        if !(c in pm.ref[:nw][nw][:active_fault]["phases"])
+            JuMP.@NLconstraint(pm.model, 0.0 == vr[c]*vistar[c] - vi[c]*vrstar[c])
+            JuMP.@NLconstraint(pm.model, vr[c] * vrstar[c] >= 0.0)
+            JuMP.@NLconstraint(pm.model, vi[c] * vistar[c] >= 0.0)
+        end
+        
+        
     end
 
-    # TODO: I think that there is already a costraint in PMD for power - check
-    # if I really need thi
-    JuMP.@NLconstraint(pm.model, p == vrg_pos*crg_pos + vig_pos*cig_pos)
-    JuMP.@constraint(pm.model, 3*p <= pmax)
-    JuMP.@constraint(pm.model, p >= 0)
+    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
+    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
 
-    # Removing apparent power constraint, this is covered by current constraint
-    # JuMP.@NLconstraint(pm.model, q == vig_pos*crg_pos - vrg_pos*cig_pos)
-    # JuMP.@NLconstraint(pm.model, p^2 + q_int^2 <= (smax/3)^2)
+    JuMP.@constraint(pm.model, p <= pmax)
+    JuMP.@constraint(pm.model, p >= 0.0)
 
-    # Add voltage regulation constraints per phase
-    # positive sequence voltage constraint won't work as current-limiting
-    # faulted phase(s) will introduce imbalance
-    # for c in _PM.conductor_ids(pm; nw=n)
-    #     JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c]*crg[c] + x[c]*cig[c])
-    #     JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c]*cig[c] - x[c]*crg[c])
-    # end
+    JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax)
 
-    for c in cnds
-        JuMP.@NLconstraint(pm.model, vrstar[c] - r[c]*crg[c] + x[c]*cig[c] <= vrg[c] + M*z[c])
-        JuMP.@NLconstraint(pm.model, vrstar[c] - r[c]*crg[c] + x[c]*cig[c] >= vrg[c] - M*z[c])
-        JuMP.@NLconstraint(pm.model, vistar[c] - r[c]*cig[c] - x[c]*crg[c] <= vig[c] + M*z[c])
-        JuMP.@NLconstraint(pm.model, vistar[c] - r[c]*cig[c] - x[c]*crg[c] >= vig[c] - M*z[c])
-    end
-
-    # also constrain v (after virtual impedance) to be along the line between vstar and the origin
-    for c in cnds
-        JuMP.@constraint(pm.model, (vr[c] + r[c]*crg[c] - x[c]*cig[c])/vrstar[c] = (vi[c] + r[c]*cig[c] + x[c]*crg[c])/vistar[c])
-        JuMP.@NLconstraint(pm.model, vrstar[c]*(vr[c] + r[c]*crg[c] - x[c]*cig[c]) >= 0.0)
-        JuMP.@NLconstraint(pm.model, vistar[c]*(vi[c] + r[c]*cig[c] + x[c]*crg[c]) >= 0.0)        
-    end
 end
+
+function constraint_grid_formimg_inverter_droop(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, M, pmax, cmax)
+    vr = var(pm, nw, :vr, bus_id)
+    vi = var(pm, nw, :vi, bus_id)
+
+    crg =  var(pm, nw, :crg, i)
+    cig =  var(pm, nw, :cig, i)
+
+    r = var(pm, nw, :r, bus_id)
+    x = var(pm, nw, :x, bus_id)
+    z = var(pm, nw, :z, bus_id)
+    
+    cnds = _PM.conductor_ids(pm; nw=nw)
+    ncnds = length(cnds)
+
+
+    for c in 1:cnds
+        # current limits 
+        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+        JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
+
+        # terminal voltage
+        JuMP.@NLconstraint(pm.model, vrstar[c] - r[c]*crg[c] + x[c]*cig[c] == vr[c])
+        JuMP.@NLconstraint(pm.model, vistar[c] - r[c]*cig[c] - x[c]*crg[c] == vi[c])
+        
+    end
+
+    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:cnds) == pmax)
+end
+  
+# function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, M, pmax, cmax)
+#     ar = -1/6
+#     ai = sqrt(3)/6
+#     a2r = -1/6
+#     a2i = -sqrt(3)/6
+
+#     vr = var(pm, nw, :vr, bus_id)
+#     vi = var(pm, nw, :vi, bus_id)
+
+#     crg =  var(pm, nw, :crg, i)
+#     cig =  var(pm, nw, :cig, i)
+
+#     p = var(pm, nw, :p_int, bus_id)
+#     crg_pos= var(pm, nw, :crg_pos, bus_id)
+#     cig_pos = var(pm, nw, :cig_pos, bus_id)
+#     vrg_pos= var(pm, nw, :vrg_pos, bus_id)
+#     vig_pos = var(pm, nw, :vig_pos, bus_id)
+#     crg_pos_max = var(pm, nw, :crg_pos_max, bus_id)
+#     cig_pos_max = var(pm, nw, :cig_pos_max, bus_id)
+#     z = var(pm, nw, :z, bus_id)
+
+#     cnds = _PM.conductor_ids(pm; nw=nw)
+#     ncnds = length(cnds)   
+
+    
+#     # Zero-Sequence
+#     # Disabling this, assume we have 4 leg inverter topology
+#     # JuMP.@constraint(pm.model, sum(crg[c] for c in cnds) == 0)
+#     # JuMP.@constraint(pm.model, sum(cig[c] for c in cnds) == 0)
+
+#     # Negative-Sequence
+#     # Removed this - grid forming inverters can inject negative sequence for unbalanced loads
+
+#     # Positive-Sequence
+#     # TODO: get rid of these constraints & replace with power calculation per phase
+#     JuMP.@constraint(pm.model, (1/3)*crg[1] + ar*crg[2] - ai*cig[2] + a2r*crg[3] - a2i*cig[3] == crg_pos)
+#     JuMP.@constraint(pm.model, (1/3)*cig[1] + ar*cig[2] + ai*crg[2] + a2r*cig[3] + a2i*crg[3] == cig_pos)
+#     JuMP.@constraint(pm.model, (1/3)*vr[1] + ar*vr[2] - ai*vi[2] + a2r*vr[3] - a2i*vi[3] == vrg_pos)
+#     JuMP.@constraint(pm.model, (1/3)*vi[1] + ar*vi[2] + ai*vr[2] + a2r*vi[3] + a2i*vr[3] == vig_pos)
+
+#     JuMP.@NLconstraint(pm.model, 0.0 == crg_pos_max*cig_pos - cig_pos_max*crg_pos)
+#     JuMP.@NLconstraint(pm.model, crg_pos_max^2 + cig_pos_max^2 == cmax^2)
+#     JuMP.@NLconstraint(pm.model, crg_pos_max * crg_pos >= 0.0)
+#     JuMP.@NLconstraint(pm.model, cig_pos_max * cig_pos >= 0.0)
+
+#     # handle current limiting on a per-phase basis
+#     for c in cnds
+#         JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+#         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
+#     end
+
+#     # TODO: I think that there is already a costraint in PMD for power - check
+#     # if I really need thi
+#     JuMP.@NLconstraint(pm.model, p == vrg_pos*crg_pos + vig_pos*cig_pos)
+#     JuMP.@constraint(pm.model, 3*p <= pmax)
+#     JuMP.@constraint(pm.model, p >= 0)
+
+#     # Removing apparent power constraint, this is covered by current constraint
+#     # JuMP.@NLconstraint(pm.model, q == vig_pos*crg_pos - vrg_pos*cig_pos)
+#     # JuMP.@NLconstraint(pm.model, p^2 + q_int^2 <= (smax/3)^2)
+
+#     # Add voltage regulation constraints per phase
+#     # positive sequence voltage constraint won't work as current-limiting
+#     # faulted phase(s) will introduce imbalance
+#     # for c in _PM.conductor_ids(pm; nw=n)
+#     #     JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c]*crg[c] + x[c]*cig[c])
+#     #     JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c]*cig[c] - x[c]*crg[c])
+#     # end
+
+#     for c in cnds
+#         JuMP.@NLconstraint(pm.model, vrstar[c] - r[c]*crg[c] + x[c]*cig[c] <= vrg[c] + M*z[c])
+#         JuMP.@NLconstraint(pm.model, vrstar[c] - r[c]*crg[c] + x[c]*cig[c] >= vrg[c] - M*z[c])
+#         JuMP.@NLconstraint(pm.model, vistar[c] - r[c]*cig[c] - x[c]*crg[c] <= vig[c] + M*z[c])
+#         JuMP.@NLconstraint(pm.model, vistar[c] - r[c]*cig[c] - x[c]*crg[c] >= vig[c] - M*z[c])
+#     end
+
+#     # also constrain v (after virtual impedance) to be along the line between vstar and the origin
+#     for c in cnds
+#         JuMP.@constraint(pm.model, (vr[c] + r[c]*crg[c] - x[c]*cig[c])/vrstar[c] = (vi[c] + r[c]*cig[c] + x[c]*crg[c])/vistar[c])
+#         JuMP.@NLconstraint(pm.model, vrstar[c]*(vr[c] + r[c]*crg[c] - x[c]*cig[c]) >= 0.0)
+#         JuMP.@NLconstraint(pm.model, vistar[c]*(vi[c] + r[c]*cig[c] + x[c]*crg[c]) >= 0.0)        
+#     end
+# end
+
 
 ""
 function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
