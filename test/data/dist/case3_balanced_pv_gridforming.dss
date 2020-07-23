@@ -28,7 +28,7 @@ New Line.PV_line    Bus1=PV_bus.1.2.3 Primary.1.2.3  linecode = 4/0QUAD  length=
 
 !New Load.L1 phases=3  bus1=loadbus.1.2.3  Conn=Wye kW=1  kvar=.5  model=1 kV=.4
 
-New PVSystem.PV1 phases=3 bus1=PV_bus.1.2.3 kv=0.4 conn=wye irradiance=1 Pmpp=25 kva=10 pf=1 balanced=true limitcurrent=true vminpu=0.9090909
+New PVSystem.PV1 phases=3 bus1=PV_bus.1.2.3 kv=0.4 conn=wye irradiance=1 Pmpp=25 kva=25 pf=1 balanced=true limitcurrent=true vminpu=0.9090909
 
 
 Set voltagebases=[0.4]

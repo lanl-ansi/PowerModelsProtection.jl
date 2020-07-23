@@ -422,6 +422,27 @@ function get_fault_buses!(data::Dict{String,Any})
     data["fault_buses"] = hold
 end
 
+function check_microgrid!(data::Dict{String,Any})
+    if haskey(data, "microgrid")
+        if data["microgrid"]
+            index_bus = 0
+            index_gen = 0
+            bus_i = 0
+            for (index, bus) in data["bus"]
+                if bus["bus_type"] == 3 
+                    bus_i = bus["bus_i"]
+                    index_bus = index
+                end
+            end
+            for (index, gen) in data["gen"]
+                gen["gen_bus"] == bus_i ? index_gen = index : nothing
+            end
+            delete!(data["bus"], index_bus)
+            delete!(data["gen"], index_gen)
+        end
+    end
+end
+
 
 # ""
 # function is_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)

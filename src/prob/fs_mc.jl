@@ -1,6 +1,7 @@
 ""
 function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
     # check_pf!(data, solver)
+    check_microgrid!(data)
     add_mc_fault_data!(data)
     solution = Dict{String, Any}()
     faults = deepcopy(data["fault"])
