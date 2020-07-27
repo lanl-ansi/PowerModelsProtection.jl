@@ -295,8 +295,7 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
     JuMP.@constraint(pm.model, p <= pmax)
     JuMP.@constraint(pm.model, p >= 0.0)
 
-    JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax)
-
+    # JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax)
 end
 
 function constraint_grid_formimg_inverter_droop(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, M, pmax, cmax)
