@@ -171,6 +171,22 @@
 
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
         data["fault"] = Dict{String, Any}()
+        data["fault"]["1"] = Dict("type" => "3pg", "bus" => "loadbus", "phases" => [1,2,3], "gr" => .0005, "pr" => .0005)
+        data["microgrid"] = true
+        result = FS.run_mc_fault_study(data, ipopt_solver)
+        @test result["loadbus"]["3pg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        i_r = result["loadbus"]["3pg"][1]["solution"]["line"]["pv_line"]["cr_fr"]
+        i_i = result["loadbus"]["3pg"][1]["solution"]["line"]["pv_line"]["ci_fr"]
+        v_r = result["loadbus"]["3pg"][1]["solution"]["bus"]["pv_bus"]["vr"]
+        v_i = result["loadbus"]["3pg"][1]["solution"]["bus"]["pv_bus"]["vi"]
+        for c = 1:3
+            v = v_r[c] + v_i[c] *im
+            i = i_r[c] + i_i[c] *im
+            println("conductor: ", string(c), " voltage: ", string(abs(v)), "/_", string(angle(v)*180/pi), " current: ", string(abs(i)), "/_", string(angle(i)*180/pi))
+        end
+
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
+        data["fault"] = Dict{String, Any}()
         data["fault"]["1"] = Dict("type" => "ll", "bus" => "loadbus", "phases" => [1,2], "gr" => .0005)
         data["microgrid"] = true
         result = FS.run_mc_fault_study(data, ipopt_solver)
@@ -179,6 +195,22 @@
         i_i = result["loadbus"]["ll"][1]["solution"]["line"]["pv_line"]["ci_fr"]
         v_r = result["loadbus"]["ll"][1]["solution"]["bus"]["pv_bus"]["vr"]
         v_i = result["loadbus"]["ll"][1]["solution"]["bus"]["pv_bus"]["vi"]
+        for c = 1:3
+            v = v_r[c] + v_i[c] *im
+            i = i_r[c] + i_i[c] *im
+            println("conductor: ", string(c), " voltage: ", string(abs(v)), "/_", string(angle(v)*180/pi), " current: ", string(abs(i)), "/_", string(angle(i)*180/pi))
+        end
+
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
+        data["fault"] = Dict{String, Any}()
+        data["fault"]["1"] = Dict("type" => "llg", "bus" => "loadbus", "phases" => [1,2], "gr" => .0005, "pr" => .0005)
+        data["microgrid"] = true
+        result = FS.run_mc_fault_study(data, ipopt_solver)
+        @test result["loadbus"]["llg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        i_r = result["loadbus"]["llg"][1]["solution"]["line"]["pv_line"]["cr_fr"]
+        i_i = result["loadbus"]["llg"][1]["solution"]["line"]["pv_line"]["ci_fr"]
+        v_r = result["loadbus"]["llg"][1]["solution"]["bus"]["pv_bus"]["vr"]
+        v_i = result["loadbus"]["llg"][1]["solution"]["bus"]["pv_bus"]["vi"]
         for c = 1:3
             v = v_r[c] + v_i[c] *im
             i = i_r[c] + i_i[c] *im
