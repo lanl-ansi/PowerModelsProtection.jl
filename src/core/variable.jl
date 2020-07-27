@@ -308,13 +308,13 @@ function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
         ) for i in ids(pm, nw, :solar)
     )
 
-    p = var(pm, nw)[:p] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_p_$(i)",
+    p = var(pm, nw)[:p_solar] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_p_solar_$(i)",
         start = 0
     )
 
-    q = var(pm, nw)[:q] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_q_$(i)",
+    q = var(pm, nw)[:q_solar] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar)], base_name="$(nw)_q_solar_$(i)",
         start = 0
     )
 
