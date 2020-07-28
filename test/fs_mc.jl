@@ -124,17 +124,17 @@
         data["fault"] = Dict{String, Any}()
         data["fault"]["1"] = Dict("type" => "3p", "bus" => "pv_bus", "phases" => [1,2,3], "gr" => 0.0005)
         result = FS.run_mc_fault_study(data, ipopt_solver)
-        @test result["pv_bus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test result["loadbus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
         data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
         data["fault"] = Dict{String, Any}()
         data["fault"]["1"] = Dict("type" => "lg", "bus" => "pv_bus", "phases" => [1], "gr" => 0.0005)
         result = FS.run_mc_fault_study(data, ipopt_solver)
-        @test result["pv_bus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test result["loadbus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
         data = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
         data["fault"] = Dict{String, Any}()
         data["fault"]["1"] = Dict("type" => "ll", "bus" => "pv_bus", "phases" => [1,2], "gr" => 0.0005)
         result = FS.run_mc_fault_study(data, ipopt_solver)
-        @test result["pv_bus"]["ll"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test result["loadbus"]["ll"][1]["termination_status"] == MOI.LOCALLY_SOLVED
     end
     @testset "3-bus grid forming pv fault test" begin
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
@@ -143,12 +143,10 @@
         data["microgrid"] = true
         result = FS.run_mc_fault_study(data, ipopt_solver)
         @test result["loadbus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
-        i_r = result["loadbus"]["3p"][1]["solution"]["line"]["pv_line"]["cr_fr"]
-        i_i = result["loadbus"]["3p"][1]["solution"]["line"]["pv_line"]["ci_fr"]
         v_r = result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vr"]
         v_i = result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vi"]
         v = v_r + 1im*v_i
-        @test isapprox(abs(v[1]), 0.999868; atol = 0.001)
+        @test isapprox(abs(v[1]), 0.999868; atol = 0.01)
 
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
         data["fault"] = Dict{String, Any}()
@@ -156,12 +154,10 @@
         data["microgrid"] = true
         result = FS.run_mc_fault_study(data, ipopt_solver)
         @test result["loadbus"]["3p"][1]["termination_status"] == MOI.LOCALLY_SOLVED
-        i_r = result["loadbus"]["3p"][1]["solution"]["line"]["pv_line"]["cr_fr"]
-        i_i = result["loadbus"]["3p"][1]["solution"]["line"]["pv_line"]["ci_fr"]
         v_r = result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vr"]
         v_i = result["loadbus"]["3p"][1]["solution"]["bus"]["pv_bus"]["vi"]
         v = v_r + 1im*v_i
-        @test isapprox(abs(v[1]), 0.0139318; atol = 0.001)
+        @test isapprox(abs(v[1]), 0.0277888; atol = 0.001)
 
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
         data["fault"] = Dict{String, Any}()
@@ -169,12 +165,10 @@
         data["microgrid"] = true
         result = FS.run_mc_fault_study(data, ipopt_solver)
         @test result["loadbus"]["3pg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
-        i_r = result["loadbus"]["3pg"][1]["solution"]["line"]["pv_line"]["cr_fr"]
-        i_i = result["loadbus"]["3pg"][1]["solution"]["line"]["pv_line"]["ci_fr"]
         v_r = result["loadbus"]["3pg"][1]["solution"]["bus"]["pv_bus"]["vr"]
         v_i = result["loadbus"]["3pg"][1]["solution"]["bus"]["pv_bus"]["vi"]
         v = v_r + 1im*v_i
-        @test isapprox(abs(v[1]), 0.0140812; atol = 0.001)
+        @test isapprox(abs(v[1]), 0.0279377; atol = 0.001)
 
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
         data["fault"] = Dict{String, Any}()
@@ -182,13 +176,11 @@
         data["microgrid"] = true
         result = FS.run_mc_fault_study(data, ipopt_solver)
         @test result["loadbus"]["ll"][1]["termination_status"] == MOI.LOCALLY_SOLVED
-        i_r = result["loadbus"]["ll"][1]["solution"]["line"]["pv_line"]["cr_fr"]
-        i_i = result["loadbus"]["ll"][1]["solution"]["line"]["pv_line"]["ci_fr"]
         v_r = result["loadbus"]["ll"][1]["solution"]["bus"]["pv_bus"]["vr"]
         v_i = result["loadbus"]["ll"][1]["solution"]["bus"]["pv_bus"]["vi"]
         v = v_r + 1im*v_i
-        @test isapprox(abs(v[1]), 0.0197166; atol = 0.001)
-        @test isapprox(abs(v[2]), 0.0228834; atol = 0.001)
+        @test isapprox(abs(v[1]), 0.0299815; atol = 0.001)
+        @test isapprox(abs(v[2]), 0.0342332; atol = 0.001)
         @test isapprox(abs(v[3]), 1.0; atol = 0.001)
 
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
@@ -197,14 +189,12 @@
         data["microgrid"] = true
         result = FS.run_mc_fault_study(data, ipopt_solver)
         @test result["loadbus"]["llg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
-        i_r = result["loadbus"]["llg"][1]["solution"]["line"]["pv_line"]["cr_fr"]
-        i_i = result["loadbus"]["llg"][1]["solution"]["line"]["pv_line"]["ci_fr"]
         v_r = result["loadbus"]["llg"][1]["solution"]["bus"]["pv_bus"]["vr"]
         v_i = result["loadbus"]["llg"][1]["solution"]["bus"]["pv_bus"]["vi"]
         v = v_r + 1im*v_i
-        @test isapprox(abs(v[1]), 0.0157778; atol = 0.001)
-        @test isapprox(abs(v[2]), 0.0158122; atol = 0.001)
-        @test isapprox(abs(v[3]), 1.00443; atol = 0.001)
+        @test isapprox(abs(v[1]), 0.0313028; atol = 0.001)
+        @test isapprox(abs(v[2]), 0.0313028; atol = 0.001)
+        @test isapprox(abs(v[3]), 1.0; atol = 0.001)
 
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
         data["fault"] = Dict{String, Any}()
@@ -212,13 +202,11 @@
         data["microgrid"] = true
         result = FS.run_mc_fault_study(data, ipopt_solver)
         @test result["loadbus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
-        i_r = result["loadbus"]["lg"][1]["solution"]["line"]["pv_line"]["cr_fr"]
-        i_i = result["loadbus"]["lg"][1]["solution"]["line"]["pv_line"]["ci_fr"]
         v_r = result["loadbus"]["lg"][1]["solution"]["bus"]["pv_bus"]["vr"]
         v_i = result["loadbus"]["lg"][1]["solution"]["bus"]["pv_bus"]["vi"]
         v = v_r + 1im*v_i
-        @test isapprox(abs(v[1]), 0.0233274; atol = 0.001)
-        @test isapprox(abs(v[2]), 1.00468; atol = 0.001)
+        @test isapprox(abs(v[1]), 0.0464314; atol = 0.001)
+        @test isapprox(abs(v[2]), 1.0; atol = 0.001)
     end
 
 end
