@@ -276,17 +276,21 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
         JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[c] * (1+z[c]))
         JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 >= vm[c] * (1-z[c]))
 
-        if length(pm.ref[:nw][nw][:active_fault]["phases"]) == 3
-            if c == 1
-                JuMP.@NLconstraint(pm.model, 0.0 == vr[c]*vistar[c] - vi[c]*vrstar[c])
-                JuMP.@NLconstraint(pm.model, vr[c] * vrstar[c] >= 0.0)
-                JuMP.@NLconstraint(pm.model, vi[c] * vistar[c] >= 0.0)
-            end
-        elseif !(c in pm.ref[:nw][nw][:active_fault]["phases"])
-            JuMP.@NLconstraint(pm.model, 0.0 == vr[c]*vistar[c] - vi[c]*vrstar[c])
-            JuMP.@NLconstraint(pm.model, vr[c] * vrstar[c] >= 0.0)
-            JuMP.@NLconstraint(pm.model, vi[c] * vistar[c] >= 0.0)
-        end
+        JuMP.@NLconstraint(pm.model, 0.0 == vr[c]*vistar[c] - vi[c]*vrstar[c])
+        JuMP.@NLconstraint(pm.model, vr[c] * vrstar[c] >= 0.0)
+        JuMP.@NLconstraint(pm.model, vi[c] * vistar[c] >= 0.0)        
+
+        # if length(pm.ref[:nw][nw][:active_fault]["phases"]) == 3
+        #     if c == 1
+        #         JuMP.@NLconstraint(pm.model, 0.0 == vr[c]*vistar[c] - vi[c]*vrstar[c])
+        #         JuMP.@NLconstraint(pm.model, vr[c] * vrstar[c] >= 0.0)
+        #         JuMP.@NLconstraint(pm.model, vi[c] * vistar[c] >= 0.0)
+        #     end
+        # elseif !(c in pm.ref[:nw][nw][:active_fault]["phases"])
+        #     JuMP.@NLconstraint(pm.model, 0.0 == vr[c]*vistar[c] - vi[c]*vrstar[c])
+        #     JuMP.@NLconstraint(pm.model, vr[c] * vrstar[c] >= 0.0)
+        #     JuMP.@NLconstraint(pm.model, vi[c] * vistar[c] >= 0.0)
+        # end
         
         
     end
@@ -297,7 +301,8 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
     JuMP.@constraint(pm.model, p <= pmax)
     JuMP.@constraint(pm.model, p >= 0.0)
 
-    # JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax)
+    JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax)
+
 end
 
 function constraint_grid_formimg_inverter_droop(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, M, pmax, cmax)
