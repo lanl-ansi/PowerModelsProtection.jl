@@ -274,6 +274,9 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
         pmax = gen["kva"]
     end
 
+    r = [0.1, 0.1, 0.2]
+    x = [0.0, 0.0, 0.0]
+
     if "r" in keys(gen)
         r = gen["zr"]
     end

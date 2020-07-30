@@ -66,7 +66,7 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
 
     for i in ids(pm, :solar)
         # constraint_mc_pq_inverter(pm, i)
-        constraint_mc_grid_forming_inverter(pm, i)
+        constraint_mc_grid_forming_inverter_impedance(pm, i)
     end
 
 end

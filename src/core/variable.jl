@@ -164,47 +164,6 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
     end
 end
 
-function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
-    p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
-        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_p_int_$(i)",
-        start = 0
-    )
-
-    for (i,gen) in pq_gen_refs(pm, nw)
-        JuMP.set_lower_bound(p_int[i], 0.0)
-        JuMP.set_upper_bound(p_int[i], gen["pmax"])
-    end
-
-    q_int = var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
-        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_q_int_$(i)",
-        start = 0
-    )
-
-    for (i,gen) in pq_gen_refs(pm, nw)
-        JuMP.set_lower_bound(q_int[i], gen["qmin"])
-        JuMP.set_upper_bound(q_int[i], gen["qmax"])
-    end
-
-
-    crg_pos_max= var(pm, nw)[:crg_max] = JuMP.@variable(pm.model,
-        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_crg_pos_max_$(i)",
-        start = 0.0
-    )
-    cig_pos_max = var(pm, nw)[:cig_max] = JuMP.@variable(pm.model,
-        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_cig_pos_max_$(i)",
-        start = 0.0
-    )
-
-    z = var(pm, nw)[:z] = JuMP.@variable(pm.model,
-        [i in pq_gen_ids(pm, nw)], base_name="$(nw)_z_$(i)",
-        start = 0.0
-    )
-    for i in pq_gen_ids(pm, nw)
-        JuMP.set_lower_bound(z[i], 0.0)
-        JuMP.set_upper_bound(z[i], 1.0)
-    end
-end
-
 
 ""
 function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
