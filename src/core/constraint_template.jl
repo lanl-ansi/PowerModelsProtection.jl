@@ -249,23 +249,41 @@ function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int;
         pmax = gen["kva"]
     end
 
-    constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, pmax, gen["kva"], cmax)
+    constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, pmax, cmax)
 end
 
-# function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
-#     index = pm.ref[:nw][nw][:solar][i]
-#     gen = pm.ref[:nw][nw][:gen][index]
-#     bus_i = gen["gen_bus"]
-#     bus = pm.ref[:nw][nw][:bus][bus_i]
+function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    index = pm.ref[:nw][nw][:solar][i]
+    gen = pm.ref[:nw][nw][:gen][index]
+    bus_i = gen["gen_bus"]
+    bus = pm.ref[:nw][nw][:bus][bus_i]
 
-#     cnds = _PM.conductor_ids(pm; nw=nw)
-#     ncnds = length(cnds)  
+    if !haskey(bus, "vm") && !haskey(bus, "va")
+        bus["vm"] = [1 for c in _PM.conductor_ids(pm; nw=nw)]
+        bus["va"] = [0 -2*pi/3 2*pi/3]
+    end
 
-#     vrstar = [bus["vm"][c]*cos(bus["va"][c]) for c in cnds]
-#     vistar = [bus["vm"][c]*sin(bus["va"][c]) for c in cnds]    
-#     M = 2
-#     constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, gen["kva"], gen["i_max"], M)
-# end
+    cmax = gen["i_max"]
+    vrstar = [bus["vm"][c]*cos(bus["va"][c]) for c in _PM.conductor_ids(pm; nw=nw)]
+    vistar = [bus["vm"][c]*sin(bus["va"][c]) for c in _PM.conductor_ids(pm; nw=nw)]    
+
+    # push into pmax on import and erase this 
+    if gen["solar_max"] < gen["kva"]
+        pmax = gen["solar_max"]
+    else
+        pmax = gen["kva"]
+    end
+
+    if "r" in keys(gen)
+        r = gen["zr"]
+    end
+
+    if "x" in keys(gen)
+        x = gen["zx"]
+    end
+
+    constraint_grid_formimg_inverter_impedance(pm, nw, index, i, vrstar, vistar, r, x, pmax, cmax)
+end
 
 ""
 function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)

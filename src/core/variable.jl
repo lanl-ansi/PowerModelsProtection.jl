@@ -283,22 +283,23 @@ function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
     cnds = _PM.conductor_ids(pm; nw=nw)
     ncnds = length(cnds)
 
-    # for droop formulation
-    # var(pm, nw)[:r] = Dict(i => JuMP.@variable(pm.model,
-    #            [c in 1:ncnds], base_name="$(nw)_r_$(i)",
-    #            start = 0.0,
-    #            lower_bound = 0.0,
-    #            upper_bound = 1
-    #     ) for i in ids(pm, nw, :solar)
-    # )
+    # inverter setpoints for virtual impedance formulation
+    # taking into account virtual impedance voltage drop
+    var(pm, nw)[:vrsp] = Dict(i => JuMP.@variable(pm.model,
+               [c in 1:ncnds], base_name="$(nw)_vrsp_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1
+        ) for i in ids(pm, nw, :solar)
+    )
 
-    # var(pm, nw)[:x] = Dict(i => JuMP.@variable(pm.model,
-    #            [c in 1:ncnds], base_name="$(nw)_x_$(i)",
-    #            start = 0.0,
-    #            lower_bound = 0.0,
-    #            upper_bound = 1
-    #     ) for i in ids(pm, nw, :solar)
-    # )
+    var(pm, nw)[:visp] = Dict(i => JuMP.@variable(pm.model,
+               [c in 1:ncnds], base_name="$(nw)_visp_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1
+        ) for i in ids(pm, nw, :solar)
+    )
 
     var(pm, nw)[:z] = Dict(i => JuMP.@variable(pm.model,
                [c in 1:ncnds], base_name="$(nw)_z_$(i)",
