@@ -164,15 +164,14 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
     end
 end
 
-
 ""
 function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_p_int_$(i)",
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_p_int_$(i)",
         start = 0
     )
-    for i in ids(pm, nw, :solar)
-        index = pm.ref[:nw][nw][:solar][i]
+    for i in ids(pm, nw, :solar_gfli)
+        index = pm.ref[:nw][nw][:solar_gfli][i]
         gen = pm.ref[:nw][nw][:gen][index]
         pmax = 0.0
         if gen["solar_max"] < gen["kva"] * gen["pf"]
@@ -185,11 +184,11 @@ function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bound
     end
 
     q_int = var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_q_int_$(i)",
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_q_int_$(i)",
         start = 0
     )
-    for i in ids(pm, nw, :solar)
-        index = pm.ref[:nw][nw][:solar][i]
+    for i in ids(pm, nw, :solar_gfli)
+        index = pm.ref[:nw][nw][:solar_gfli][i]
         gen = pm.ref[:nw][nw][:gen][index]
         pmax = 0.0
         if gen["solar_max"] < gen["kva"] * gen["pf"]
@@ -202,37 +201,38 @@ function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bound
     end
 
     crg_pos= var(pm, nw)[:crg_pos] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_crg_pos_$(i)",
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_crg_pos_$(i)",
         start = 0.0
     )
     cig_pos = var(pm, nw)[:cig_pos] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_cig_pos_$(i)",
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_cig_pos_$(i)",
         start = 0.0
     )  
 
     vrg_pos= var(pm, nw)[:vrg_pos] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_vrg_pos_$(i)",
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_vrg_pos_$(i)",
         start = 0.0
     )
     vig_pos = var(pm, nw)[:vig_pos] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_vig_pos_$(i)",
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_vig_pos_$(i)",
         start = 0.0
     ) 
 
     crg_pos_max= var(pm, nw)[:crg_pos_max] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_crg_pos_max_$(i)",
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_crg_pos_max_$(i)",
         start = 0.0
     )
     cig_pos_max = var(pm, nw)[:cig_pos_max] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_cig_pos_max_$(i)",
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_cig_pos_max_$(i)",
         start = 0.0
     )
 
-    z= var(pm, nw)[:z] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_z_$(i)",
+    z = var(pm, nw)[:z_gfli] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar_gfli)], base_name="$(nw)_z_gfli_$(i)",
         start = 0.0
     )
-    for i in ids(pm, nw, :solar)
+
+    for i in ids(pm, nw, :solar_gfli)
         JuMP.set_lower_bound(z[i], 0.0)
         JuMP.set_upper_bound(z[i], 1.0)
     end
@@ -247,13 +247,13 @@ function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
     var(pm, nw)[:vrsp] = Dict(i => JuMP.@variable(pm.model,
                [c in 1:ncnds], base_name="$(nw)_vrsp_$(i)",
                start = 0.0,
-        ) for i in ids(pm, nw, :solar)
+        ) for i in ids(pm, nw, :solar_gfmi)
     )
 
     var(pm, nw)[:visp] = Dict(i => JuMP.@variable(pm.model,
                [c in 1:ncnds], base_name="$(nw)_visp_$(i)",
                start = 0.0,
-        ) for i in ids(pm, nw, :solar)
+        ) for i in ids(pm, nw, :solar_gfmi)
     )
 
     var(pm, nw)[:z] = Dict(i => JuMP.@variable(pm.model,
@@ -261,16 +261,16 @@ function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
                start = 0.0,
                lower_bound = 0.0,
                upper_bound = 1
-        ) for i in ids(pm, nw, :solar)
+        ) for i in ids(pm, nw, :solar_gfmi)
     )
 
     p = var(pm, nw)[:p_solar] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_p_solar_$(i)",
+        [i in ids(pm, nw, :solar_gfmi)], base_name="$(nw)_p_solar_$(i)",
         start = 0
     )
 
     q = var(pm, nw)[:q_solar] = JuMP.@variable(pm.model,
-        [i in ids(pm, nw, :solar)], base_name="$(nw)_q_solar_$(i)",
+        [i in ids(pm, nw, :solar_gfmi)], base_name="$(nw)_q_solar_$(i)",
         start = 0
     )
 

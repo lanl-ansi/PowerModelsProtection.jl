@@ -218,7 +218,7 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, 
     vig_pos = var(pm, nw, :vig_pos, bus_id)
     crg_pos_max = var(pm, nw, :crg_pos_max, bus_id)
     cig_pos_max = var(pm, nw, :cig_pos_max, bus_id)
-    z = var(pm, nw, :z, bus_id)
+    z = var(pm, nw, :z_gfli, bus_id)
 
     cnds = _PM.conductor_ids(pm; nw=nw)
     ncnds = length(cnds)   
@@ -280,10 +280,9 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
         JuMP.@constraint(pm.model, vr[c] * vrstar[c] >= 0.0)
         JuMP.@constraint(pm.model, vi[c] * vistar[c] >= 0.0)          
     end
-
-    # DC-link power 
+ 
     JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
-    # JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
+    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
 
     JuMP.@constraint(pm.model, p <= pmax)
     JuMP.@constraint(pm.model, p >= 0.0)

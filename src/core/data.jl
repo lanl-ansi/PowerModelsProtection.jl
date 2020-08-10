@@ -275,7 +275,7 @@ end
 
 
 ""
-function add_lg_fault_study!(data::Dict{String,Any}, bus::Int, i; resistance=0.0001)
+function add_lg_fault_study!(data::Dict{String,Any}, bus::Int, i; resistance=0.01)
     b = string(bus)
     s_base = data["baseMVA"] 
     v_base = data["bus"][b]["vbase"]/sqrt(3)
@@ -297,7 +297,7 @@ end
 
 
 ""
-function add_ll_fault_study!(data::Dict{String,Any}, bus::Int, i; phase_resistance=0.0001)
+function add_ll_fault_study!(data::Dict{String,Any}, bus::Int, i; phase_resistance=0.01)
     b = string(bus)
     s_base = data["baseMVA"] 
     v_base = data["bus"][b]["vbase"]/sqrt(3)
@@ -325,7 +325,7 @@ end
 
 
 ""
-function add_llg_fault_study!(data::Dict{String,Any}, bus::Int, i, resistance=0.0001, phase_resistance=0.0001)
+function add_llg_fault_study!(data::Dict{String,Any}, bus::Int, i, resistance=0.01, phase_resistance=0.01)
     b = string(bus)
     s_base = data["baseMVA"] 
     v_base = data["bus"][b]["vbase"]/sqrt(3)

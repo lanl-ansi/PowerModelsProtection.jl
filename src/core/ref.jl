@@ -36,10 +36,15 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     for (n, nw_data) in nws_data
         nw_id = parse(Int, n)
         nw_ref = ref[:nw][nw_id]
-        nw_ref[:solar] = Dict{Int, Any}()
+        nw_ref[:solar_gfli] = Dict{Int, Any}()
+        nw_ref[:solar_gfmi] = Dict{Int, Any}()
         for (i, gen) in nw_data["gen"]
             if occursin("pvsystem", gen["source_id"]) 
-                nw_ref[:solar][gen["gen_bus"]] = parse(Int, i)
+                if haskey(gen, "grid_forming")
+                    gen["grid_forming"] ? nw_ref[:solar_gfmi][gen["gen_bus"]] = parse(Int, i) : nw_ref[:solar_gfli][gen["gen_bus"]] = parse(Int, i)
+                else
+                    nw_ref[:solar_gfli][gen["gen_bus"]] = parse(Int, i)
+                end
                 gen["i_max"] = 1/gen["dss"]["vminpu"] * gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000/3
                 gen["solar_max"] = gen["dss"]["irradiance"] * gen["dss"]["pmpp"]/ref[:nw][0][:baseMVA]/1000
                 gen["kva"] = gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000

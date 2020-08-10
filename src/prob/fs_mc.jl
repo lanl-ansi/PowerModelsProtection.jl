@@ -33,13 +33,13 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     variable_mc_transformer_current(pm, bounded=false)
     variable_mc_generation(pm, bounded=false) 
   
-    # variable_mc_pq_inverter(pm)
+    variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
 
     for (i,bus) in ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3
-        # constraint_mc_ref_bus_voltage(pm, i)
-        constraint_mc_voltage_magnitude_only(pm, i)
+        constraint_mc_ref_bus_voltage(pm, i)
+        # constraint_mc_voltage_magnitude_only(pm, i)
     end
 
     for id in ids(pm, :gen)
@@ -64,9 +64,13 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
         _PMD.constraint_mc_transformer_power(pm, i)
     end
 
-    for i in ids(pm, :solar)
-        # constraint_mc_pq_inverter(pm, i)
-        constraint_mc_grid_forming_inverter_impedance(pm, i)
+    for i in ids(pm, :solar_gfli)
+        constraint_mc_pq_inverter(pm, i)
+    end
+
+    for i in ids(pm, :solar_gfmi)
+        # constraint_mc_grid_forming_inverter_impedance(pm, i)
+        constraint_mc_grid_forming_inverter(pm, i)
     end
 
 end
