@@ -247,16 +247,12 @@ function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
     var(pm, nw)[:vrsp] = Dict(i => JuMP.@variable(pm.model,
                [c in 1:ncnds], base_name="$(nw)_vrsp_$(i)",
                start = 0.0,
-               lower_bound = 0.0,
-               upper_bound = 1
         ) for i in ids(pm, nw, :solar)
     )
 
     var(pm, nw)[:visp] = Dict(i => JuMP.@variable(pm.model,
                [c in 1:ncnds], base_name="$(nw)_visp_$(i)",
                start = 0.0,
-               lower_bound = 0.0,
-               upper_bound = 1
         ) for i in ids(pm, nw, :solar)
     )
 
