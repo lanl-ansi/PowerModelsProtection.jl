@@ -1,0 +1,81 @@
+
+CIRCUIT ELEMENT POWER FLOW
+
+(Power Flow into element from indicated Bus)
+
+Power Delivery Elements
+
+  Bus     Phase     kW     +j   kvar         kVA         PF
+
+ELEMENT = "Vsource.SOURCE"
+SOURCEBUS     1      -261.2 +j   -180.8      317.7       0.8223
+SOURCEBUS     2      -261.2 +j   -180.8      317.7       0.8223
+SOURCEBUS     3      -261.2 +j   -180.8      317.7       0.8223
+   TERMINAL TOTAL .  -783.7 +j   -542.3      953.1       0.8223
+SOURCEBUS     0         0.0 +j      0.0        0.0       1.0000
+SOURCEBUS     0         0.0 +j      0.0        0.0       1.0000
+SOURCEBUS     0         0.0 +j      0.0        0.0       1.0000
+   TERMINAL TOTAL .     0.0 +j      0.0        0.0       1.0000
+
+ELEMENT = "Line.OHLINE"
+SOURCEBUS     1       261.2 +j    180.8      317.7       0.8223
+SOURCEBUS     2       261.2 +j    180.8      317.7       0.8223
+SOURCEBUS     3       261.2 +j    180.8      317.7       0.8223
+   TERMINAL TOTAL .   783.7 +j    542.3      953.1       0.8223
+PRIMARY       1      -146.8 +j   -100.6      178.0       0.8248
+PRIMARY       2      -146.8 +j   -100.6      178.0       0.8248
+PRIMARY       3      -146.8 +j   -100.6      178.0       0.8248
+   TERMINAL TOTAL .  -440.3 +j   -301.9      533.9       0.8248
+
+ELEMENT = "Line.QUAD"
+PRIMARY       1       157.0 +j    100.5      186.4       0.8423
+PRIMARY       2       157.0 +j    100.5      186.4       0.8423
+PRIMARY       3       157.0 +j    100.5      186.4       0.8423
+   TERMINAL TOTAL .   471.0 +j    301.4      559.2       0.8423
+LOADBUS       1       -10.5 +j      0.0       10.5      -1.0000
+LOADBUS       2       -10.5 +j      0.0       10.5      -1.0000
+LOADBUS       3       -10.5 +j     -0.0       10.5       1.0000
+   TERMINAL TOTAL .   -31.4 +j      0.0       31.4      -1.0000
+
+ELEMENT = "Line.PV_LINE"
+PV_BUS        1         5.2 +j     -0.0        5.2      -1.0000
+PV_BUS        2         5.2 +j     -0.0        5.2      -1.0000
+PV_BUS        3         5.2 +j     -0.0        5.2      -1.0000
+   TERMINAL TOTAL .    15.7 +j     -0.0       15.7      -1.0000
+PRIMARY       1        -5.1 +j      0.1        5.1      -0.9999
+PRIMARY       2        -5.1 +j      0.1        5.1      -0.9999
+PRIMARY       3        -5.1 +j      0.1        5.1      -0.9999
+   TERMINAL TOTAL .   -15.3 +j      0.2       15.3      -0.9999
+
+ELEMENT = "Line.PV2_LINE"
+PV2_BUS       1         5.2 +j     -0.0        5.2      -1.0000
+PV2_BUS       2         5.2 +j     -0.0        5.2      -1.0000
+PV2_BUS       3         5.2 +j     -0.0        5.2      -1.0000
+   TERMINAL TOTAL .    15.7 +j     -0.0       15.7      -1.0000
+PRIMARY       1        -5.1 +j      0.1        5.1      -0.9999
+PRIMARY       2        -5.1 +j      0.1        5.1      -0.9999
+PRIMARY       3        -5.1 +j      0.1        5.1      -0.9999
+   TERMINAL TOTAL .   -15.3 +j      0.2       15.3      -0.9999
+
+= = = = = = = = = = = = = = = = = = =  = = = = = = = = = = =  = =
+
+Power Conversion Elements
+
+  Bus     Phase     kW   +j  kvar         kVA         PF
+
+ELEMENT = "PVSystem.PV1"
+PV_BUS        1      -5.2 +j    0.0        5.2      -1.0000
+PV_BUS        2      -5.2 +j    0.0        5.2      -1.0000
+PV_BUS        3      -5.2 +j    0.0        5.2      -1.0000
+PV_BUS        0       0.0 +j    0.0        0.0       1.0000
+  TERMINAL TOTAL  .   -15.7 +j      0.0       15.7      -1.0000
+
+ELEMENT = "PVSystem.PV2"
+PV2_BUS       1      -5.2 +j    0.0        5.2      -1.0000
+PV2_BUS       2      -5.2 +j    0.0        5.2      -1.0000
+PV2_BUS       3      -5.2 +j    0.0        5.2      -1.0000
+PV2_BUS       0       0.0 +j    0.0        0.0       1.0000
+  TERMINAL TOTAL  .   -15.7 +j      0.0       15.7      -1.0000
+
+
+Total Circuit Losses =  783.7 +j  542.3
