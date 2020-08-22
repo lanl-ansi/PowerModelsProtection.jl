@@ -253,7 +253,7 @@ function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int;
 end
 
 function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
-    index = pm.ref[:nw][nw][:solar][i]
+    index = pm.ref[:nw][nw][:solar_gfmi][i]
     gen = pm.ref[:nw][nw][:gen][index]
     bus_i = gen["gen_bus"]
     bus = pm.ref[:nw][nw][:bus][bus_i]
