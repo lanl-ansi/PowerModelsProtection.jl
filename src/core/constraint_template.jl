@@ -274,8 +274,8 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
         pmax = gen["kva"]
     end
 
-    r = [0.1, 0.1, 0.1]
-    x = [0.0, 0.0, 0.0]
+    r = 10*[1, 1, 1]
+    x = [0, 0, 0]
 
     if "r" in keys(gen)
         r = gen["zr"]
@@ -285,10 +285,14 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
         x = gen["zx"]
     end
 
+    r = [1, 1, 1]
+    x = [1, 1, 1]
+
     # r = [0.0, 0.0, 0.0]
     # x = [0.0, 0.0, 0.0]    
 
     # constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, pmax, cmax)
+    # function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
     constraint_grid_formimg_inverter_impedance(pm, nw, index, i, vrstar, vistar, r, x, pmax, cmax)
 end
 

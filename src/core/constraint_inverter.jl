@@ -328,10 +328,9 @@ function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw
 
     # DC-link power
     JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
-    # JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
 
-    JuMP.@constraint(pm.model, p <= pmax)
-    JuMP.@constraint(pm.model, p >= 0.0)
+    # JuMP.@constraint(pm.model, p <= pmax)
+    # JuMP.@constraint(pm.model, p >= 0.0)
 end
 
 

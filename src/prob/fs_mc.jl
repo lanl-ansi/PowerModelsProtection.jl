@@ -5,7 +5,7 @@ function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
     add_mc_fault_data!(data)
     solution = Dict{String, Any}()
     faults = deepcopy(data["fault"])
-    delete!(data, "fault")
+    delete!(data, "fault")  
     for (i,bus) in faults
         solution[i] = Dict{String,Any}()
         for (j,type) in bus
@@ -69,8 +69,8 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     end
 
     for i in ids(pm, :solar_gfmi)
-        # constraint_mc_grid_forming_inverter_impedance(pm, i)
-        constraint_mc_grid_forming_inverter(pm, i)
+        constraint_mc_grid_forming_inverter_impedance(pm, i)
+        # constraint_mc_grid_forming_inverter(pm, i)
     end
 
 end

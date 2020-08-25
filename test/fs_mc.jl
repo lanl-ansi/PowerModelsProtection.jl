@@ -249,6 +249,18 @@
         result = FS.run_mc_fault_study(data, ipopt_solver)
         @test result["pv_bus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
     end
-
+    @testset "2 pq inverter grid-forming pv fault test" begin
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv_2_gridforming.dss")
+        data["fault"] = Dict{String, Any}()
+        data["fault"]["1"] = Dict("type" => "lg", "bus" => "loadbus", "phases" => [1], "gr" => 0.0005)
+        result = FS.run_mc_fault_study(data, ipopt_solver)
+        @test result["loadbus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
+        v_r = result["loadbus"]["lg"][1]["solution"]["bus"]["pv_bus"]["vr"]
+        v_i = result["loadbus"]["lg"][1]["solution"]["bus"]["pv_bus"]["vi"]
+        @test isapprox(abs(v_r[1]), 0.5484553319545448; atol = 0.001)
+        @test isapprox(abs(v_i[1]), 0.0029269286321313317; atol = 0.001)
+        @test isapprox(abs(v_r[2]), 0.6828942947492501; atol = 0.001)
+        @test isapprox(abs(v_i[2]), 0.8827951107227415; atol = 0.001)
+    end 
 
 end
