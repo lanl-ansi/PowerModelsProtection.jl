@@ -251,6 +251,7 @@
     end
     @testset "2 pq inverter grid-forming pv fault test" begin
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_2_gridforming.dss")
+        data["branch"]["4"]["br_status"] = 0
         data["fault"] = Dict{String, Any}()
         data["fault"]["1"] = Dict("type" => "lg", "bus" => "loadbus", "phases" => [1], "gr" => 0.0005)
         result = FS.run_mc_fault_study(data, ipopt_solver)
@@ -262,5 +263,31 @@
         @test isapprox(abs(v_r[2]), 0.6828942947492501; atol = 0.001)
         @test isapprox(abs(v_i[2]), 0.8827951107227415; atol = 0.001)
     end 
+    @testset "2 islands pq inverter grid-forming pv fault test" begin
+        data = FS.parse_file("../test/data/dist/case3_balanced_pv_2_islands_gridforming.dss")
+        for (i, gen) in data["gen"]
+            gen["name"] == "pv1" ? gen["grid_forming"] = true : nothing 
+            gen["name"] == "pv2" ? gen["grid_forming"] = true : nothing 
+        end        
+        data["branch"]["2"]["br_status"] = 0
+        data["branch"]["5"]["br_status"] = 0        
+        data["fault"] = Dict{String, Any}()
+        data["fault"]["1"] = Dict("type" => "lg", "bus" => "loadbus", "phases" => [1], "gr" => 0.0005)
+        result = FS.run_mc_fault_study(data, ipopt_solver)
+        @test result["loadbus"]["lg"][1]["termination_status"] == MOI.LOCALLY_SOLVED
 
+        v_r = result["loadbus"]["lg"][1]["solution"]["bus"]["pv1_bus"]["vr"]
+        v_i = result["loadbus"]["lg"][1]["solution"]["bus"]["pv1_bus"]["vi"]
+        @test isapprox(v_r[1], 0.0222495; atol = 0.001)
+        @test isapprox(v_i[1], -0.0013008; atol = 0.001)
+        @test isapprox(v_r[2], -0.500003; atol = 0.001)
+        @test isapprox(v_i[2], -0.866026; atol = 0.001)
+
+        v_r = result["loadbus"]["lg"][1]["solution"]["bus"]["pv2_bus"]["vr"]
+        v_i = result["loadbus"]["lg"][1]["solution"]["bus"]["pv2_bus"]["vi"]
+        @test isapprox(v_r[1], 1.0; atol = 0.001)
+        @test isapprox(v_i[1], -2.04801e-6; atol = 0.001)
+        @test isapprox(v_r[2], -0.500003; atol = 0.001)
+        @test isapprox(v_i[2], -0.866026; atol = 0.001)        
+    end 
 end
