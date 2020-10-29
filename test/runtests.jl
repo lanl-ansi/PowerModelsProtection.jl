@@ -1,5 +1,5 @@
-# using PowerModelsProtection
-include("../src/PowerModelsProtection.jl")
+using PowerModelsProtection
+
 const FS = PowerModelsProtection
 
 import Memento

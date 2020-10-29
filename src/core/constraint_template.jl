@@ -9,6 +9,7 @@ function is_inverter(pm, i, nw)
     return gen["inverter"] == 1
 end
 
+
 ""
 function is_pq_inverter(pm, i, nw)
     gen = ref(pm, nw, :gen, i)
@@ -28,6 +29,7 @@ function is_pq_inverter(pm, i, nw)
     return gen["inverter_mode"] == "pq"
 end
 
+
 ""
 function is_v_inverter(pm, i, nw)
     gen = ref(pm, nw, :gen, i)
@@ -46,6 +48,7 @@ function is_v_inverter(pm, i, nw)
 
     return gen["inverter_mode"] == "v"
 end
+
 
 ""
 function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
@@ -103,17 +106,11 @@ function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 
         smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
         cmax = 1.1*smax
-        # cm = 0.1*smax
-        println("cmax = $cmax")
-        #cmax = 2
 
-        # vs = 0.1
-        # constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cmax)
         constraint_pq_inverter(pm, nw, i, bus_id, pg, qg, cmax)
-        # constraint_unity_pf_inverter_rs(pm, nw, i, bus_id, r, pg, qg, cmax)
-        # constraint_unity_pf_inverter(pm, nw, i, bus_id, pg, qg, cmax)
     end
 end
+
 
 ""
 function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
@@ -131,14 +128,12 @@ function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
         pg = gen["pg"]
         qg = gen["qg"]
 
-        cm = abs(gen["pg"] + 1im*gen["qg"])/bus["vm"]
-        
-        println("cm = $cm")
-        #cmax = 2
+        cm = abs(gen["pg"] + 1im*gen["qg"])/bus["vm"]    
 
         constraint_i_inverter_vs(pm, nw, i, bus_id, r, pg, qg, cm)
     end
 end
+
 
 ""
 function constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
@@ -166,14 +161,11 @@ function constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 
         smax = abs(max(abs(gen["pmax"]), abs(gen["pmin"])) + max(abs(gen["qmax"]), abs(gen["qmin"]))*1im)
         cmax = 1.1*smax
-        # cm = 0.1*smax
-        println("cmax = $cmax")
-        #cmax = 2
-
-        # vs = 0.1
+    
         constraint_v_inverter(pm, nw, i, bus_id, r, x, vgr, vgi, cmax)
     end
 end
+
 
 ""
 function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
@@ -227,6 +219,7 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=p
     constraint_mc_pq_inverter(pm, nw, index, i, pmax, 0.0, cmax)
 end
 
+
 function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfmi][i]
     gen = pm.ref[:nw][nw][:gen][index]
@@ -251,6 +244,7 @@ function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int;
 
     constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, pmax, cmax)
 end
+
 
 function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfmi][i]
@@ -285,6 +279,7 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
         x = gen["zx"]
     end
 
+    # TODO verfiy the formulation with multiple inverters 
     r = [1, 1, 1]
     x = [1, 1, 1]
 
@@ -295,6 +290,7 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
     # function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
     constraint_grid_formimg_inverter_impedance(pm, nw, index, i, vrstar, vistar, r, x, pmax, cmax)
 end
+
 
 ""
 function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)

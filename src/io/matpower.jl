@@ -9,7 +9,7 @@ function parse_matpower(file::String)
         end
         delete!(pm_data, "gensub")
     else
-        # default values need address pu values?
+        # TODO verify pu values as inputs 
         for (i,gen) in pm_data["gensub"]
             pm_data["gen"][i]["rs"] = 0
             pm_data["gen"][i]["xs"] = .1

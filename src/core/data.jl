@@ -38,7 +38,7 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
 end
 
 function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
-    # need to work on 
+    # TODO add in mc power flow 
     # if result["primal_status"] == MOI.FEASIBLE_POINT
     #     for (i, bus) in result["solution"]["bus"]
     #         data["bus"][i]["vm"] = bus["vm"]
@@ -443,25 +443,3 @@ function check_microgrid!(data::Dict{String,Any})
     end
 end
 
-
-# ""
-# function is_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
-#     gen = ref(pm, nw, :gen, i)
-
-#     if !haskey(gen, "inverter")
-#         return false
-#     end
-
-#     if gen["inverter"] == 0
-#         return false
-#     end
-
-#     bus_id = gen["gen_bus"]
-#     bus = ref(pm, nw, :bus, bus_id)
-
-#     if bus["bus_type"] == 1
-#         return true
-#     else
-#         return false
-#     end
-# end
