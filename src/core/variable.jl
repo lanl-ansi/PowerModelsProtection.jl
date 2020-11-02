@@ -1,4 +1,4 @@
-"copies from PowerModels and PowerModelsDistribution without power vars"
+"Copies from PowerModels and PowerModelsDistribution without power vars"
 function variable_branch_current(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
     _PM.variable_branch_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PM.variable_branch_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
@@ -23,18 +23,13 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
         busid = gen["gen_bus"]
         smax = abs(max(abs(gen["pmax"]),abs(gen["pmin"])) + max(abs(gen["qmax"]),abs(gen["qmin"]))*1im)
         cmax = 1.1*smax
-        # cm = 0.1*smax
-        # cmax = 10*smax
-        # cmax = 0.8
 
         vr = var(pm, nw, :vr, busid)
         vi = var(pm, nw, :vi, busid)
         crg = var(pm, nw, :crg, i)
         cig = var(pm, nw, :cig, i)
 
-        if gen["inverter"] == 1 && gen["inverter_mode"] == "pq"
-            println("crg limits for gen $i: [-$cmax, $cmax]")
-            println("cig limits for gen $i: [-$cmax, $cmax]")            
+        if gen["inverter"] == 1 && gen["inverter_mode"] == "pq"          
             JuMP.set_lower_bound(crg, -cmax)
             JuMP.set_upper_bound(crg, cmax)
             JuMP.set_lower_bound(cig, -cmax)
@@ -69,8 +64,7 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded:
 
 
     for (i, gen) in ref(pm, nw, :gen)
-        kmax = max(1.1/gen["pg"], 2)
-        println("Setting k limits for $i: [0, $kmax]")        
+        kmax = max(1.1/gen["pg"], 2)        
         JuMP.set_lower_bound(kg[i], 0)
         JuMP.set_upper_bound(kg[i], kmax)
     end
@@ -102,6 +96,8 @@ function variable_mc_generation(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounde
     _PMD.variable_mc_gen_current_setpoint_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PM.var(pm, nw)[:crg_bus] = Dict{Int, Any}()
     _PM.var(pm, nw)[:cig_bus] = Dict{Int, Any}()
+
+    # TODO need to test DER with power as decision variable
     # _PM.var(pm, nw)[:pg] = Dict{Int, Any}()
     # _PM.var(pm, nw)[:qg] = Dict{Int, Any}()
 end

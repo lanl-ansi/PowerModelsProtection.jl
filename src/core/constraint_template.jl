@@ -1,4 +1,4 @@
-""
+"Check to see if gen is inverter model"
 function is_inverter(pm, i, nw)
     gen = ref(pm, nw, :gen, i)
 
@@ -10,7 +10,7 @@ function is_inverter(pm, i, nw)
 end
 
 
-""
+"Checks to see if inverter is operating in pq mode"
 function is_pq_inverter(pm, i, nw)
     gen = ref(pm, nw, :gen, i)
 
@@ -30,7 +30,7 @@ function is_pq_inverter(pm, i, nw)
 end
 
 
-""
+"Checks to see if inverter is operating in V mode"
 function is_v_inverter(pm, i, nw)
     gen = ref(pm, nw, :gen, i)
 
@@ -50,7 +50,7 @@ function is_v_inverter(pm, i, nw)
 end
 
 
-""
+"Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence"
 function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
         i = gen["index"]
@@ -89,7 +89,7 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 end
 
 
-""
+"Constraints for fault current contribution of inverter in grid-following mode with pq set points"
 function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
         i = gen["index"]
@@ -112,7 +112,7 @@ function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 end
 
 
-""
+"Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly"
 function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
         i = gen["index"]
@@ -135,7 +135,7 @@ function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 end
 
 
-""
+"Constraints for fault current contribution of inverter in grid-forming mode"
 function constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
         i = gen["index"]
@@ -167,7 +167,7 @@ function constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 end
 
 
-""
+"Constraint to calculate the fault current at a bus and the current at other buses"
 function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)["bus_i"]
     bus_arcs = ref(pm, nw, :bus_arcs, i)
@@ -185,7 +185,7 @@ function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=
 end
 
 
-""
+"Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor"
 function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k,gen) in ref(pm, nw, :gen)
         i = gen["index"]
@@ -205,7 +205,7 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
 end
 
 
-""
+"Constraints for fault current contribution of multiconductor inverter in grid-following mode"
 function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfli][i]
     gen = pm.ref[:nw][nw][:gen][index]
@@ -220,6 +220,7 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=p
 end
 
 
+"Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
 function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfmi][i]
     gen = pm.ref[:nw][nw][:gen][index]
@@ -246,6 +247,7 @@ function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int;
 end
 
 
+"Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
 function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfmi][i]
     gen = pm.ref[:nw][nw][:gen][index]
@@ -292,7 +294,7 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
 end
 
 
-""
+"Constraint to calculate the fault current at a bus and the current at other buses for multiconductor"
 function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)["bus_i"]
     bus_arcs = ref(pm, nw, :bus_arcs, i)
@@ -312,7 +314,7 @@ function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::I
 end
 
 
-""
+"Constraint on the current from gen based on connection"
 function constraint_mc_generation(pm::_PM.AbstractPowerModel, id::Int; nw::Int=pm.cnw, report::Bool=true, bounded::Bool=true)
     generator = ref(pm, nw, :gen, id)
     bus = ref(pm, nw, :bus, generator["gen_bus"])
@@ -325,7 +327,7 @@ function constraint_mc_generation(pm::_PM.AbstractPowerModel, id::Int; nw::Int=p
 end
 
 
-""
+"Constarint to set the ref bus voltage"
 function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, i::Int; nw::Int=pm.cnw)
     vm = ref(pm, :bus, i, "vm")
     va = ref(pm, :bus, i, "va")
@@ -336,7 +338,7 @@ function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, i::Int; nw::Int
     constraint_mc_ref_bus_voltage(pm, nw, i, vr, vi)
 end
 
-
+"Constarint to set the ref bus voltage magnitude only"
 function constraint_mc_voltage_magnitude_only(pm::_PM.AbstractIVRModel, i::Int; nw::Int=pm.cnw)
     vm = ref(pm, :bus, i, "vm")
     constraint_mc_voltage_magnitude_only(pm, nw, i, vm)

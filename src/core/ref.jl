@@ -1,4 +1,4 @@
-""
+"Adds the fault to the model"
 function ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     if _IM.ismultinetwork(data)
         nws_data = data["nw"]
@@ -12,7 +12,8 @@ function ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     end
 end
 
-""
+
+"Adds the fault to the model for multiconductor"
 function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     if _IM.ismultinetwork(data)
         nws_data = data["nw"]
@@ -27,6 +28,8 @@ function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     end
 end
 
+
+"Calculates the p[ower from solar based on inputs"
 function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     if _IM.ismultinetwork(data)
         nws_data = data["nw"]

@@ -1,5 +1,5 @@
 
-""
+"Check to see if pf should be solved"
 function check_pf!(data::Dict{String,Any}, solver)
     if haskey(data, "pf")
         if data["pf"] == "true"
@@ -11,7 +11,7 @@ function check_pf!(data::Dict{String,Any}, solver)
 end
 
 
-""
+"Adds the result from pf based on model type"
 function add_pf_data!(data::Dict{String,Any}, solver)
     if haskey(data, "method") && (data["method"] == "PMD")
         result = run_mc_pf(data, solver)
@@ -25,7 +25,7 @@ function add_pf_data!(data::Dict{String,Any}, solver)
 end
 
 
-""
+"Adds the result from pf"
 function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     if result["primal_status"] == MOI.FEASIBLE_POINT
         for (i, bus) in result["solution"]["bus"]
@@ -37,6 +37,8 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     end
 end
 
+
+"Adds the result from pf from multiconductor"
 function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     # TODO add in mc power flow 
     # if result["primal_status"] == MOI.FEASIBLE_POINT
@@ -49,7 +51,8 @@ function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     # end
 end
 
-""
+
+"Add fault data to model single or study"
 function add_fault_data!(data::Dict{String,Any})
     if haskey(data, "fault")
         add_fault!(data)
@@ -59,7 +62,7 @@ function add_fault_data!(data::Dict{String,Any})
 end
 
 
-""
+"Add single fault data to model"
 function add_fault!(data::Dict{String,Any})
     hold = deepcopy(data["fault"])
     data["fault"] = Dict{String, Any}()
@@ -73,7 +76,7 @@ function add_fault!(data::Dict{String,Any})
 end
 
 
-""
+"Add study fault data to model"
 function add_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     get_active_phases!(data)
@@ -88,7 +91,7 @@ function add_fault_study!(data::Dict{String,Any})
 end
 
 
-""
+"Add single fault data to model for study"
 function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001)
     gf = max(1/resistance, 1e-6)
     haskey(data["fault"], i) || (data["fault"][i] = Dict{Int, Any}())
@@ -97,7 +100,7 @@ function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, re
 end
 
 
-""
+"Add fault data to model single or study for multiconductor"
 function add_mc_fault_data!(data::Dict{String,Any})
     if haskey(data, "fault")
         add_mc_fault!(data)
@@ -107,7 +110,7 @@ function add_mc_fault_data!(data::Dict{String,Any})
 end
 
 
-""
+"Add single fault data to model based off fault type for multiconductor"
 function add_mc_fault!(data::Dict{String,Any})
     hold = deepcopy(data["fault"])
     data["fault"] = Dict{String, Any}()
@@ -130,7 +133,7 @@ end
 
 
 
-""
+"Add all fault type data to model for study for multiconductor"
 function add_mc_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String, Any}()
     get_fault_buses!(data) 
@@ -147,7 +150,7 @@ function add_mc_fault_study!(data::Dict{String,Any})
 end
 
 
-""
+"Add single line to ground fault for multiconductor"
 function add_lg_fault!(data::Dict{String,Any}, i::String, phases, resistance)
     bus = data["bus_lookup"][i]
     b = string(bus)
@@ -166,7 +169,7 @@ function add_lg_fault!(data::Dict{String,Any}, i::String, phases, resistance)
 end
 
 
-""
+"Add line to line fault for multiconductor"
 function add_ll_fault!(data::Dict{String,Any}, i::String, phases, phase_resistance)
     bus = data["bus_lookup"][i]
     b = string(bus)
@@ -189,7 +192,7 @@ function add_ll_fault!(data::Dict{String,Any}, i::String, phases, phase_resistan
 end
 
 
-""
+"Add 3 phase fault for multiconductor"
 function add_3p_fault!(data::Dict{String,Any}, i::String, phases, phase_resistance)
     bus = data["bus_lookup"][i]
     b = string(bus)
@@ -216,7 +219,7 @@ function add_3p_fault!(data::Dict{String,Any}, i::String, phases, phase_resistan
 end
 
 
-""
+"Add line to line to ground fault for multiconductor"
 function add_llg_fault!(data::Dict{String,Any}, i::String, phases, resistance=0.0001, phase_resistance=0.0001)
     bus = data["bus_lookup"][i]
     b = string(bus)
@@ -242,7 +245,7 @@ function add_llg_fault!(data::Dict{String,Any}, i::String, phases, resistance=0.
 end
 
 
-""
+"Add 3 phase to ground fault for multiconductor"
 function add_3pg_fault!(data::Dict{String,Any}, i::String, phases, resistance=0.0001, phase_resistance=0.0001)
     bus = data["bus_lookup"][i]
     b = string(bus)
@@ -274,7 +277,7 @@ function add_3pg_fault!(data::Dict{String,Any}, i::String, phases, resistance=0.
 end
 
 
-""
+"Add study line to ground fault for multiconductor"
 function add_lg_fault_study!(data::Dict{String,Any}, bus::Int, i; resistance=0.01)
     b = string(bus)
     s_base = data["baseMVA"] 
@@ -296,7 +299,7 @@ function add_lg_fault_study!(data::Dict{String,Any}, bus::Int, i; resistance=0.0
 end
 
 
-""
+"Add study line to line fault for multiconductor"
 function add_ll_fault_study!(data::Dict{String,Any}, bus::Int, i; phase_resistance=0.01)
     b = string(bus)
     s_base = data["baseMVA"] 
@@ -324,7 +327,7 @@ function add_ll_fault_study!(data::Dict{String,Any}, bus::Int, i; phase_resistan
 end
 
 
-""
+"Add study line to line to ground fault for multiconductor"
 function add_llg_fault_study!(data::Dict{String,Any}, bus::Int, i, resistance=0.01, phase_resistance=0.01)
     b = string(bus)
     s_base = data["baseMVA"] 
@@ -356,7 +359,7 @@ function add_llg_fault_study!(data::Dict{String,Any}, bus::Int, i, resistance=0.
 end
 
 
-""
+"Add study 3 phase fault for multiconductor"
 function add_3p_fault_study!(data::Dict{String,Any}, bus::Int, i; phase_resistance=0.0001)
     b = string(bus)
     s_base = data["baseMVA"] 
@@ -382,7 +385,7 @@ function add_3p_fault_study!(data::Dict{String,Any}, bus::Int, i; phase_resistan
 end
 
 
-""
+"Add study 3 phase to ground fault for multiconductor"
 function add_3pg_fault_study!(data::Dict{String,Any}, bus::Int, i, resistance=0.0001, phase_resistance=0.0001)
     b = string(bus)
     s_base = data["baseMVA"] 
@@ -412,6 +415,8 @@ function add_3pg_fault_study!(data::Dict{String,Any}, bus::Int, i, resistance=0.
     end
 end
 
+
+"Creates a list of buses in the model to fault for study"
 function get_fault_buses!(data::Dict{String,Any})
     hold = []
     for i in keys(data["bus_lookup"])
@@ -422,6 +427,8 @@ function get_fault_buses!(data::Dict{String,Any})
     data["fault_buses"] = hold
 end
 
+
+"Checks for a microgrid and deactivates infinite bus"
 function check_microgrid!(data::Dict{String,Any})
     if haskey(data, "microgrid")
         if data["microgrid"]

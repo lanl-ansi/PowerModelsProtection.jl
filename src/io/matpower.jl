@@ -1,4 +1,4 @@
-""
+"Parse the input data"
 function parse_matpower(file::String)
     pm_data = _PM.parse_file(file)
     pm_data["method"] = "PMs"

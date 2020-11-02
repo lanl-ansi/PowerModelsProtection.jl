@@ -99,7 +99,7 @@ function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i, bus_
 end
 
 
-""
+"Constraints for fault current contribution of inverter in grid-following mode with pq set points"
 function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -257,6 +257,8 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, 
     JuMP.@NLconstraint(pm.model, p_int >= (1-z) * pg/3)
 end
 
+
+"Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
 function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, pmax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -297,6 +299,7 @@ end
 
 
 # TODO complete formulation and test in multiple inverters 
+"Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
 function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -343,7 +346,7 @@ function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw
 end
 
 
-""
+"Constraints for fault current inverter with current set point"
 function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     ar = -1/2
     ai = sqrt(3)/2

@@ -1,18 +1,18 @@
 
-""
+"Rm pf on the mc model"
 function run_mc_pf(data::Dict{String,Any}, solver; kwargs...)
     solution = _PM.run_model(data, _PM.IVRPowerModel, solver, build_mc_pf; ref_extensions=[ref_add_fault!], kwargs...)
     return solution
 end
 
 
-""
+"Run pf on file"
 function run_fault_study(file::String, solver; kwargs...)
     return run_mc_pf(parse_file(file), solver; kwargs...)
 end
 
 
-""
+"Build mc pf"
 function build_mc_pf(pm::_PM.AbstractPowerModel)
     _PM.variable_bus_voltage(pm, bounded = true)
     variable_branch_current(pm, bounded = false)
