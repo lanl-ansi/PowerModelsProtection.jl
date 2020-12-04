@@ -45,10 +45,10 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
                 else
                     nw_ref[:solar_gfli][gen["gen_bus"]] = parse(Int, i)
                 end
-                gen["i_max"] = 1/gen["dss"]["vminpu"] * gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000/3
-                gen["solar_max"] = gen["dss"]["irradiance"] * gen["dss"]["pmpp"]/ref[:nw][0][:baseMVA]/1000
-                gen["kva"] = gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000
-                gen["pf"] = gen["dss"]["pf"]
+                haskey(gen, "i_max") ? nothing : gen["i_max"] = 1/gen["dss"]["vminpu"] * gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000/3
+                haskey(gen, "solar_max") ? nothing : gen["solar_max"] = gen["dss"]["irradiance"] * gen["dss"]["pmpp"]/ref[:nw][0][:baseMVA]/1000
+                haskey(gen, "kva") ? nothing : gen["kva"] = gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000
+                haskey(gen, "pf") ? nothing : gen["pf"] = gen["dss"]["pf"]
                 delete!(gen, "dss")
             end
         end

@@ -1,6 +1,6 @@
 ""
 function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
-    # check_pf!(data, solver)
+    check_pf!(data, solver)
     check_microgrid!(data)
     add_mc_fault_data!(data)
     solution = Dict{String, Any}()
@@ -70,7 +70,6 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
 
     for i in ids(pm, :solar_gfmi)
         constraint_mc_grid_forming_inverter_impedance(pm, i)
-        # constraint_mc_grid_forming_inverter(pm, i)
     end
 
 end

@@ -18,6 +18,7 @@ function add_pf_data!(data::Dict{String,Any}, solver)
         add_mc_pf_data!(data, result)
     else
         if haskey(data, "method") && (data["method"] == "PMs")
+            println("Hi Nymeria")
             result = _PMD.run_pf(data, _PM.ACPPowerModel, solver)
             add_pf_data!(data, result)
         end
@@ -37,17 +38,20 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     end
 end
 
+
+""
 function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
-    # need to work on 
-    # if result["primal_status"] == MOI.FEASIBLE_POINT
-    #     for (i, bus) in result["solution"]["bus"]
-    #         data["bus"][i]["vm"] = bus["vm"]
-    #         data["bus"][i]["va"] = bus["va"]
-    #     end
-    # else
-    #     Memento.info(_LOGGER, "The model power flow returned infeasible")
-    # end
+    if result["primal_status"] == MOI.FEASIBLE_POINT
+        for (i, bus) in result["solution"]["bus"]
+            bus_index = string(data["bus_lookup"][i])
+            data["bus"][bus_index]["vr"] = bus["vr"]
+            data["bus"][bus_index]["vi"] = bus["vi"]
+        end
+    else
+        Memento.info(_LOGGER, "The model power flow returned infeasible")
+    end
 end
+
 
 ""
 function add_fault_data!(data::Dict{String,Any})

@@ -315,6 +315,20 @@ function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::I
     end
 end
 
+function constraint_mc_current_balance_pf(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    bus = ref(pm, nw, :bus, i)["bus_i"]
+    bus_arcs = ref(pm, nw, :bus_arcs, i)
+    bus_arcs_sw = ref(pm, nw, :bus_arcs_sw, i)
+    bus_arcs_trans = ref(pm, nw, :bus_arcs_trans, i)
+    bus_gens = ref(pm, nw, :bus_gens, i)
+    bus_shunts = ref(pm, nw, :bus_shunts, i)
+
+    bus_gs = Dict(k => ref(pm, nw, :shunt, k, "gs") for k in bus_shunts)
+    bus_bs = Dict(k => ref(pm, nw, :shunt, k, "bs") for k in bus_shunts)
+    
+    constraint_mc_current_balance(pm, nw, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
+end
+
 
 ""
 function constraint_mc_generation(pm::_PM.AbstractPowerModel, id::Int; nw::Int=pm.cnw, report::Bool=true, bounded::Bool=true)
