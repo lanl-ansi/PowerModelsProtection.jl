@@ -1,4 +1,4 @@
-"states that the bus voltage is equal to the internal voltage minus voltage drop across subtransient impedance"
+"States that the bus voltage is equal to the internal voltage minus voltage drop across subtransient impedance"
 function constraint_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi)
     vr_to = var(pm, n, :vr, bus_id)
     vi_to = var(pm, n, :vi, bus_id)
@@ -12,7 +12,7 @@ end
 
 
 
-""
+"Calculates the fault current at a bus"
 function constraint_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     bus = ref(pm, nw, :active_fault, "bus_i")
     g = ref(pm, nw, :active_fault, "gf")
@@ -35,7 +35,7 @@ function constraint_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 end
 
 
-""
+"Calculates the current balance at the non-faulted buses"
 function constraint_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_gens, bus_gs, bus_bs)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
@@ -59,7 +59,7 @@ function constraint_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arc
 end
 
 
-""
+"Calculates the current balance at the faulted bus"
 function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_gens, bus_gs, bus_bs, bus)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
@@ -88,7 +88,7 @@ function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, b
 end
 
 
-""
+"Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence"
 function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi)
     vr_to = var(pm, n, :vr, bus_id)
     vi_to = var(pm, n, :vi, bus_id)
@@ -103,7 +103,7 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus
 end
 
 
-""
+"Calculates the current at the faulted bus for multiconductor"
 function constraint_mc_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     bus = ref(pm, nw, :active_fault, "bus_i")
 
@@ -134,7 +134,7 @@ function constraint_mc_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 end
 
 
-""
+"Calculates the current balance at the non-faulted buses for multiconductor"
 function constraint_mc_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
@@ -176,7 +176,7 @@ function constraint_mc_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_
 end
 
 
-""
+"Calculates the current balance at the faulted bus for multiconductor"
 function constraint_mc_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs, bus)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
@@ -221,7 +221,7 @@ function constraint_mc_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i
 end
 
 
-""
+"Calculates the current at a wye connected gen with no power constraints"
 function constraint_mc_generation_wye(pm::_PM.IVRPowerModel, nw::Int, id::Int, bus_id::Int; report::Bool=true, bounded::Bool=true)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -240,7 +240,7 @@ function constraint_mc_generation_wye(pm::_PM.IVRPowerModel, nw::Int, id::Int, b
 end
 
 
-""
+"Calculates the current at a delta connected gen with no power constraints"
 function constraint_mc_generation_delta(pm::_PM.IVRPowerModel, nw::Int, id::Int, bus_id::Int; report::Bool=true, bounded::Bool=true)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -267,7 +267,7 @@ function constraint_mc_generation_delta(pm::_PM.IVRPowerModel, nw::Int, id::Int,
 end
 
 
-""
+"Constarint to set the ref bus voltage"
 function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
@@ -281,6 +281,8 @@ function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0,
     end
 end
 
+
+"Constarint to set the ref bus voltage magnitude only"
 function constraint_mc_voltage_magnitude_only(pm::_PM.AbstractIVRModel, n::Int, i, vm)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
@@ -290,6 +292,8 @@ function constraint_mc_voltage_magnitude_only(pm::_PM.AbstractIVRModel, n::Int, 
     end
 end
 
+
+"Constarint to set the ref bus voltage angle only"
 function constraint_mc_theta_ref(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)

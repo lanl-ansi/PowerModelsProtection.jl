@@ -1,4 +1,4 @@
-""
+" "
 function v_gen_buses(nw_ref)
 	v_gen_bus_ids = Set(gen["gen_bus"] for (i,gen) in nw_ref[:gen] if gen["inverter_mode"] == "v")
     return [(i,bus) for (i,bus) in nw_ref[:bus] if i in v_gen_bus_ids]
@@ -26,7 +26,7 @@ end
 
 
 
-""
+"Tries to maximize the power from an inverter"
 function objective_max_inverter_power(pm::_PM.AbstractIVRModel; report::Bool=true)
     return JuMP.@objective(pm.model, Min,
         sum(
@@ -36,7 +36,7 @@ function objective_max_inverter_power(pm::_PM.AbstractIVRModel; report::Bool=tru
 end
 
 
-""
+"Tries to minimize the power from an inverter"
 function objective_min_inverter_error(pm::_PM.AbstractIVRModel; report::Bool=true)
     return JuMP.@objective(pm.model, Min,
         sum(

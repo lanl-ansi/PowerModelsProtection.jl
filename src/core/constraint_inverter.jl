@@ -21,6 +21,7 @@ function constraint_unity_pf_inverter_disjunctive(pm::_PM.AbstractIVRModel, nw, 
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
+
 "Constraints for fault current contribution of inverter in grid-following mode with a real voltage drop to handle low-zero terminal voltages"
 function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
@@ -37,6 +38,7 @@ function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, 
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
+
 "Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor"
 function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
@@ -50,9 +52,9 @@ function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_i
     # I think this can be generalized to arbitrary power factors by multiplying k with alpha + j*beta
     # JuMP.@NLconstraint(pm.model, vr == kg*crg)
     # JuMP.@NLconstraint(pm.model, vi == kg*cig)
+    # TODO Verify that the relaxation is reasonable 
     _IM.relaxation_product(pm.model, kg, crg, vr)    
     _IM.relaxation_product(pm.model, kg, cig, vi)
-    println("Limiting max current for gen $i at $bus_id to $cmax")
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
@@ -80,6 +82,7 @@ function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i, bus_
     scrg =  var(pm, n, :scrg, i)
     scig =  var(pm, n, :scig, i)
 
+    # TODO verify if this can be relaxed 
     # inverter current scaled by a real amount
     # _IM.relaxation_product(pm.model, kg, crg, scrg)
     # _IM.relaxation_product(pm.model, kg, cig, scig)
@@ -92,12 +95,11 @@ function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i, bus_
     # _IM.relaxation_product(pm.model, kg, crg, vi)    
     # JuMP.@constraint(pm.model, crg == 0)
     
-    println("Limiting max current for pq inverter $i at $bus_id to $cmax")
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
 
-""
+"Constraints for fault current contribution of inverter in grid-following mode with pq set points"
 function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -134,12 +136,14 @@ function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i, bu
 
     kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
     
+    # TODO verify setting reactive power to zero for feasiblity  
     # this is equivalent to having a resistance in series with the inverter
     JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig + r*crg^2 + r*cig^2)
     # JuMP.@NLconstraint(pm.model, 0.01 >= vi*crg - vr*cig)
     # JuMP.@NLconstraint(pm.model, -0.01 <= vi*crg - vr*cig)
     JuMP.@NLconstraint(pm.model, cm^2 >= crg^2 + cig^2) 
 end
+
 
 "Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly"
 function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cm)
@@ -157,6 +161,7 @@ function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, v
     JuMP.@NLconstraint(pm.model, cm^2 == crg^2 + cig^2) 
 end
 
+
 "Constraints for fault current contribution of inverter in grid-forming mode"
 function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, cmax)
     # vr_to = var(pm, n, :vr, bus_id)
@@ -165,6 +170,7 @@ function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x
     crg =  var(pm, n, :crg, i)
     cig =  var(pm, n, :cig, i)
     
+    # TODO verify setting reactive power to zero for feasiblity  
     # add a voltage drop so we don't need to worry about infeasibility near a short s
     # JuMP.@constraint(pm.model, vr_to == vgr - r * crg + x * cig)
     # JuMP.@constraint(pm.model, vi_to == vgi - r * cig - x * crg)
@@ -172,7 +178,8 @@ function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
-# adding the complex multiplier to constraint_unity_pf_inverter should do the same thing as this
+
+# TODO adding the complex multiplier to constraint_unity_pf_inverter should do the same thing as this
 # with potentially better performance under low terminal voltages
 "McCormick relaxation of constraints for fault current contribution of inverter in grid-following mode"
 function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
@@ -250,6 +257,8 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, 
     JuMP.@NLconstraint(pm.model, p_int >= (1-z) * pg/3)
 end
 
+
+"Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
 function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, pmax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -288,6 +297,9 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
     JuMP.@constraint(pm.model, p >= 0.0)
 end
 
+
+# TODO complete formulation and test in multiple inverters 
+"Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
 function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
@@ -329,12 +341,12 @@ function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw
     # DC-link power
     JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
 
+    #TODO verify can be solved in multi-inverter scenario 
     # JuMP.@constraint(pm.model, p <= pmax)
-    # JuMP.@constraint(pm.model, p >= 0.0)
 end
 
 
-""
+"Constraints for fault current inverter with current set point"
 function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     ar = -1/2
     ai = sqrt(3)/2
