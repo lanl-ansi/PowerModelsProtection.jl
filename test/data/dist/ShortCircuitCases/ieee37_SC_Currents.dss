@@ -1,7 +1,7 @@
 Clear
 
 New object=circuit.ieee37
-~ basekv=230 pu=1.00 
+~ basekv=230 pu=1.00
 ~ R1=4.2831 X1=16.6212  R0=3.9609 X0=29.7351  !MVAsc3=200000 MVAsc1=210000
 
 
@@ -16,7 +16,7 @@ New Transformer.XFM1  Phases=3 Windings=2 Xhl=1.81
 ~ wdg=2 bus=775       conn=Delta kv=0.48  kva=500    %r=0.045
 
 ! import line codes with phase impedance matrices
-Redirect        IEEELineCodes.dss
+Redirect        IEEELineCodes.DSS
 
 ! Lines
 New Line.L1     Phases=3 Bus1=701.1.2.3  Bus2=702.1.2.3  LineCode=722  Length=0.96
@@ -98,7 +98,7 @@ Set VoltageBases = "230,4.8,0.48"
 CalcVoltageBases
 
 !Transformer.Reg1a.Taps=[1.0 1.0]
-!Transformer.Reg1c.Taps=[1.0 1.0] 
+!Transformer.Reg1c.Taps=[1.0 1.0]
 Set Controlmode=OFF
 
 
