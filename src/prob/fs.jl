@@ -1,12 +1,11 @@
-
 "Run fs"
 function run_fault_study(data::Dict{String,Any}, solver; kwargs...)
     check_pf!(data, solver)
     add_fault_data!(data)
-    solution = Dict{String, Any}()
-    for (i,bus) in data["fault"]
-        solution[i] = Dict{Int64, Any}()
-        for (f,fault) in bus
+    solution = Dict{String,Any}()
+    for (i, bus) in data["fault"]
+        solution[i] = Dict{Int64,Any}()
+        for (f, fault) in bus
             data["active_fault"] = fault
             solution[i][f] = _PM.run_model(data, _PM.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
         end
@@ -32,7 +31,7 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
     has_v_gens = false
 
     for (n, nw_ref) in nws(pm)
-        for (i,gen) in nw_ref[:gen]
+        for (i, gen) in nw_ref[:gen]
             if gen["inverter_mode"] == "pq"
                 has_pq_gens = true
             end
@@ -57,7 +56,7 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
 
     constraint_fault_current(pm)
 
-    for (i,bus) in ref(pm, :bus)
+    for (i, bus) in ref(pm, :bus)
         constraint_current_balance(pm, i)
     end
 
