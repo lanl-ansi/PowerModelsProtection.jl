@@ -1,6 +1,6 @@
 # PowerModelsProtection
 
-[![Build Status](https://travis-ci.org/lanl-ansi/PowerModelsProtection.jl.svg?branch=grid-forming-inverters)](https://travis-ci.org/lanl-ansi/PowerModelsProtection.jl)
+![CI](https://github.com/lanl-ansi/PowerModelsProtection.jl/workflows/CI/badge.svg) ![Documentation](https://github.com/lanl-ansi/PowerModelsProtection.jl/workflows/Documentation/badge.svg)
 
 Fault study for PowerModels and PowerModelsDistribution
 
@@ -50,9 +50,9 @@ where `k` is a decision variable ranging from 0 to 1
 
 ### Unbalanced
 
-An inverter under unbalanced conditions will operate 
+An inverter under unbalanced conditions will operate
 at a fixed power factor _averaged across all phases_
-while injecting only positive-sequence current. 
+while injecting only positive-sequence current.
 This sounds ugly, but the constraints don't appear
 to be too bad.
 
@@ -82,7 +82,7 @@ Constant power factor constraints:
 
 #### Current Limiting Model
 
-This model assumes that 
+This model assumes that
 `vm`, `va` set from inverter node voltage from base power flow
 
 ```julia
