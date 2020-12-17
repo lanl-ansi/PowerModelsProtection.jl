@@ -251,6 +251,7 @@
     end
     @testset "2 pq inverter grid-forming pv fault test" begin
         data = FS.parse_file("../test/data/dist/case3_balanced_pv_2_gridforming.dss")
+        # TODO: Do I need to explicitly set the inverters as grid-forming?
         data["branch"]["4"]["br_status"] = 0
         data["fault"] = Dict{String, Any}()
         data["fault"]["1"] = Dict("type" => "lg", "bus" => "loadbus", "phases" => [1], "gr" => 0.0005)

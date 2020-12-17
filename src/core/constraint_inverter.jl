@@ -298,6 +298,7 @@ function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw
     crg =  var(pm, nw, :crg, i)
     cig =  var(pm, nw, :cig, i)
 
+    # current-limiting indicator variable
     z = var(pm, nw, :z, bus_id)
     p = var(pm, nw, :p_solar, bus_id)
     q = var(pm, nw, :q_solar, bus_id) 
