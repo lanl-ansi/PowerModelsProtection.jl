@@ -1,4 +1,4 @@
-""
+"Adds the fault to the model"
 function ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     if _IM.ismultinetwork(data)
         nws_data = data["nw"]
@@ -12,7 +12,8 @@ function ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     end
 end
 
-""
+
+"Adds the fault to the model for multiconductor"
 function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     if _IM.ismultinetwork(data)
         nws_data = data["nw"]
@@ -27,6 +28,8 @@ function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     end
 end
 
+
+"Calculates the p[ower from solar based on inputs"
 function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     if _IM.ismultinetwork(data)
         nws_data = data["nw"]
@@ -45,10 +48,10 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
                 else
                     nw_ref[:solar_gfli][gen["gen_bus"]] = parse(Int, i)
                 end
-                gen["i_max"] = 1/gen["dss"]["vminpu"] * gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000/3
-                gen["solar_max"] = gen["dss"]["irradiance"] * gen["dss"]["pmpp"]/ref[:nw][0][:baseMVA]/1000
-                gen["kva"] = gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000
-                gen["pf"] = gen["dss"]["pf"]
+                haskey(gen, "i_max") ? nothing : gen["i_max"] = 1/gen["dss"]["vminpu"] * gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000/3
+                haskey(gen, "solar_max") ? nothing : gen["solar_max"] = gen["dss"]["irradiance"] * gen["dss"]["pmpp"]/ref[:nw][0][:baseMVA]/1000
+                haskey(gen, "kva") ? nothing : gen["kva"] = gen["dss"]["kva"]/ref[:nw][0][:baseMVA]/1000
+                haskey(gen, "pf") ? nothing : gen["pf"] = gen["dss"]["pf"]
                 delete!(gen, "dss")
             end
         end

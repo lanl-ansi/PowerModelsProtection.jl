@@ -1,6 +1,6 @@
 using Debugger
 
-""
+"Runs the mc fault study"
 function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
     check_pf!(data, solver)
     check_microgrid!(data)
@@ -22,13 +22,13 @@ function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
 end
 
 
-""
+"Call to run fs on file"
 function run_mc_fault_study(file::String, solver; kwargs...)
     return run_mc_fault_study(parse_file(file; import_all = true), solver; kwargs...)
 end
 
 
-""
+"Build mc fault study"
 function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
     variable_mc_branch_current(pm, bounded=false)
@@ -48,6 +48,7 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
         constraint_mc_generation(pm, id)
     end
 
+    # TODO add back in the generator voltage drop with inverters in model  
     # constraint_mc_gen_voltage_drop(pm)
 
     constraint_mc_fault_current(pm)
@@ -72,7 +73,6 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
 
     for i in ids(pm, :solar_gfmi)
         constraint_mc_grid_forming_inverter_impedance(pm, i)
-        # constraint_mc_grid_forming_inverter(pm, i)
     end
 
 end

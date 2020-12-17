@@ -35,6 +35,7 @@ module PowerModelsProtection
     include("prob/common.jl")
     include("prob/fs.jl")
     include("prob/fs_mc.jl")
+    include("prob/pf_mc.jl")
 
     include("core/export.jl")  # must be last include to properly export functions
 end

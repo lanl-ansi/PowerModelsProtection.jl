@@ -1,5 +1,5 @@
 
-""
+"Run fs"
 function run_fault_study(data::Dict{String,Any}, solver; kwargs...)
     check_pf!(data, solver)
     add_fault_data!(data)
@@ -15,13 +15,13 @@ function run_fault_study(data::Dict{String,Any}, solver; kwargs...)
 end
 
 
-""
+"Run fs on file"
 function run_fault_study(file::String, solver; kwargs...)
     return run_fault_study(parse_file(file), solver; kwargs...)
 end
 
 
-""
+"Build fault study"
 function build_fault_study(pm::_PM.AbstractPowerModel)
     _PM.variable_bus_voltage(pm, bounded = true)
     variable_branch_current(pm, bounded = false)
