@@ -1,4 +1,3 @@
-
 @testset "test pf" begin
     ut_trans_2w_yy = FS.parse_file("../test/data/dist/ut_trans_2w_yy.dss")
     case3_unbalanced = FS.parse_file("../test/data/dist/case3_unbalanced.dss")
@@ -34,8 +33,6 @@
     @testset "ivr pf case3_balanced_multi_pv_on_bus_grid_following" begin
         sol = FS.run_mc_pf(case3_balanced_multi_pv_on_bus_grid_following, ipopt_solver)
         @test calulate_error_percentage(sol["solution"]["line"]["quad"]["cr_fr"][1], 90.855) < .05
-        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cr_fr"][1], 71.848) < .05
     end
 
 end
-

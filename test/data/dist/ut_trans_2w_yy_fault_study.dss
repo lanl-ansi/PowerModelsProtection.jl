@@ -37,3 +37,7 @@ Calcvoltagebases
 
 ! Solve network
 solve
+
+
+solve mode=faultstudy
+show f

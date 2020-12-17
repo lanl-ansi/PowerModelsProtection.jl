@@ -11,7 +11,6 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id
 end
 
 
-
 "Calculates the fault current at a bus"
 function constraint_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     bus = ref(pm, nw, :active_fault, "bus_i")
@@ -20,11 +19,11 @@ function constraint_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     vi = var(pm, nw, :vi, bus)
 
     var(pm, nw)[:cfr] = JuMP.@variable(pm.model,
-        [bus], base_name="$(nw)_cfr",
+        [bus], base_name = "$(nw)_cfr",
         start = 0
     )
     var(pm, nw)[:cfi] = JuMP.@variable(pm.model,
-        [bus], base_name="$(nw)_cfi",
+        [bus], base_name = "$(nw)_cfi",
         start = 0
     )
 
@@ -49,12 +48,12 @@ function constraint_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arc
     JuMP.@NLconstraint(pm.model, sum(cr[a] for a in bus_arcs)
                                 ==
                                 sum(crg[g] for g in bus_gens)
-                                - sum(gs for gs in values(bus_gs))*vr + sum(bs for bs in values(bus_bs))*vi
+                                - sum(gs for gs in values(bus_gs)) * vr + sum(bs for bs in values(bus_bs)) * vi
                                 )
     JuMP.@NLconstraint(pm.model, sum(ci[a] for a in bus_arcs)
                                 ==
                                 sum(cig[g] for g in bus_gens)
-                                - sum(gs for gs in values(bus_gs))*vi - sum(bs for bs in values(bus_bs))*vr
+                                - sum(gs for gs in values(bus_gs)) * vi - sum(bs for bs in values(bus_bs)) * vr
                                 )
 end
 
@@ -76,13 +75,13 @@ function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, b
     JuMP.@NLconstraint(pm.model, sum(cr[a] for a in bus_arcs)
                                 ==
                                 sum(crg[g] for g in bus_gens)
-                                - sum(gs for gs in values(bus_gs))*vr + sum(bs for bs in values(bus_bs))*vi
+                                - sum(gs for gs in values(bus_gs)) * vr + sum(bs for bs in values(bus_bs)) * vi
                                 - cfr
                                 )
     JuMP.@NLconstraint(pm.model, sum(ci[a] for a in bus_arcs)
                                 ==
                                 sum(cig[g] for g in bus_gens)
-                                - sum(gs for gs in values(bus_gs))*vi - sum(bs for bs in values(bus_bs))*vr
+                                - sum(gs for gs in values(bus_gs)) * vi - sum(bs for bs in values(bus_bs)) * vr
                                 - cfi
                                 )
 end
@@ -97,8 +96,8 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus
     cig =  var(pm, n, :cig, i)
 
     for c in _PM.conductor_ids(pm; nw=n)
-        JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c]*crg[c] + x[c]*cig[c])
-        JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c]*cig[c] - x[c]*crg[c])
+        JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c] * crg[c] + x[c] * cig[c])
+        JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c] * cig[c] - x[c] * crg[c])
     end
 end
 
@@ -113,12 +112,12 @@ function constraint_mc_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     vi = var(pm, nw, :vi, bus)
 
     var(pm, nw)[:cfr] = JuMP.@variable(pm.model,
-        [c in _PM.conductor_ids(pm; nw=nw)], base_name="$(nw)_cfr",
+        [c in _PM.conductor_ids(pm; nw=nw)], base_name = "$(nw)_cfr",
         start = 0
     )
 
     var(pm, nw)[:cfi] = JuMP.@variable(pm.model,
-        [c in _PM.conductor_ids(pm; nw=nw)], base_name="$(nw)_cfi",
+        [c in _PM.conductor_ids(pm; nw=nw)], base_name = "$(nw)_cfi",
         start = 0
     )
 
@@ -128,8 +127,8 @@ function constraint_mc_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     cnds = _PM.conductor_ids(pm; nw=nw)
 
     for c in _PM.conductor_ids(pm; nw=nw)
-        JuMP.@constraint(pm.model, cr[c] == sum(Gf[c,d]*vr[d] for d in cnds))
-        JuMP.@constraint(pm.model, ci[c] == sum(Gf[c,d]*vi[d] for d in cnds))
+        JuMP.@constraint(pm.model, cr[c] == sum(Gf[c,d] * vr[d] for d in cnds))
+        JuMP.@constraint(pm.model, ci[c] == sum(Gf[c,d] * vi[d] for d in cnds))
     end
 end
 
@@ -161,7 +160,7 @@ function constraint_mc_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_
                                     + sum(crt[a_trans][c] for a_trans in bus_arcs_trans)
                                     ==
                                     sum(crg[g][c]        for g in bus_gens)
-                                    - sum( Gt[c,d]*vr[d] - Bt[c,d]*vi[d] for d in cnds) # shunts
+                                    - sum(Gt[c,d] * vr[d] - Bt[c,d] * vi[d] for d in cnds) # shunts
                                     - 0
                                     )
         JuMP.@NLconstraint(pm.model, sum(ci[a][c] for a in bus_arcs)
@@ -169,7 +168,7 @@ function constraint_mc_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_
                                     + sum(cit[a_trans][c] for a_trans in bus_arcs_trans)
                                     ==
                                     sum(cig[g][c]        for g in bus_gens)
-                                    - sum( Gt[c,d]*vi[d] + Bt[c,d]*vr[d] for d in cnds) # shunts
+                                    - sum(Gt[c,d] * vi[d] + Bt[c,d] * vr[d] for d in cnds) # shunts
                                     - 0
                                     )
     end
@@ -206,7 +205,7 @@ function constraint_mc_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i
                                     + sum(crt[a_trans][c] for a_trans in bus_arcs_trans)
                                     ==
                                     sum(crg[g][c]        for g in bus_gens)
-                                    - sum( Gt[c,d]*vr[d] - Bt[c,d]*vi[d] for d in cnds) # shunts
+                                    - sum(Gt[c,d] * vr[d] - Bt[c,d] * vi[d] for d in cnds) # shunts
                                     - cfr[c] # faults
                                     )
         JuMP.@NLconstraint(pm.model, sum(ci[a][c] for a in bus_arcs)
@@ -214,7 +213,7 @@ function constraint_mc_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i
                                     + sum(cit[a_trans][c] for a_trans in bus_arcs_trans)
                                     ==
                                     sum(cig[g][c]        for g in bus_gens)
-                                    - sum( Gt[c,d]*vi[d] + Bt[c,d]*vr[d] for d in cnds) # shunts
+                                    - sum(Gt[c,d] * vi[d] + Bt[c,d] * vr[d] for d in cnds) # shunts
                                     - cfi[c] # faults
                                     )
     end
@@ -248,14 +247,14 @@ function constraint_mc_generation_delta(pm::_PM.IVRPowerModel, nw::Int, id::Int,
     cig = var(pm, nw, :cig, id)
 
     nph = 3
-    prev = Dict(i=>(i+nph-2)%nph+1 for i in 1:nph)
-    next = Dict(i=>i%nph+1 for i in 1:nph)
+    prev = Dict(i => (i + nph - 2) % nph + 1 for i in 1:nph)
+    next = Dict(i => i % nph + 1 for i in 1:nph)
 
-    vrg = JuMP.@NLexpression(pm.model, [i in 1:nph], vr[i]-vr[next[i]])
-    vig = JuMP.@NLexpression(pm.model, [i in 1:nph], vi[i]-vi[next[i]])
+    vrg = JuMP.@NLexpression(pm.model, [i in 1:nph], vr[i] - vr[next[i]])
+    vig = JuMP.@NLexpression(pm.model, [i in 1:nph], vi[i] - vi[next[i]])
 
-    crg_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], crg[i]-crg[prev[i]])
-    cig_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], cig[i]-cig[prev[i]])
+    crg_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], crg[i] - crg[prev[i]])
+    cig_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], cig[i] - cig[prev[i]])
 
     var(pm, nw, :crg_bus)[id] = crg_bus
     var(pm, nw, :cig_bus)[id] = cig_bus
@@ -264,11 +263,11 @@ function constraint_mc_generation_delta(pm::_PM.IVRPowerModel, nw::Int, id::Int,
         sol(pm, nw, :gen, id)[:crg_bus] = crg_bus
         sol(pm, nw, :gen, id)[:cig_bus] = cig_bus
     end
-end
+        end
 
 
 "Constarint to set the ref bus voltage"
-function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
+    function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
 
