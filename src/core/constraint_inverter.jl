@@ -50,11 +50,11 @@ function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_i
     kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
     
     # I think this can be generalized to arbitrary power factors by multiplying k with alpha + j*beta
-    # JuMP.@NLconstraint(pm.model, vr == kg*crg)
-    # JuMP.@NLconstraint(pm.model, vi == kg*cig)
-    # TODO Verify that the relaxation is reasonable 
-    _IM.relaxation_product(pm.model, kg, crg, vr)    
-    _IM.relaxation_product(pm.model, kg, cig, vi)
+    JuMP.@NLconstraint(pm.model, vr == kg*crg)
+    JuMP.@NLconstraint(pm.model, vi == kg*cig)
+    # TODO Verify that the relaxation is reasonable - don't think that this is the case given large bounds on v and c
+    # _IM.relaxation_product(pm.model, kg, crg, vr)    
+    # _IM.relaxation_product(pm.model, kg, cig, vi)
     JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2) 
 end
 
@@ -101,17 +101,19 @@ end
 
 "Constraints for fault current contribution of inverter in grid-following mode with pq set points"
 function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
+    println("Adding pq inverter constraint for gen $i at bus $bus_id")
+
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
     crg =  var(pm, nw, :crg, i)
     cig =  var(pm, nw, :cig, i)
 
-    p_int = var(pm, nw, :p_int, bus_id)
-    q_int = var(pm, nw, :q_int, bus_id) 
-    crg_max = var(pm, nw, :crg_pos_max, bus_id)
-    cig_max = var(pm, nw, :cig_pos_max, bus_id)
-    z = var(pm, nw, :z, bus_id)
+    p_int = var(pm, nw, :p_int, i)
+    q_int = var(pm, nw, :q_int, i) 
+    crg_max = var(pm, nw, :crg_pos_max, i)
+    cig_max = var(pm, nw, :cig_pos_max, i)
+    z = var(pm, nw, :z, i)
 
     JuMP.@NLconstraint(pm.model, 0.0 == crg_max*cig - cig_max*crg)
     JuMP.@NLconstraint(pm.model, crg_max^2 + cig_max^2 == cmax^2)

@@ -1,4 +1,4 @@
-@testset "unbalance fault study" begin
+@testset "Unbalanced fault study" begin
     ut_trans_2w_yy_fault_study = FS.parse_file("../test/data/dist/ut_trans_2w_yy_fault_study.dss")
     case3_balanced_pv = FS.parse_file("../test/data/dist/case3_balanced_pv.dss")
     case3_balanced_pv_gridforming = FS.parse_file("../test/data/dist/case3_balanced_pv_gridforming.dss")
