@@ -13,14 +13,10 @@ end
 "Adds the result from pf based on model type"
 function add_pf_data!(data::Dict{String,Any}, solver)
     if haskey(data, "method") && (data["method"] == "PMD")
-        println("Running MC PF")
-        result = _PMD.run_mc_pf(data, _PM.ACPPowerModel, solver)
-        println(result["solution"]["bus"])
-        println("Adding PF results to data")
+        result = run_mc_pf(data, solver)
         add_mc_pf_data!(data, result)
     else
         if haskey(data, "method") && (data["method"] == "PMs")
-            println("Hi Nymeria")
             result = _PMD.run_pf(data, _PM.ACPPowerModel, solver)
             add_pf_data!(data, result)
         end

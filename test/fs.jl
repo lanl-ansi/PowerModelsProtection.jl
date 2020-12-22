@@ -69,7 +69,7 @@
         result = study_results["2"][1]
         solution = result["solution"]
 
-        @test result["termination_status"] == LOCALLY_SOLVED
+        @test result["termination_status"] == MOI.LOCALLY_SOLVED
 
         @test isapprox(result["objective"], -4.323499; atol = 1e-3)
 
