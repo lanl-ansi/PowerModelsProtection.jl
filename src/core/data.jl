@@ -12,14 +12,19 @@ end
 
 "Adds the result from pf based on model type"
 function add_pf_data!(data::Dict{String,Any}, solver)
+
     if haskey(data, "method") && (data["method"] == "PMD")
+        Memento.info(_LOGGER, "Adding PF results to network")
         result = run_mc_pf(data, solver)
         add_mc_pf_data!(data, result)
+    elseif haskey(data, "method") && (data["method"] == "PMs")
+        Memento.info(_LOGGER, "Adding PF results to network")
+        result = _PMD.run_pf(data, _PM.ACPPowerModel, solver)
+        add_pf_data!(data, result)
     else
-        if haskey(data, "method") && (data["method"] == "PMs")
-            result = _PMD.run_pf(data, _PM.ACPPowerModel, solver)
-            add_pf_data!(data, result)
-        end
+        Memento.info(_LOGGER, "Adding OPF results to network")
+        result = _PMD.run_mc_opf(data, _PM.ACPPowerModel, solver)
+        add_pf_data!(data, result)
     end
 end
 
@@ -30,7 +35,15 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
         for (i, bus) in result["solution"]["bus"]
             data["bus"][i]["vm"] = bus["vm"]
             data["bus"][i]["va"] = bus["va"]
+            Memento.debug(_LOGGER, "Adding powerflow solution to bus $i")
+            # Memento.info(_LOGGER, "Adding powerflow solution to bus $i")
         end
+        for (i, gen) in result["solution"]["gen"]
+            data["gen"][i]["pg"] = gen["pg"]
+            data["gen"][i]["qg"] = gen["qg"]
+            Memento.debug(_LOGGER, "Adding powerflow solution to gen $i")
+            # Memento.info(_LOGGER, "Adding powerflow solution to bus $i")
+        end        
     else
         Memento.info(_LOGGER, "The model power flow returned infeasible")
     end

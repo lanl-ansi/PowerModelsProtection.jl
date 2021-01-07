@@ -17,6 +17,7 @@ module PowerModelsProtection
 
     function __init__()
         global _LOGGER = Memento.getlogger(PowerModels)
+        # Memento.setlevel!(_LOGGER, "debug")
     end
 
     include("core/variable.jl")

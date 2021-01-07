@@ -2,6 +2,7 @@
 
 "Runs the mc fault study"
 function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
+    Memento.setlevel!(_LOGGER, "debug")
     check_pf!(data, solver)
     check_microgrid!(data)
     add_mc_fault_data!(data)
@@ -11,10 +12,10 @@ function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
     for (i,bus) in faults
         solution[i] = Dict{String,Any}()
         for (j,type) in bus
-            solution[i][j] = Dict{Int64,Any}()
+            solution[i][j] = Dict{String,Any}()
             for (f,fault) in type
                 data["active_fault"] = fault
-                solution[i][j][f] = run_mc_model(data, _PM.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!, ref_add_solar!], kwargs...)
+                solution[i][j]["$f"] = run_mc_model(data, _PM.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!, ref_add_gen_dynamics!, ref_add_solar!], kwargs...)
             end
         end
     end
@@ -49,7 +50,7 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     end
 
     # TODO add back in the generator voltage drop with inverters in model  
-    # constraint_mc_gen_voltage_drop(pm)
+    constraint_mc_gen_voltage_drop(pm)
 
     constraint_mc_fault_current(pm)
 

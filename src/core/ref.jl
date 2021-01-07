@@ -29,7 +29,7 @@ function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
 end
 
 
-"Calculates the p[ower from solar based on inputs"
+"Calculates the power from solar based on inputs"
 function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     if _IM.ismultinetwork(data)
         nws_data = data["nw"]
@@ -52,7 +52,38 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
                 haskey(gen, "solar_max") ? nothing : gen["solar_max"] = gen["dss"]["irradiance"] * gen["dss"]["pmpp"] / ref[:nw][0][:baseMVA] / 1000
                 haskey(gen, "kva") ? nothing : gen["kva"] = gen["dss"]["kva"] / ref[:nw][0][:baseMVA] / 1000
                 haskey(gen, "pf") ? nothing : gen["pf"] = gen["dss"]["pf"]
-                delete!(gen, "dss")
+                # delete!(gen, "dss")
+            end
+        end
+    end
+end
+
+"Calculates the power from solar based on inputs"
+function ref_add_gen_dynamics!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+    if _IM.ismultinetwork(data)
+        nws_data = data["nw"]
+    else
+        nws_data = Dict("0" => data)
+    end
+    for (n, nw_data) in nws_data
+        nw_id = parse(Int, n)
+        nw_ref = ref[:nw][nw_id]
+
+        for (i, gen) in nw_data["gen"]
+            if occursin("pvsystem", gen["source_id"])
+                continue
+            end
+
+            if !haskey(gen, "zr")
+                gen["zr"] = [0, 0, 0,]
+            end
+
+            if !haskey(gen, "zx")
+                if gen["source_id"] == "_virtual_gen.vsource.source"
+                    gen["zx"] = [0, 0, 0]
+                elseif haskey(gen, "dss") && haskey(gen["dss"], "xdp") 
+                    gen["zx"] = repeat([gen["dss"]["xdp"]], 3)
+                end
             end
         end
     end

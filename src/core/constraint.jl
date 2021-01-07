@@ -92,8 +92,10 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus
     vr_to = var(pm, n, :vr, bus_id)
     vi_to = var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  var(pm, n, :crg_bus, i)
+    cig =  var(pm, n, :cig_bus, i)
+
+    Memento.info(_LOGGER, "Adding drop for generator $i on bus $bus_id with xdp = $x")
 
     for c in _PM.conductor_ids(pm; nw=n)
         JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c] * crg[c] + x[c] * cig[c])
@@ -266,8 +268,9 @@ function constraint_mc_generation_delta(pm::_PM.IVRPowerModel, nw::Int, id::Int,
         end
 
 
-"Constarint to set the ref bus voltage"
-    function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
+"Constraint to set the ref bus voltage"
+function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
+    Memento.info(_LOGGER, "Setting voltage for reference bus $i")
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
 

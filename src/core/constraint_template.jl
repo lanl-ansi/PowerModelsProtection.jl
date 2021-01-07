@@ -189,18 +189,56 @@ end
 "Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor"
 function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k, gen) in ref(pm, nw, :gen)
+        if gen["source_id"] == "_virtual_gen.vsource.source"
+            continue
+        end
+
         i = gen["index"]
         bus_id = gen["gen_bus"]
 
         r = gen["zr"]
         x = gen["zx"]
 
-        vm = ref(pm, :bus, bus_id, "vm")
-        va = ref(pm, :bus, bus_id, "va")
+        vm = [1, 1, 1]
+        va = [0, 0, 0]
 
-        vgr = [vm[i] * cos(va[i]) for i in 1:3]
-        vgi = [vm[i] * sin(va[i]) for i in 1:3]
+        if "vm" in keys(ref(pm, :bus, bus_id))
+            vm = ref(pm, :bus, bus_id, "vm")
+        else
+            Memento.warn(_LOGGER, "vm not specified for bus $bus_id, assuming 1")
+        end
 
+        if "va" in keys(ref(pm, :bus, bus_id))
+            va = ref(pm, :bus, bus_id, "va")
+        else
+            Memento.warn(_LOGGER, "va not specified for bus $bus_id, assuming 0")
+        end      
+        
+        pg = gen["pg"]
+        qg = gen["qg"]
+        sg = pg .+ 1im*qg
+
+        vr = [vm[i] * cos(va[i]) for i in 1:3]
+        vi = [vm[i] * sin(va[i]) for i in 1:3]
+
+        ib = 1e6/(sqrt(3)*400)
+
+        v = vr .+ 1im*vi
+        cg = conj(sg./v)
+        z = r .+ 1im*x
+        vg = v .+ (z.*cg)
+
+        vgr = real(vg)
+        vgi = imag(vg)
+
+        println("Generator terminal voltage from pre-fault powerflow")
+        println(abs.(v))
+        println("Generator pre-fault power (kVA)")
+        println(1e3*sg)
+        println("Generator pre-fault current (A)")
+        println(abs.(ib*cg))
+        println("Calculated generator internal voltage")
+        println(abs.(vg))
         constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi)
     end
 end
