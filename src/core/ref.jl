@@ -65,6 +65,9 @@ function ref_add_gen_dynamics!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any}
     else
         nws_data = Dict("0" => data)
     end
+
+    sbase2 = data["baseMVA"]
+
     for (n, nw_data) in nws_data
         nw_id = parse(Int, n)
         nw_ref = ref[:nw][nw_id]
@@ -81,8 +84,20 @@ function ref_add_gen_dynamics!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any}
             if !haskey(gen, "zx")
                 if gen["source_id"] == "_virtual_gen.vsource.source"
                     gen["zx"] = [0, 0, 0]
-                elseif haskey(gen, "dss") && haskey(gen["dss"], "xdp") 
-                    gen["zx"] = repeat([gen["dss"]["xdp"]], 3)
+                elseif haskey(gen, "dss") && haskey(gen["dss"], "xdp")
+                    K = 1
+
+                    if haskey(gen["dss"], "kw")
+                        sbase1 = gen["dss"]["kw"]/1000
+                        K = sbase2/sbase1 
+                    else
+                        Memento.warn(_LOGGER, "No kW specified for generator, not changing base for Xd'")
+                    end
+
+                    # Scaling factor for rebase
+                    x = K*gen["dss"]["xdp"]
+
+                    gen["zx"] = repeat([x], 3)
                 end
             end
         end

@@ -212,33 +212,41 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
             va = ref(pm, :bus, bus_id, "va")
         else
             Memento.warn(_LOGGER, "va not specified for bus $bus_id, assuming 0")
-        end      
+        end  
+        
+        mva = 100
+        kva = 1e3*mva
+        sb = 1e6*mva
+
+        kv = 4.16
+        vb = 1000*kv
         
         pg = gen["pg"]
         qg = gen["qg"]
-        sg = pg .+ 1im*qg
+        sg = pg + 1im*qg
 
         vr = [vm[i] * cos(va[i]) for i in 1:3]
         vi = [vm[i] * sin(va[i]) for i in 1:3]
 
-        ib = 1e6/(sqrt(3)*400)
-
-        v = vr .+ 1im*vi
-        cg = conj(sg./v)
-        z = r .+ 1im*x
-        vg = v .+ (z.*cg)
+        v = vr + 1im*vi
+        cg = [conj(sg[i]/v[i]) for i in 1:3]
+        z = r + 1im*x
+        vg = [v[i] + (z[i]*cg[i]) for i in 1:3]
 
         vgr = real(vg)
         vgi = imag(vg)
 
         println("Generator terminal voltage from pre-fault powerflow")
-        println(abs.(v))
+        println(abs.(v[1]))
         println("Generator pre-fault power (kVA)")
-        println(1e3*sg)
+        println(kva*sg[1])
         println("Generator pre-fault current (A)")
-        println(abs.(ib*cg))
+        ssi = sb*sg[1]
+        vsi = vb*v[1]/sqrt(3)
+        isi = ssi/vsi
+        println(abs(isi))
         println("Calculated generator internal voltage")
-        println(abs.(vg))
+        println(abs.(vg[1]))
         constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi)
     end
 end

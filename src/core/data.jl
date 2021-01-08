@@ -13,13 +13,13 @@ end
 "Adds the result from pf based on model type"
 function add_pf_data!(data::Dict{String,Any}, solver)
 
-    if haskey(data, "method") && (data["method"] == "PMD")
-        Memento.info(_LOGGER, "Adding PF results to network")
+    if haskey(data, "method") && (data["method"] == "PMP")
+        Memento.info(_LOGGER, "Adding PMD PF results to network")
         result = run_mc_pf(data, solver)
         add_mc_pf_data!(data, result)
-    elseif haskey(data, "method") && (data["method"] == "PMs")
+    elseif haskey(data, "method") && (data["method"] in ["PMs","PMD","pf"])
         Memento.info(_LOGGER, "Adding PF results to network")
-        result = _PMD.run_pf(data, _PM.ACPPowerModel, solver)
+        result = _PMD.run_mc_pf(data, _PM.ACPPowerModel, solver)
         add_pf_data!(data, result)
     else
         Memento.info(_LOGGER, "Adding OPF results to network")
