@@ -49,6 +49,11 @@ function is_v_inverter(pm, i, nw)
     return gen["inverter_mode"] == "v"
 end
 
+"generator reactive power setpoint constraint"
+function constraint_mc_gen_power_setpoint_imag(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw, kwargs...)
+    qg_set = ref(pm, nw, :gen, i)["qg"]
+    constraint_mc_gen_power_setpoint_imag(pm, nw, i, qg_set)
+end
 
 "Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence"
 function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)

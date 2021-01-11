@@ -1,3 +1,9 @@
+"generator reactive power setpoint constraint"
+function constraint_mc_gen_power_setpoint_imag(pm::_PM.AbstractPowerModel, n::Int, i, qg)
+    qg_var = var(pm, n, :qg, i)
+    JuMP.@constraint(pm.model, qg_var .== qg)
+end
+
 "States that the bus voltage is equal to the internal voltage minus voltage drop across subtransient impedance"
 function constraint_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi)
     vr_to = var(pm, n, :vr, bus_id)

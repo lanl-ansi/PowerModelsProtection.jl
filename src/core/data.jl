@@ -1,3 +1,5 @@
+using Debugger
+
 "Check to see if pf should be solved"
 function check_pf!(data::Dict{String,Any}, solver)
     if haskey(data, "pf")
@@ -13,15 +15,19 @@ end
 "Adds the result from pf based on model type"
 function add_pf_data!(data::Dict{String,Any}, solver)
 
-    if haskey(data, "method") && (data["method"] == "PMD")
+    if haskey(data, "method") && data["method"] in ["PMD", "solar-pf"]
         Memento.info(_LOGGER, "Adding PF results to network")
         result = run_mc_pf(data, solver)
-        add_mc_pf_data!(data, result)
-    elseif haskey(data, "method") && (data["method"] == "PMs")
+        add_mc_pf_data!(data, result)    
+    elseif haskey(data, "method") && data["method"] == "dg-pf"
         Memento.info(_LOGGER, "Adding PF results to network")
-        result = _PMD.run_pf(data, _PM.ACPPowerModel, solver)
-        add_pf_data!(data, result)
-    else
+        result = run_mc_dg_pf(data, solver)
+        add_pf_data!(data, result)  
+    elseif haskey(data, "method") && data["method"] in ["PMs", "pf"]
+        Memento.info(_LOGGER, "Adding PF results to network")
+        result = _PMD.run_mc_pf(data, _PM.ACPPowerModel, solver)
+        add_pf_data!(data, result)                  
+    else # "method == opf"
         Memento.info(_LOGGER, "Adding OPF results to network")
         result = _PMD.run_mc_opf(data, _PM.ACPPowerModel, solver)
         add_pf_data!(data, result)
@@ -50,9 +56,10 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
 end
 
 
-""
+"Add the result from pf returning in the engineer model format"
 function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     if result["primal_status"] == MOI.FEASIBLE_POINT
+        # println(data["bus_lookup"])
         for (i, bus) in result["solution"]["bus"]
             bus_index = string(data["bus_lookup"][i])
             data["bus"][bus_index]["vr"] = bus["vr"]
