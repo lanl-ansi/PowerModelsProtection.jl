@@ -261,7 +261,7 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
-function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, pmax, cmax)
+function constraint_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, pmax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -279,6 +279,7 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
 
     for c in 1:ncnds
         # current limits 
+        # z = 1 -> invert in in current limiting mode
         JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
 
@@ -296,7 +297,7 @@ function constraint_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
     JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
 
     JuMP.@constraint(pm.model, p <= pmax)
-    JuMP.@constraint(pm.model, p >= 0.0)
+    JuMP.@constraint(pm.model, p >= -pmax)
 end
 
 

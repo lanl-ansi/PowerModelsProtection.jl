@@ -31,6 +31,7 @@ end
 
 "Calculates the power from solar based on inputs"
 function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+    Memento.info(_LOGGER, "Adding solar refs")
     if _IM.ismultinetwork(data)
         nws_data = data["nw"]
     else
@@ -42,13 +43,19 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
         nw_ref[:solar_gfli] = Dict{Int,Any}()
         nw_ref[:solar_gfmi] = Dict{Int,Any}()
         for (i, gen) in nw_data["gen"]
+            Memento.info(_LOGGER,"Adding solar refs for gen $i")
+
             if occursin("pvsystem", gen["source_id"])
                 if haskey(gen, "grid_forming")
+                    Memento.info(_LOGGER, "Gen $i is grid-forming inverter:")
+                    println(gen)
+                    println()
                     gen["grid_forming"] ? nw_ref[:solar_gfmi][gen["gen_bus"]] = parse(Int, i) : nw_ref[:solar_gfli][gen["gen_bus"]] = parse(Int, i)
                 else
                     nw_ref[:solar_gfli][gen["gen_bus"]] = parse(Int, i)
                 end
-                haskey(gen, "i_max") ? nothing : gen["i_max"] = 1 / gen["dss"]["vminpu"] * gen["dss"]["kva"] / ref[:nw][0][:baseMVA] / 1000 / 3
+                haskey(gen, "i_max") ? nothing : gen["i_max"] = (1/gen["dss"]["vminpu"]) * gen["dss"]["kva"] / (3 * 1000 * ref[:nw][0][:baseMVA])
+                Memento.info(_LOGGER, "Gen $i imax = $(gen["i_max"])")
                 haskey(gen, "solar_max") ? nothing : gen["solar_max"] = gen["dss"]["irradiance"] * gen["dss"]["pmpp"] / ref[:nw][0][:baseMVA] / 1000
                 haskey(gen, "kva") ? nothing : gen["kva"] = gen["dss"]["kva"] / ref[:nw][0][:baseMVA] / 1000
                 haskey(gen, "pf") ? nothing : gen["pf"] = gen["dss"]["pf"]
@@ -95,7 +102,10 @@ function ref_add_gen_dynamics!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any}
                     end
 
                     # Scaling factor for rebase
+                    Memento.info(_LOGGER, "Old Xdp for gen$i = $(gen["dss"]["xdp"])")
+                    Memento.info(_LOGGER, "Scaling Xdp by $K")
                     x = K*gen["dss"]["xdp"]
+                    Memento.info(_LOGGER,   "New Xdp for gen$i = $x")
 
                     gen["zx"] = repeat([x], 3)
                 end

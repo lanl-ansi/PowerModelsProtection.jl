@@ -106,6 +106,8 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus
     for c in _PM.conductor_ids(pm; nw=n)
         JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c] * crg[c] + x[c] * cig[c])
         JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c] * cig[c] - x[c] * crg[c])
+        # JuMP.@constraint(pm.model, vr_to[c] == vgr[c])
+        # JuMP.@constraint(pm.model, vi_to[c] == vgi[c])
     end
 end
 

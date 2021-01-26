@@ -27,11 +27,16 @@ function add_pf_data!(data::Dict{String,Any}, solver)
         Memento.info(_LOGGER, "Adding PF results to network")
         result = _PMD.run_mc_pf(data, _PM.ACPPowerModel, solver)
         add_pf_data!(data, result)                  
-    else # "method == opf"
+    elseif haskey(data, "method") && data["method"] == "opf"
         Memento.info(_LOGGER, "Adding OPF results to network")
         result = _PMD.run_mc_opf(data, _PM.ACPPowerModel, solver)
         add_pf_data!(data, result)
+    else
+        Memento.info(_LOGGER, "Not performing pre-fault power flow")
     end
+
+    Memento.info(_LOGGER, "Done adding results to network")
+
 end
 
 

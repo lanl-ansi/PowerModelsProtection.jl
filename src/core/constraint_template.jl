@@ -1,3 +1,5 @@
+using Memento
+
 "Check to see if gen is inverter model"
 function is_inverter(pm, i, nw)
     gen = ref(pm, nw, :gen, i)
@@ -194,9 +196,23 @@ end
 "Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor"
 function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
     for (k, gen) in ref(pm, nw, :gen)
-        if gen["source_id"] == "_virtual_gen.vsource.source"
+
+        if k in ids(pm, :solar_gfli)
+            Memento.info(_LOGGER, "Skipping gen $k in gen constraints")
             continue
         end
+
+        if !("zr" in keys(gen))  
+            Memento.info(_LOGGER, "Skipping gen $k in gen constraints")
+            continue
+        end
+
+        if gen["source_id"] == "_virtual_gen.vsource.source"
+            Memento.info(_LOGGER, "Skipping gen $k in gen constraints")
+            continue
+        end
+
+        Memento.info(_LOGGER, "Adding voltage drop constraint for generator $k")
 
         i = gen["index"]
         bus_id = gen["gen_bus"]
@@ -205,7 +221,7 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
         x = gen["zx"]
 
         vm = [1, 1, 1]
-        va = [0, 0, 0]
+        va = [0, -2*pi/3, 2*pi/3]
 
         if "vm" in keys(ref(pm, :bus, bus_id))
             vm = ref(pm, :bus, bus_id, "vm")
@@ -274,6 +290,7 @@ end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
 function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    Memento.info(_LOGGER, "Adding grid-forming inverter constraint without impedance")
     index = pm.ref[:nw][nw][:solar_gfmi][i]
     gen = pm.ref[:nw][nw][:gen][index]
     bus_i = gen["gen_bus"]
@@ -281,7 +298,7 @@ function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int;
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
         bus["vm"] = [1 for c in _PM.conductor_ids(pm; nw=nw)]
-        bus["va"] = [0 -2 * pi / 3 2 * pi / 3]
+        bus["va"] = [0, -2*pi/3, 2*pi/3]
     end
 
     cmax = gen["i_max"]
@@ -295,7 +312,7 @@ function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int;
         pmax = gen["kva"]
     end
 
-    constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, pmax, cmax)
+    constraint_grid_forming_inverter(pm, nw, index, i, vrstar, vistar, pmax, cmax)
 end
 
 
@@ -308,7 +325,7 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
         bus["vm"] = [1 for c in _PM.conductor_ids(pm; nw=nw)]
-        bus["va"] = [0 -2 * pi / 3 2 * pi / 3]
+        bus["va"] = [0, -2*pi/3, 2*pi/3]
     end
 
     cmax = gen["i_max"]
@@ -322,7 +339,7 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
         pmax = gen["kva"]
     end
 
-    r = 10 * [1, 1, 1]
+    r = 0.1*ones(3)
     x = [0, 0, 0]
 
     if "r" in keys(gen)
@@ -333,12 +350,6 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
         x = gen["zx"]
     end
 
-    # TODO verfiy the formulation with multiple inverters
-    r = [1, 1, 1]
-    x = [1, 1, 1]
-
-    # r = [0.0, 0.0, 0.0]
-    # x = [0.0, 0.0, 0.0]
 
     # constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, pmax, cmax)
     # function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
