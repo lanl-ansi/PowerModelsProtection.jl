@@ -1,4 +1,4 @@
-using Debugger
+# using Debugger
 
 "Check to see if pf should be solved"
 function check_pf!(data::Dict{String,Any}, solver)
