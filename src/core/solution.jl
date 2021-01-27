@@ -1,36 +1,29 @@
-
-""
+"Output the solution"
 function solution_fs!(pm::_PM.AbstractPowerModel, sol::Dict{String,Any})
-    sol["fault"] = ref(pm, pm.cnw, :active_fault)
-    sol["fault"]["currents"] = Dict{String, Any}()
-    add_branch_currents!(pm, sol)
-    add_tansformer_currents!(pm, sol)
-end
-
-
-""
-function add_tansformer_currents!(pm::_PM.AbstractPowerModel, sol::Dict{String,Any})
-    s_base = sol["baseMVA"] * 1000
-    for (l,i,j) in ref(pm, pm.cnw, :arcs_from_trans)
-        v_base = ref(pm, pm.cnw, :bus, i)["base_kv"]
-        i_base = sqrt(3) * s_base/ v_base
-        trans = ref(pm, pm.cnw, :bus, j)["name"]
-        name = string(ref(pm, pm.cnw, :bus, i)["name"], ">>", trans)
-        sol["fault"]["currents"][name] = [abs(JuMP.value(var(pm, pm.cnw, :crt, (l,i,j))[c]) + JuMP.value(var(pm, pm.cnw, :cit, (l,i,j))[c]) * im ) * i_base for c in 1:3]
+    # TODO create an output format
+    if haskey(pm.var[:nw][0], :cfr)
+        cfr = JuMP.value.(pm.var[:nw][0][:cfr])
+        cfi = JuMP.value.(pm.var[:nw][0][:cfi])
+        sol["fault_current"] = Dict("cfr" => cfr, "cfi" => cfi)
     end
 end
 
 
 ""
-function add_branch_currents!(pm::_PM.AbstractPowerModel, sol::Dict{String,Any})
-    s_base = sol["baseMVA"] * 1000
-    for (index, branch) in ref(pm, pm.cnw, :branch)
-        if occursin("line.", branch["source_id"])
-            v_base = ref(pm, pm.cnw, :bus, branch["t_bus"])["base_kv"]
-            i_base = sqrt(3) * s_base/ v_base
-            bus_i = string(index)
-            name = branch["source_id"]
-            sol["fault"]["currents"][name] = [abs(sol["branch"][bus_i]["csr_fr"][c] + sol["branch"][bus_i]["csi_fr"][c] *im) * i_base for c in 1:3]
+function add_fault_solution!(sol::Dict{String,Any}, data::Dict{String,Any})
+    sol["fault"] = Dict{String,Any}()
+    sol["fault"]["currents"] = Dict{String,Any}()
+    bus = data["bus"][string(data["active_fault"]["bus_i"])]
+    cfr = [data["baseMVA"] * 1000 / bus["vbase"] * sol["fault_current"]["cfr"][c] for c in 1:3]
+    cfi = [data["baseMVA"] * 1000 / bus["vbase"] * sol["fault_current"]["cfi"][c] for c in 1:3]
+    sol["fault"]["bus"] = Dict("bus_i" => data["active_fault"]["bus_i"], "current" => [sqrt(cfr[c]^2 + cfi[c]^2) for c in 1:3])
+    for (name, line) in sol["line"]
+        for (i, branch) in data["branch"]
+            if branch["name"] == name
+                csr_fr = [data["baseMVA"] * 1000 / branch["vbase"] * line["csr_fr"][c] for c in 1:3]
+                csi_fr = [data["baseMVA"] * 1000 / branch["vbase"] * line["csi_fr"][c] for c in 1:3]
+                sol["fault"]["currents"][name] = [abs(csr_fr[c] + csi_fr[c] * im) for c in 1:3]
+            end
         end
     end
 end

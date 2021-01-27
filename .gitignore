@@ -1,5 +1,5 @@
 .DS_Store
-
+*.swp
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
@@ -7,3 +7,4 @@ deps/deps.jl
 docs/build
 
 Manifest.toml
+
