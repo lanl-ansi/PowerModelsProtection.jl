@@ -48,11 +48,9 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
             if occursin("pvsystem", gen["source_id"])
                 if haskey(gen, "grid_forming")
                     Memento.info(_LOGGER, "Gen $i is grid-forming inverter:")
-                    println(gen)
-                    println()
-                    gen["grid_forming"] ? nw_ref[:solar_gfmi][gen["gen_bus"]] = parse(Int, i) : nw_ref[:solar_gfli][gen["gen_bus"]] = parse(Int, i)
+                    gen["grid_forming"] ? nw_ref[:solar_gfmi][parse(Int, i)] = gen["gen_bus"]  : nw_ref[:solar_gfli][parse(Int, i)] = gen["gen_bus"]
                 else
-                    nw_ref[:solar_gfli][gen["gen_bus"]] = parse(Int, i)
+                    nw_ref[:solar_gfli][parse(Int, i)] = gen["gen_bus"]
                 end
                 haskey(gen, "i_max") ? nothing : gen["i_max"] = (1/gen["dss"]["vminpu"]) * gen["dss"]["kva"] / (3 * 1000 * ref[:nw][0][:baseMVA])
                 Memento.info(_LOGGER, "Gen $i imax = $(gen["i_max"])")

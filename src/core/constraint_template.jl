@@ -276,7 +276,7 @@ end
 "Constraints for fault current contribution of multiconductor inverter in grid-following mode"
 function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfli][i]
-    gen = pm.ref[:nw][nw][:gen][index]
+    gen = pm.ref[:nw][nw][:gen][i]
 
     cmax = gen["i_max"]
     if gen["solar_max"] < gen["kva"] * gen["pf"]
@@ -284,7 +284,7 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=p
     else
         pmax = gen["kva"] * gen["pf"]
     end
-    constraint_mc_pq_inverter(pm, nw, index, i, pmax, 0.0, cmax)
+    constraint_mc_pq_inverter(pm, nw, i, index, pmax, 0.0, cmax)
 end
 
 
@@ -350,10 +350,42 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
         x = gen["zx"]
     end
 
-
-    # constraint_grid_formimg_inverter(pm, nw, index, i, vrstar, vistar, pmax, cmax)
-    # function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
     constraint_grid_formimg_inverter_impedance(pm, nw, index, i, vrstar, vistar, r, x, pmax, cmax)
+end
+
+"Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
+function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    index = pm.ref[:nw][nw][:solar_gfmi][i]
+    gen = pm.ref[:nw][nw][:gen][i]
+    bus_i = gen["gen_bus"]
+    bus = pm.ref[:nw][nw][:bus][bus_i]
+    bus["bus_type"] == 5 ? ang = true : ang = false
+
+    if !haskey(bus, "vm") && !haskey(bus, "va")
+        vm = [.995 for c in _PM.conductor_ids(pm; nw=nw)]
+        va = [0 -2*pi/3 2*pi/3]
+    else
+        vm = bus["vm"]
+        va = bus["va"]
+    end
+    
+    vm = [.995 for c in _PM.conductor_ids(pm; nw=nw)]
+    va = [0 -2*pi/3 2*pi/3]
+
+    cmax = gen["i_max"]
+    vr = [vm[c] * cos(va[c]) for c in _PM.conductor_ids(pm; nw=nw)]
+    vi = [vm[c] * sin(va[c]) for c in _PM.conductor_ids(pm; nw=nw)]
+
+    # push into pmax on import and erase this
+    if gen["solar_max"] < gen["kva"]
+        pmax = gen["solar_max"]
+    else
+        pmax = gen["kva"]
+    end
+
+    smax = gen["kva"]
+
+    constraint_grid_formimg_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, cmax, smax, ang)
 end
 
 

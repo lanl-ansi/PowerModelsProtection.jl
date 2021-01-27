@@ -5,7 +5,7 @@ using Memento
 function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
     Memento.setlevel!(_LOGGER, "debug")
 
-    check_pf!(data, solver)
+    # check_pf!(data, solver)
     check_microgrid!(data)
     add_mc_fault_data!(data)
     solution = Dict{String, Any}()
@@ -82,8 +82,8 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     Memento.info(_LOGGER, "Adding constraints for grid-forming inverters")   
     for i in ids(pm, :solar_gfmi)
         Memento.info(_LOGGER, "Adding constraints for grid-forming inverter $i")
-        constraint_mc_grid_forming_inverter(pm, i)
-        # constraint_mc_grid_forming_inverter_impedance(pm, i)
+        # constraint_mc_grid_forming_inverter(pm, i)
+        constraint_mc_grid_forming_inverter_virtual_impedance(pm, i)
     end
 
 end

@@ -219,15 +219,15 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, 
     crg =  var(pm, nw, :crg, i)
     cig =  var(pm, nw, :cig, i)
 
-    p_int = var(pm, nw, :p_int, bus_id)
-    q_int = var(pm, nw, :q_int, bus_id) 
-    crg_pos= var(pm, nw, :crg_pos, bus_id)
-    cig_pos = var(pm, nw, :cig_pos, bus_id)
-    vrg_pos= var(pm, nw, :vrg_pos, bus_id)
-    vig_pos = var(pm, nw, :vig_pos, bus_id)
-    crg_pos_max = var(pm, nw, :crg_pos_max, bus_id)
-    cig_pos_max = var(pm, nw, :cig_pos_max, bus_id)
-    z = var(pm, nw, :z_gfli, bus_id)
+    p_int = var(pm, nw, :p_int, i)
+    q_int = var(pm, nw, :q_int, i) 
+    crg_pos= var(pm, nw, :crg_pos, i)
+    cig_pos = var(pm, nw, :cig_pos, i)
+    vrg_pos= var(pm, nw, :vrg_pos, i)
+    vig_pos = var(pm, nw, :vig_pos, i)
+    crg_pos_max = var(pm, nw, :crg_pos_max, i)
+    cig_pos_max = var(pm, nw, :cig_pos_max, i)
+    z = var(pm, nw, :z_gfli, i)
 
     cnds = _PM.conductor_ids(pm; nw=nw)
     ncnds = length(cnds)   
@@ -268,9 +268,9 @@ function constraint_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
     crg =  var(pm, nw, :crg, i)
     cig =  var(pm, nw, :cig, i)
 
-    z = var(pm, nw, :z, bus_id)
-    p = var(pm, nw, :p_solar, bus_id)
-    q = var(pm, nw, :q_solar, bus_id) 
+    z = var(pm, nw, :z, i)
+    p = var(pm, nw, :p_solar, i)
+    q = var(pm, nw, :q_solar, i) 
     
     cnds = _PM.conductor_ids(pm; nw=nw)
     ncnds = length(cnds)
@@ -349,6 +349,62 @@ function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw
     # JuMP.@constraint(pm.model, p <= pmax)
 end
 
+"Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
+function constraint_grid_formimg_inverter_virtual_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang)
+    vr = var(pm, nw, :vr, bus_id)
+    vi = var(pm, nw, :vi, bus_id)
+    
+    vrstar = var(pm, nw, :vrsp, i)
+    vistar = var(pm, nw, :visp, i)
+    
+    crg =  var(pm, nw, :crg, i)
+    cig =  var(pm, nw, :cig, i)
+    
+    # current-limiting indicator variable
+    z = var(pm, nw, :z, i)
+    z2 = var(pm, nw, :z2, i)
+    z3 = var(pm, nw, :z3, i)
+    rv = var(pm, nw, :rv, i)
+    xv = var(pm, nw, :xv, i)
+    p = var(pm, nw, :p_solar, i)
+    q = var(pm, nw, :q_solar, i) 
+    
+    cnds = _PM.conductor_ids(pm; nw=nw)
+    ncnds = length(cnds)
+    
+    vm = [vr0[c]^2 + vi0[c]^2 for c in 1:ncnds]
+        
+    for c in 1:ncnds
+        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+        JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
+    
+        JuMP.@NLconstraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[c] * (1-z[c]))
+        JuMP.@NLconstraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[c])
+    
+        if ang
+            # setpoint voltage phase
+            JuMP.@constraint(pm.model, 0.0 == vrstar[c]*vi0[c] - vistar[c]*vr0[c])
+            JuMP.@constraint(pm.model, vrstar[c] * vr0[c] >= 0.0)
+            JuMP.@constraint(pm.model, vistar[c] * vi0[c] >= 0.0) 
+        end
+    
+        JuMP.@constraint(pm.model, rv[c] <= .10)
+        JuMP.@constraint(pm.model, rv[c] >= 0.0)
+        JuMP.@constraint(pm.model, xv[c] <= .10)
+        JuMP.@constraint(pm.model, xv[c] >= 0)
+    
+        JuMP.@constraint(pm.model, vr[c] == vrstar[c] - rv[c] * crg[c] + xv[c] * cig[c])
+        JuMP.@constraint(pm.model, vi[c] == vistar[c] - rv[c] * cig[c] - xv[c]* crg[c])
+    end
+    
+    # DC-link power
+    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
+    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
+    
+    JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax^2)
+    JuMP.@constraint(pm.model, p <= pmax)
+    JuMP.@constraint(pm.model, p >= -pmax)
+end
 
 "Constraints for fault current inverter with current set point"
 function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)

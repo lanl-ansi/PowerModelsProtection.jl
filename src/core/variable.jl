@@ -171,8 +171,7 @@ function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bound
         start = 0
     )
     for i in ids(pm, nw, :solar_gfli)
-        index = pm.ref[:nw][nw][:solar_gfli][i]
-        gen = pm.ref[:nw][nw][:gen][index]
+        gen = pm.ref[:nw][nw][:gen][i]
         pmax = 0.0
         if gen["solar_max"] < gen["kva"] * gen["pf"]
             pmax = gen["solar_max"]
@@ -188,8 +187,7 @@ function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bound
         start = 0
     )
     for i in ids(pm, nw, :solar_gfli)
-        index = pm.ref[:nw][nw][:solar_gfli][i]
-        gen = pm.ref[:nw][nw][:gen][index]
+        gen = pm.ref[:nw][nw][:gen][i]
         pmax = 0.0
         if gen["solar_max"] < gen["kva"] * gen["pf"]
             pmax = gen["solar_max"]
@@ -262,7 +260,23 @@ function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
                [c in 1:ncnds], base_name = "$(nw)_z_$(i)",
                start = 0.0,
                lower_bound = 0.0,
-               upper_bound = 1
+               upper_bound = 1.0
+        ) for i in ids(pm, nw, :solar_gfmi)
+    )
+    
+    var(pm, nw)[:z2] = Dict(i => JuMP.@variable(pm.model,
+               [c in 1:ncnds], base_name = "$(nw)_z2_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1.0
+        ) for i in ids(pm, nw, :solar_gfmi)
+    )
+
+    var(pm, nw)[:z3] = Dict(i => JuMP.@variable(pm.model,
+               [c in 1:ncnds], base_name = "$(nw)_z3_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1.0
         ) for i in ids(pm, nw, :solar_gfmi)
     )
 
@@ -274,6 +288,18 @@ function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
     q = var(pm, nw)[:q_solar] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :solar_gfmi)], base_name = "$(nw)_q_solar_$(i)",
         start = 0
+    )
+
+    var(pm, nw)[:rv] = Dict(i => JuMP.@variable(pm.model,
+               [c in 1:ncnds], base_name = "$(nw)_rv_$(i)",
+               start = 0.0,
+        ) for i in ids(pm, nw, :solar_gfmi)
+    )
+
+    var(pm, nw)[:xv] = Dict(i => JuMP.@variable(pm.model,
+               [c in 1:ncnds], base_name = "$(nw)_xv_$(i)",
+               start = 0.0,
+        ) for i in ids(pm, nw, :solar_gfmi)
     )
 
 end
