@@ -15,8 +15,8 @@ function build_mc_pf(pm::_PM.AbstractPowerModel)
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
     _PMD.variable_mc_branch_current(pm, bounded=false)
     _PMD.variable_mc_transformer_current(pm, bounded=false)
-    _PMD.variable_mc_gen_power_setpoint(pm, bounded=false)
-    _PMD.variable_mc_load_setpoint(pm, bounded = false)
+    _PMD.variable_mc_generator_current(pm, bounded=false)
+    _PMD.variable_mc_load_current(pm, bounded = false)
 
     variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
@@ -28,16 +28,16 @@ function build_mc_pf(pm::_PM.AbstractPowerModel)
     end
 
     for id in ids(pm, :gen)
-        _PMD.constraint_mc_gen_setpoint(pm, id)
+        _PMD.constraint_mc_generator_power(pm, id)
     end
 
     for id in ids(pm, :load)
-        _PMD.constraint_mc_load_setpoint(pm, id)
+        _PMD.constraint_mc_load_power(pm, id)
     end
 
     for (i, bus) in ref(pm, :bus)
 
-        _PMD.constraint_mc_load_current_balance(pm, i)
+        _PMD.constraint_mc_current_balance(pm, i)
 
         # PV Bus Constraints
         if length(ref(pm, :bus_gens, i)) > 0 && !(i in ids(pm, :ref_buses))
@@ -93,8 +93,8 @@ function build_mc_dg_pf(pm::_PM.AbstractPowerModel)
     # _PMD.variable_mc_branch_current(pm; bounded=false)
     _PMD.variable_mc_transformer_power(pm; bounded=false)
     # _PMD.variable_mc_transformer_current(pm; bounded=false)
-    _PMD.variable_mc_gen_power_setpoint(pm; bounded=false)
-    _PMD.variable_mc_load_setpoint(pm; bounded=false)
+    _PMD.variable_mc_generator_current(pm; bounded=false)
+    _PMD.variable_mc_load_current(pm; bounded=false)
     # _PMD.variable_mc_storage_power(pm; bounded=false)
 
     _PMD.constraint_mc_model_voltage(pm)
@@ -108,16 +108,16 @@ function build_mc_dg_pf(pm::_PM.AbstractPowerModel)
 
     # gens should be constrained before KCL, or Pd/Qd undefined
     for id in ids(pm, :gen)
-        _PMD.constraint_mc_gen_setpoint(pm, id)
+        _PMD.constraint_mc_generator_power(pm, id)
     end
 
     # loads should be constrained before KCL, or Pd/Qd undefined
     for id in ids(pm, :load)
-        _PMD.constraint_mc_load_setpoint(pm, id)
+        _PMD.constraint_mc_load_power(pm, id)
     end
 
     for (i,bus) in ref(pm, :bus)
-        _PMD.constraint_mc_load_power_balance(pm, i)
+        _PMD.constraint_mc_current_balance(pm, i)
         # _PMD.constraint_mc_load_current_balance(pm, i)
 
 
