@@ -1,6 +1,6 @@
 ""
 function run_mc_model(data::Dict{String,<:Any}, model_type::Type, solver, build_mc::Function; ref_extensions::Vector{<:Function}=Vector{Function}([]), make_si=!get(data, "per_unit", false), multinetwork::Bool=false, kwargs...)::Dict{String,Any}
-    result = _PM.run_model(data, model_type, solver, build_mc; ref_extensions=[_PMD.ref_add_arcs_transformer!, ref_extensions...], multiconductor=true, multinetwork=multinetwork, solution_processors=[solution_fs!], kwargs...)
+    result = _PM.run_model(data, model_type, solver, build_mc; ref_extensions=[_PMD.ref_add_arcs_transformer!, _PMD.ref_add_arcs_switch!, _PMD.ref_add_connections!, ref_extensions...], multiconductor=true, multinetwork=multinetwork, solution_processors=[solution_fs!], kwargs...)
     if haskey(data, "active_fault") 
         fault_current = result["solution"]["fault_current"]  
         hold_solution = result["solution"]

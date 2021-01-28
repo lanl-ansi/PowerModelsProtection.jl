@@ -36,19 +36,19 @@
     @testset "3-bus pv fault test single faults" begin
         data = deepcopy(case3_balanced_pv)
         data["fault"] = Dict{String,Any}()
-        data["fault"]["1"] = Dict("type" => "3p", "bus" => "loadbus", "phases" => [1,2,3], "gr" => 0.0005)
+        data["fault"]["1"] = Dict("type" => "3p", "bus" => "loadbus", "phases" => [1,2,3], "gr" => 0.005)
         sol = FS.run_mc_fault_study(data, ipopt_solver)
         @test sol["loadbus"]["3p"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
         @test calulate_error_percentage(sol["loadbus"]["3p"]["1"]["solution"]["fault"]["currents"]["pv_line"][1], 39.686) < .05
         data = deepcopy(case3_balanced_pv)
         data["fault"] = Dict{String,Any}()
-        data["fault"]["1"] = Dict("type" => "lg", "bus" => "loadbus", "phases" => [2], "gr" => 0.0005)
+        data["fault"]["1"] = Dict("type" => "lg", "bus" => "loadbus", "phases" => [2], "gr" => 0.005)
         sol = FS.run_mc_fault_study(data, ipopt_solver)
         @test sol["loadbus"]["lg"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
         @test calulate_error_percentage(sol["loadbus"]["lg"]["1"]["solution"]["fault"]["currents"]["pv_line"][1], 38.978) < .05
         data = deepcopy(case3_balanced_pv)
         data["fault"] = Dict{String,Any}()
-        data["fault"]["1"] = Dict("type" => "ll", "bus" => "loadbus", "phases" => [1,2], "gr" => 0.0005)
+        data["fault"]["1"] = Dict("type" => "ll", "bus" => "loadbus", "phases" => [1,2], "gr" => 0.005)
         sol = FS.run_mc_fault_study(data, ipopt_solver)
         @test sol["loadbus"]["ll"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
         @test calulate_error_percentage(sol["loadbus"]["ll"]["1"]["solution"]["fault"]["currents"]["pv_line"][1], 39.693) < .05
