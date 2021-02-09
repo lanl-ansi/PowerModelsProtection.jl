@@ -178,7 +178,8 @@ end
 "Constraint to calculate the fault current at a bus and the current at other buses"
 function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)["bus_i"]
-    bus_arcs = ref(pm, nw, :bus_arcs, i)
+    bus_arcs = ref(pm, nw, :bus_arcs_conns_branch, i)
+    println(bus_arcs)
     bus_gens = ref(pm, nw, :bus_gens, i)
     bus_shunts = ref(pm, nw, :bus_shunts, i)
 
@@ -219,56 +220,60 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
 
         r = gen["zr"]
         x = gen["zx"]
+        
+        # only 3 phase generation is supported 
+        terminals = gen["terminals"]
+        if terminals == 3 
+            vm = [1, 1, 1]
+            va = [0, -2*pi/3, 2*pi/3]
 
-        vm = [1, 1, 1]
-        va = [0, -2*pi/3, 2*pi/3]
+            if "vm" in keys(ref(pm, :bus, bus_id))
+                vm = ref(pm, :bus, bus_id, "vm")
+            else
+                Memento.warn(_LOGGER, "vm not specified for bus $bus_id, assuming 1")
+            end
 
-        if "vm" in keys(ref(pm, :bus, bus_id))
-            vm = ref(pm, :bus, bus_id, "vm")
-        else
-            Memento.warn(_LOGGER, "vm not specified for bus $bus_id, assuming 1")
+            if "va" in keys(ref(pm, :bus, bus_id))
+                va = ref(pm, :bus, bus_id, "va")
+            else
+                Memento.warn(_LOGGER, "va not specified for bus $bus_id, assuming 0")
+            end  
+        
+            mva = 100
+            kva = 1e3*mva
+            sb = 1e6*mva
+
+            kv = 4.16
+            vb = 1000*kv
+        
+            pg = gen["pg"]
+            qg = gen["qg"]
+            sg = pg + 1im*qg
+
+            vr = [vm[i] * cos(va[i]) for i in 1:3]
+            vi = [vm[i] * sin(va[i]) for i in 1:3]
+
+            v = vr + 1im*vi
+            cg = [conj(sg[i]/v[i]) for i in 1:3]
+            z = r + 1im*x
+            vg = [v[i] + (z[i]*cg[i]) for i in 1:3]
+
+            vgr = real(vg)
+            vgi = imag(vg)
+
+            println("Generator terminal voltage from pre-fault powerflow")
+            println(abs.(v[1]))
+            println("Generator pre-fault power (kVA)")
+            println(kva*sg[1])
+            println("Generator pre-fault current (A)")
+            ssi = sb*sg[1]
+            vsi = vb*v[1]/sqrt(3)
+            isi = ssi/vsi
+            println(abs(isi))
+            println("Calculated generator internal voltage")
+            println(abs.(vg[1]))
+            constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi, terminals)
         end
-
-        if "va" in keys(ref(pm, :bus, bus_id))
-            va = ref(pm, :bus, bus_id, "va")
-        else
-            Memento.warn(_LOGGER, "va not specified for bus $bus_id, assuming 0")
-        end  
-        
-        mva = 100
-        kva = 1e3*mva
-        sb = 1e6*mva
-
-        kv = 4.16
-        vb = 1000*kv
-        
-        pg = gen["pg"]
-        qg = gen["qg"]
-        sg = pg + 1im*qg
-
-        vr = [vm[i] * cos(va[i]) for i in 1:3]
-        vi = [vm[i] * sin(va[i]) for i in 1:3]
-
-        v = vr + 1im*vi
-        cg = [conj(sg[i]/v[i]) for i in 1:3]
-        z = r + 1im*x
-        vg = [v[i] + (z[i]*cg[i]) for i in 1:3]
-
-        vgr = real(vg)
-        vgi = imag(vg)
-
-        println("Generator terminal voltage from pre-fault powerflow")
-        println(abs.(v[1]))
-        println("Generator pre-fault power (kVA)")
-        println(kva*sg[1])
-        println("Generator pre-fault current (A)")
-        ssi = sb*sg[1]
-        vsi = vb*v[1]/sqrt(3)
-        isi = ssi/vsi
-        println(abs(isi))
-        println("Calculated generator internal voltage")
-        println(abs.(vg[1]))
-        constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi)
     end
 end
 
@@ -359,22 +364,23 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractP
     gen = pm.ref[:nw][nw][:gen][i]
     bus_i = gen["gen_bus"]
     bus = pm.ref[:nw][nw][:bus][bus_i]
+    terminals = bus["terminals"]
     bus["bus_type"] == 5 ? ang = true : ang = false
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
-        vm = [.995 for c in _PM.conductor_ids(pm; nw=nw)]
+        vm = [.995 for c in bus["terminals"]]
         va = [0 -2*pi/3 2*pi/3]
     else
         vm = bus["vm"]
         va = bus["va"]
     end
     
-    vm = [.995 for c in _PM.conductor_ids(pm; nw=nw)]
+    vm = [.995 for c in terminals]
     va = [0 -2*pi/3 2*pi/3]
 
     cmax = gen["i_max"]
-    vr = [vm[c] * cos(va[c]) for c in _PM.conductor_ids(pm; nw=nw)]
-    vi = [vm[c] * sin(va[c]) for c in _PM.conductor_ids(pm; nw=nw)]
+    vr = [vm[c] * cos(va[c]) for c in terminals]
+    vi = [vm[c] * sin(va[c]) for c in terminals]
 
     # push into pmax on import and erase this
     if gen["solar_max"] < gen["kva"]
@@ -385,26 +391,25 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractP
 
     smax = gen["kva"]
 
-    constraint_grid_formimg_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, cmax, smax, ang)
+    constraint_mc_grid_formimg_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, cmax, smax, ang, terminals)
 end
 
 
 "Constraint to calculate the fault current at a bus and the current at other buses for multiconductor"
 function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
-    bus = ref(pm, nw, :bus, i)["bus_i"]
-    bus_arcs = ref(pm, nw, :bus_arcs, i)
-    bus_arcs_sw = ref(pm, nw, :bus_arcs_sw, i)
-    bus_arcs_trans = ref(pm, nw, :bus_arcs_trans, i)
-    bus_gens = ref(pm, nw, :bus_gens, i)
-    bus_shunts = ref(pm, nw, :bus_shunts, i)
+    bus = ref(pm, nw, :bus, i)
+    bus_arcs = ref(pm, nw, :bus_arcs_conns_branch, i)
+    bus_arcs_sw = ref(pm, nw, :bus_arcs_conns_switch, i)
+    bus_arcs_trans = ref(pm, nw, :bus_arcs_conns_transformer, i)
+    bus_gens = ref(pm, nw, :bus_conns_gen, i)
+    bus_storage = ref(pm, nw, :bus_conns_storage, i)
+    bus_shunts = ref(pm, nw, :bus_conns_shunt, i)
 
-    bus_gs = Dict(k => ref(pm, nw, :shunt, k, "gs") for k in bus_shunts)
-    bus_bs = Dict(k => ref(pm, nw, :shunt, k, "bs") for k in bus_shunts)
 
-    if bus != ref(pm, nw, :active_fault, "bus_i")
-        constraint_mc_current_balance(pm, nw, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
+    if bus["bus_i"] != ref(pm, nw, :active_fault, "bus_i")
+        constraint_mc_current_balance(pm, nw, i, bus["terminals"], bus["grounded"], bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_storage, bus_shunts)
     else
-        constraint_mc_fault_current_balance(pm, nw, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs, bus)
+        constraint_mc_fault_current_balance(pm, nw, i, bus["terminals"], bus["grounded"], bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_storage, bus_shunts)
     end
 end
 
@@ -431,22 +436,23 @@ function constraint_mc_generation(pm::_PM.AbstractPowerModel, id::Int; nw::Int=p
     bus = ref(pm, nw, :bus, generator["gen_bus"])
 
     if get(generator, "configuration", _PMD.WYE) == _PMD.WYE
-        constraint_mc_generation_wye(pm, nw, id, bus["index"]; report=report, bounded=bounded)
+        constraint_mc_generation_wye(pm, nw, id, bus["index"], generator["connections"]; report=report, bounded=bounded)
     else
-        constraint_mc_generation_delta(pm, nw, id, bus["index"]; report=report, bounded=bounded)
+        constraint_mc_generation_delta(pm, nw, id, bus["index"], generator["connections"]; report=report, bounded=bounded)
     end
 end
 
 
 "Constarint to set the ref bus voltage"
 function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, i::Int; nw::Int=pm.cnw)
+    terminals = ref(pm, nw, :bus, i)["terminals"] 
     vm = ref(pm, :bus, i, "vm")
     va = ref(pm, :bus, i, "va")
+    
+    vr = [vm[i] * cos(va[i]) for i in terminals]
+    vi = [vm[i] * sin(va[i]) for i in terminals]
 
-    vr = [vm[i] * cos(va[i]) for i in 1:3]
-    vi = [vm[i] * sin(va[i]) for i in 1:3]
-
-    constraint_mc_ref_bus_voltage(pm, nw, i, vr, vi)
+    constraint_mc_ref_bus_voltage(pm, nw, i, vr, vi, terminals)
 end
 
 

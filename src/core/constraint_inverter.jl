@@ -229,7 +229,7 @@ function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, 
     cig_pos_max = var(pm, nw, :cig_pos_max, i)
     z = var(pm, nw, :z_gfli, i)
 
-    cnds = _PM.conductor_ids(pm; nw=nw)
+    cnds = ref(pm, nw, :bus, bus_id)["terminals"]
     ncnds = length(cnds)   
 
     
@@ -350,7 +350,7 @@ function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw
 end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_grid_formimg_inverter_virtual_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang)
+function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang, terminals)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
     
@@ -369,12 +369,9 @@ function constraint_grid_formimg_inverter_virtual_impedance(pm::_PM.AbstractIVRM
     p = var(pm, nw, :p_solar, i)
     q = var(pm, nw, :q_solar, i) 
     
-    cnds = _PM.conductor_ids(pm; nw=nw)
-    ncnds = length(cnds)
-    
-    vm = [vr0[c]^2 + vi0[c]^2 for c in 1:ncnds]
+    vm = [vr0[c]^2 + vi0[c]^2 for c in terminals]
         
-    for c in 1:ncnds
+    for c in terminals
         JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
     
@@ -398,8 +395,8 @@ function constraint_grid_formimg_inverter_virtual_impedance(pm::_PM.AbstractIVRM
     end
     
     # DC-link power
-    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
-    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
+    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in terminals) == p)
+    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in terminals) == q)
     
     JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax^2)
     JuMP.@constraint(pm.model, p <= pmax)

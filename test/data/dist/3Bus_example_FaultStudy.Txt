@@ -1,0 +1,45 @@
+FAULT STUDY REPORT
+
+ALL-Node Fault Currents
+
+Bus             Node 1  X/R        Node 2  X/R        Node 3  X/R   ...  (Amps)
+
+"SOURCEBUS",1437457833,   4.0, 1437457833,   4.0, 1437457833,   4.0
+"LOADBUS",       1455,   0.7,       1455,   0.7,       1455,   0.7
+"LOADBUS2",       640,   0.5
+"PRIMARY",       3140,   0.7,       3140,   0.7,       3140,   0.7
+"PV_BUS",        1455,   0.7,       1455,   0.7,       1455,   0.7
+
+
+ONE-Node to ground Faults
+
+                                      pu Node Voltages (L-N Volts if no base)
+Bus         Node  Amps         Node 1     Node 2     Node 3    ...
+
+"SOURCEBUS"    1   1437457833          0.000      0.974      1.018
+"SOURCEBUS"    2   1437457833          1.018      0.000      0.974
+"SOURCEBUS"    3   1437457833          0.974      1.018      0.000
+"LOADBUS"      2          862          0.000      1.262      1.237
+"LOADBUS"      1          862          1.237      0.000      1.262
+"LOADBUS"      3          862          1.262      1.237      0.000
+"LOADBUS2"     2          640          0.000
+"PRIMARY"      1         1860          0.000      1.236      1.263
+"PRIMARY"      2         1860          1.263      0.000      1.236
+"PRIMARY"      3         1860          1.236      1.263      0.000
+"PV_BUS"       1          862          0.000      1.237      1.262
+"PV_BUS"       2          862          1.262      0.000      1.237
+"PV_BUS"       3          862          1.237      1.262      0.000
+
+Adjacent Node-Node Faults
+
+                                        pu Node Voltages (L-N Volts if no base)
+Bus          Node-Node      Amps        Node 1     Node 2     Node 3    ...
+
+"SOURCEBUS"   1   2     3980492         0.997      0.994      0.996
+"SOURCEBUS"   2   3     3980492         0.996      0.997      0.994
+"LOADBUS"     2   1        1259         0.498      0.498      0.996
+"LOADBUS"     1   3        1259         0.996      0.498      0.498
+"PRIMARY"     1   2        2718         0.498      0.498      0.996
+"PRIMARY"     2   3        2718         0.996      0.498      0.498
+"PV_BUS"      1   2        1259         0.498      0.498      0.996
+"PV_BUS"      2   3        1259         0.996      0.498      0.498
