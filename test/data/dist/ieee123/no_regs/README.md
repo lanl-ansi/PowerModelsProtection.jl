@@ -1,1 +1,0 @@
-THis is based on the tutorial in [Modern Object Pascal Introduction for Programmers](https://castle-engine.io/modern_pascal_introduction.html)

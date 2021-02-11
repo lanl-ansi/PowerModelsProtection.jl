@@ -1,9 +1,0 @@
-New PVSystem.1 phases=3 bus1=8.1.2.3   kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.2 phases=3 bus1=18.1.2.3  kV=4.16 conn=wye irradiance=1 Pmpp=840 kVA=700 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.3 phases=3 bus1=28.1.2.3  kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.4 phases=3 bus1=48.1.2.3  kV=4.16 conn=wye irradiance=1 Pmpp=1200 kVA=1000 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.5 phases=3 bus1=61.1.2.3  kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.6 phases=3 bus1=79.1.2.3  kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.7 phases=3 bus1=95.1.2.3  kV=4.16 conn=wye irradiance=1 Pmpp=1200 kVA=1000 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.8 phases=3 bus1=100.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
-New PVSystem.9 phases=3 bus1=108.1.2.3 kV=4.16 conn=wye irradiance=1 Pmpp=600 kVA=500 pf=1 balanced=true limitcurrent=true vminpu=0.7143
