@@ -178,8 +178,7 @@ end
 "Constraint to calculate the fault current at a bus and the current at other buses"
 function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)["bus_i"]
-    bus_arcs = ref(pm, nw, :bus_arcs_conns_branch, i)
-    println(bus_arcs)
+    bus_arcs = ref(pm, nw, :bus_arcs, i)
     bus_gens = ref(pm, nw, :bus_gens, i)
     bus_shunts = ref(pm, nw, :bus_shunts, i)
 
@@ -460,4 +459,20 @@ end
 function constraint_mc_voltage_magnitude_only(pm::_PM.AbstractIVRModel, i::Int; nw::Int=pm.cnw)
     vm = ref(pm, :bus, i, "vm")
     constraint_mc_voltage_magnitude_only(pm, nw, i, vm)
+end
+
+
+function constraint_mc_switch_state(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    switch = ref(pm, nw, :switch, i)
+    f_bus = switch["f_bus"]
+    t_bus = switch["t_bus"]
+    z = switch["z"]
+
+    f_idx = (i, f_bus, t_bus)
+
+    if switch["state"] != 0
+        constraint_mc_switch_state_closed(pm, nw, f_bus, t_bus, f_idx, switch["f_connections"], switch["t_connections"], z)
+    else
+        _PMD.constraint_mc_switch_state_open(pm, nw, f_idx)
+    end
 end

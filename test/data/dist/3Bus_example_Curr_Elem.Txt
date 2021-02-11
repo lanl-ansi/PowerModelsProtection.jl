@@ -1,0 +1,63 @@
+
+CIRCUIT ELEMENT CURRENTS
+
+(Currents into element from indicated bus)
+
+Power Delivery Elements
+
+  Bus     Phase    Magnitude, A     Angle      (Real)   +j  (Imag)
+
+ELEMENT = "Vsource.SOURCE"
+SOURCEBUS     1           42.631 /_  161.1 =     -40.33 +j    13.816
+SOURCEBUS     2           29.584 /_   33.2 =     24.753 +j    16.201
+SOURCEBUS     3           29.735 /_  -86.3 =     1.9299 +j   -29.672
+------------
+SOURCEBUS     0           42.631 /_  -18.9 =      40.33 +j   -13.816
+SOURCEBUS     0           29.584 /_ -146.8 =    -24.753 +j   -16.201
+SOURCEBUS     0           29.735 /_   93.7 =    -1.9299 +j    29.672
+
+ELEMENT = "Line.CB"
+PRIMARY       1           42.632 /_  -18.9 =      40.33 +j    -13.82
+PRIMARY       2           29.586 /_ -146.8 =    -24.756 +j   -16.199
+PRIMARY       3           29.736 /_   93.7 =    -1.9267 +j    29.674
+------------
+SWITCHBUS     1           42.632 /_  161.1 =     -40.33 +j     13.82
+SWITCHBUS     2           29.586 /_   33.2 =     24.756 +j    16.199
+SWITCHBUS     3           29.736 /_  -86.3 =     1.9267 +j   -29.674
+
+ELEMENT = "Line.OHLINE"
+SOURCEBUS     1           42.631 /_  -18.9 =      40.33 +j   -13.816
+SOURCEBUS     2           29.584 /_ -146.8 =    -24.753 +j   -16.201
+SOURCEBUS     3           29.735 /_   93.7 =    -1.9299 +j    29.672
+------------
+PRIMARY       1           42.632 /_  161.1 =     -40.33 +j     13.82
+PRIMARY       2           29.586 /_   33.2 =     24.756 +j    16.199
+PRIMARY       3           29.736 /_  -86.3 =     1.9267 +j   -29.674
+
+ELEMENT = "Line.QUAD"
+SWITCHBUS     1           42.632 /_  -18.9 =      40.33 +j    -13.82
+SWITCHBUS     2           29.586 /_ -146.8 =    -24.756 +j   -16.199
+SWITCHBUS     3           29.736 /_   93.7 =    -1.9267 +j    29.674
+------------
+LOADBUS       1           42.633 /_  161.1 =     -40.33 +j    13.823
+LOADBUS       2           29.587 /_   33.2 =      24.76 +j    16.198
+LOADBUS       3           29.738 /_  -86.3 =     1.9236 +j   -29.676
+
+= = = = = = = = = = = = = = = = = = =  = = = = = = = = = = =  = =
+
+Power Conversion Elements
+
+  Bus     Phase    Magnitude, A     Angle      (Real)   +j  (Imag)
+
+ELEMENT = "Load.L1"
+LOADBUS       1           42.633 /_  -18.9 =      40.33 +j   -13.823
+LOADBUS       0           42.633 /_  161.1 =     -40.33 +j    13.823
+
+ELEMENT = "Load.L2"
+LOADBUS       2           29.587 /_ -146.8 =     -24.76 +j   -16.198
+LOADBUS       0           29.587 /_   33.2 =      24.76 +j    16.198
+
+ELEMENT = "Load.L3"
+LOADBUS       3           29.738 /_   93.7 =    -1.9236 +j    29.676
+LOADBUS       0           29.738 /_  -86.3 =     1.9236 +j   -29.676
+

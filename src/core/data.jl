@@ -178,7 +178,7 @@ function add_lg_fault!(data::Dict{String,Any}, i::String, phases, resistance)
     bus = data["bus_lookup"][i]
     b = string(bus)
     s_base = data["baseMVA"]
-    v_base = data["bus"][b]["vbase"] / sqrt(3)
+    v_base = data["bus"][b]["vbase"] 
     z_base = v_base^2 / s_base
     r = resistance / z_base
     gf = max(1 / r, 1e-6)
@@ -197,7 +197,7 @@ function add_ll_fault!(data::Dict{String,Any}, i::String, phases, phase_resistan
     bus = data["bus_lookup"][i]
     b = string(bus)
     s_base = data["baseMVA"]
-    v_base = data["bus"][b]["vbase"] / sqrt(3)
+    v_base = data["bus"][b]["vbase"] 
     z_base = v_base^2 / s_base
     r = phase_resistance / z_base
     gf = max(1 / r, 1e-6)
@@ -220,7 +220,7 @@ function add_3p_fault!(data::Dict{String,Any}, i::String, phases, phase_resistan
     bus = data["bus_lookup"][i]
     b = string(bus)
     s_base = data["baseMVA"]
-    v_base = data["bus"][b]["vbase"] / sqrt(3)
+    v_base = data["bus"][b]["vbase"] 
     z_base = v_base^2 / s_base
     r = phase_resistance / z_base
     gf = max(1 / r, 1e-6)
@@ -470,5 +470,17 @@ function check_microgrid!(data::Dict{String,Any})
             delete!(data["bus"], index_bus)
             delete!(data["gen"], index_gen)
         end
+    end
+end
+
+
+"adds the switch impedance to data"
+function add_switch_impedance!(data::Dict{String,Any})
+    for (inx,switch) in data["switch"]
+        bus = data["bus"][string(switch["f_bus"])]
+        z_base = bus["vbase"]^2/data["baseMVA"]
+        z1 = (switch["dss"]["r1"] + switch["dss"]["x1"]*1im)
+        z0 = (switch["dss"]["r0"] + switch["dss"]["x0"]*1im)
+        switch["z"] = 1/3*(z0+2*z1)/z_base
     end
 end

@@ -1,0 +1,8 @@
+Compile (IEEE123Master_Powerflow.dss)
+
+Solve
+
+! Show some selected results
+Export Voltages voltages_pf.csv
+Export Currents currents_pf.csv
+Export Powers kVA powers_pf.csv

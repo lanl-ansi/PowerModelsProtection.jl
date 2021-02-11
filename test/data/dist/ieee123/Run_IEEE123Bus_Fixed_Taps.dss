@@ -1,0 +1,49 @@
+! Annotated "Run" file for the IEEE 123 Bus Test Case
+
+! =================================================================
+! 2nd Script
+! =================================================================
+
+! This script give results closer to the posted results by Kersting. 
+! This is done by setting the taps on the transformers representing 
+! the regulators and then inhibiting the regulator control
+
+Compile (original/IEEE123Master.dss)
+
+! set regulators on same tap as Kersting computes
+! (uses RPN inline math feature of OpenDSS)
+! Transformer taps are expressed in per unit
+
+Transformer.reg1a.wdg=2 Tap=(0.00625  7  * 1 +)   ! Tap 7
+Transformer.reg2a.wdg=2 Tap=(0.00625 -1 * 1 +)    ! Tap -1
+Transformer.reg3a.wdg=2 Tap=(0.00625  0  * 1 +)   ! Tap 0
+Transformer.reg3c.wdg=2 Tap=(0.00625 -1 * 1 +)    ! Tap -1
+Transformer.reg4a.wdg=2 Tap=(0.00625  8 * 1 +)    ! Tap 8
+Transformer.reg4b.wdg=2 Tap=(0.00625  1 * 1 +)    ! Tap 1
+Transformer.reg4c.wdg=2 Tap=(0.00625  5 * 1 +)    ! Tap 5
+
+! Lock the regulators so they don't move
+! Another way of doing this is to Set ControlMode=OFF
+
+RegControl.creg1a.maxtapchange=0  !Fixed at present tap
+RegControl.creg2a.maxtapchange=0  !Fixed at present tap
+RegControl.creg3a.maxtapchange=0  !Fixed at present tap
+RegControl.creg4a.maxtapchange=0  !Fixed at present tap
+RegControl.creg3c.maxtapchange=0  !Fixed at present tap
+RegControl.creg4b.maxtapchange=0  !Fixed at present tap
+RegControl.creg4c.maxtapchange=0  !Fixed at present tap
+
+! No need to revise the MaxControlIter option in this case;
+! there will be only one control iteration
+
+New EnergyMeter.Feeder Line.L115 1
+
+Solve
+!Buscoords original\Buscoords.dat   ! load in bus coordinates
+
+! Show some selected results
+Export Voltages voltages_fixed.csv
+Export Currents currents_fixed.csv
+Export Powers kVA powers_fixed.csv
+
+Plot Profile

@@ -63,7 +63,7 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     for (i,bus) in ref(pm, :bus)
         constraint_mc_current_balance(pm, i)
     end
-    
+
     for i in ids(pm, :branch)
         _PMD.constraint_mc_current_from(pm, i)
         _PMD.constraint_mc_current_to(pm, i)
@@ -71,8 +71,7 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     end
 
     for i in ids(pm, :switch)
-        _PMD.constraint_mc_switch_state(pm, i)
-        # _PMD.constraint_mc_switch_current_limit(pm, i)
+        constraint_mc_switch_state(pm, i)
     end
 
     for i in ids(pm, :transformer)

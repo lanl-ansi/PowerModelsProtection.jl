@@ -1,0 +1,15 @@
+Compile (IEEE123Master_PV.dss)
+Buscoords original/BusCoords.dat   ! load in bus coordinates
+
+Solve
+
+! Show some selected results
+Export Summary summary_dg.csv
+Export Voltages voltages_dg.csv
+Export Currents currents_dg.csv
+Export Powers kVA powers_dg.csv
+
+Export Loads loads_dg.csv
+Export Generators gens_dg.csv
+
+!Plot Profile

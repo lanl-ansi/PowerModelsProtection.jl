@@ -319,3 +319,23 @@ function constraint_mc_theta_ref(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
         JuMP.@constraint(pm.model, vi[c] * vi0[c] >= 0.0)
     end
 end
+
+
+function constraint_mc_switch_state_closed(pm::_PM.AbstractIVRModel, nw::Int, f_bus::Int, t_bus::Int, f_idx::Tuple{Int,Int,Int}, f_connections::Vector{Int}, t_connections::Vector{Int}, z)
+    vr_fr = var(pm, nw, :vr, f_bus)
+    vr_to = var(pm, nw, :vr, t_bus)
+
+    vi_fr = var(pm, nw, :vi, f_bus)
+    vi_to = var(pm, nw, :vi, t_bus)
+
+    crsw = var(pm, nw, :crsw, f_idx)
+    cisw = var(pm, nw, :cisw, f_idx)
+
+    zr = real(z)
+    zi = imag(z)
+
+    for (idx,(fc,tc)) in enumerate(zip(f_connections, t_connections))
+        JuMP.@constraint(pm.model, vr_fr[fc] - crsw[fc]*zr + cisw[fc]*zi == vr_to[tc])
+        JuMP.@constraint(pm.model, vi_fr[fc] - cisw[fc]*zr - crsw[fc]*zi == vi_to[tc])
+    end
+end

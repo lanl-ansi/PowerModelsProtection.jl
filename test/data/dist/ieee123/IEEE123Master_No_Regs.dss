@@ -1,0 +1,56 @@
+! Annotated Master file for the IEEE 123-bus test case.
+!
+! This file is meant to be invoked from the Compile command in the "Run_IEEE123Bus.DSS"  file.
+! 
+! Note: DSS commands, property names, etc., are NOT case sensitive. Capitalize as you please.
+! You should always do a "Clear" before making a new circuit:
+
+Clear
+
+! INSTANTIATE A NEW CIRCUIT AND DEFINE A STIFF 4160V SOURCE
+! The new circuit is called "ieee123"
+! This creates a Vsource object connected to "sourcebus". This is now the active circuit element, so
+! you can simply continue to edit its property value. 
+! The basekV is redefined to 4.16 kV. The bus name is changed to "150" to match one of the buses in the test feeder.
+! The source is set for 1.0 per unit and the Short circuit impedance is set to a small value (0.0001 ohms)
+! The ~ is just shorthad for "more" for the New or Edit commands
+
+New object=circuit.ieee123_no_regs
+~ basekv=115  pu=1.00 R1=0.7673 X1=4.7852  R0=0.3474 X0=8.518 !R1=1.4777  X1=11.5996 R0=4.7288 X0=21.106
+
+New Transformer.Sub Buses=[Sourcebus 150] Conns=[Delta Wye] kVs=[115 4.16]  kVAs=[5000 5000] XHL=8  %R=1
+~ Tap=[1.0 1.075]
+
+! REDIRECT INPUT STREAM TO FILE CONTAINING DEFINITIONS OF LINECODES
+! This file defines the line impedances is a similar manner to the description in the test case.
+
+Redirect        original/IEEELinecodes.DSS
+Redirect        no_regs/IEEE123Lines_No_Regs.dss
+Redirect        no_regs/IEEE123Switches_No_Regs.dss
+
+! LOAD TRANSFORMER AT 61s/610
+! This is a 150 kVA Delta-Delta stepdown from 4160V to 480V.
+
+New Transformer.XFM1  Phases=3   Windings=2 Xhl=2.72
+~ wdg=1 bus=61s       conn=Delta kv=4.16    kva=150    %r=0.635
+~ wdg=2 bus=610       conn=Delta kv=0.48    kva=150    %r=0.635
+
+! CAPACITORS
+Redirect pf/IEEE123Capacitors.dss
+
+! SPOT LOADS -- REDIRECT INPUT STREAM TO LOAD DEFINITIONS FILE
+Redirect original/IEEE123Loads.dss
+
+//Buscoords original/Buscoords.dat   ! load in bus coordinates
+
+! All devices in the test feeder are now defined.
+!
+! Many of the voltages are reported in per unit, so it is important to establish the base voltages at each bus so
+! that we can compare with the result with greater ease.
+! We will let the DSS compute the voltage bases by doing a zero-load power flow.
+! There are only two voltage bases in the problem: 4160V and 480V. These must be expressed in kV
+
+Set VoltageBases = [115, 4.16, 0.48]    ! ARRAY OF VOLTAGES IN KV
+CalcVoltageBases  ! PERFORMS ZERO LOAD POWER FLOW TO ESTIMATE VOLTAGE BASES
+
+New EnergyMeter.Feeder Line.L115 1
