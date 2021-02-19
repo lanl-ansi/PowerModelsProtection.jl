@@ -1,5 +1,3 @@
-using Memento
-
 "Check to see if gen is inverter model"
 function is_inverter(pm, i, nw)
     gen = ref(pm, nw, :gen, i)
@@ -82,13 +80,13 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 
         vr = real(v)
         vi = imag(v)
-        println("vr = $vr, vi = $vi")
+        @debug "vr = $vr, vi = $vi"
 
         c = conj(s / v)
         vg = v + z * c # add an option here to disable pre-computed voltage drop
         vgr = real(vg)
         vgi = imag(vg)
-        println("Compensated vg: vgr = $vgr, vgi = $vgi")
+        @debug "Compensated vg: vgr = $vgr, vgi = $vgi"
 
 
         constraint_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi)
@@ -202,7 +200,7 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
             continue
         end
 
-        if !("zr" in keys(gen))  
+        if !("zr" in keys(gen))
             Memento.info(_LOGGER, "Skipping gen $k in gen constraints")
             continue
         end
@@ -219,10 +217,10 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
 
         r = gen["zr"]
         x = gen["zx"]
-        
-        # only 3 phase generation is supported 
-        terminals = gen["terminals"]
-        if terminals == 3 
+
+        # only 3 phase generation is supported
+        terminals = length(gen["connections"])
+        if terminals == 3
             vm = [1, 1, 1]
             va = [0, -2*pi/3, 2*pi/3]
 
@@ -236,15 +234,15 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
                 va = ref(pm, :bus, bus_id, "va")
             else
                 Memento.warn(_LOGGER, "va not specified for bus $bus_id, assuming 0")
-            end  
-        
+            end
+
             mva = 100
             kva = 1e3*mva
             sb = 1e6*mva
 
             kv = 4.16
             vb = 1000*kv
-        
+
             pg = gen["pg"]
             qg = gen["qg"]
             sg = pg + 1im*qg
@@ -260,17 +258,17 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
             vgr = real(vg)
             vgi = imag(vg)
 
-            println("Generator terminal voltage from pre-fault powerflow")
-            println(abs.(v[1]))
-            println("Generator pre-fault power (kVA)")
-            println(kva*sg[1])
-            println("Generator pre-fault current (A)")
+            @debug "Generator terminal voltage from pre-fault powerflow" abs.(v[1])
+
+            @debug "Generator pre-fault power (kVA)" kva*sg[1]
+
             ssi = sb*sg[1]
             vsi = vb*v[1]/sqrt(3)
             isi = ssi/vsi
-            println(abs(isi))
-            println("Calculated generator internal voltage")
-            println(abs.(vg[1]))
+
+            @debug "Generator pre-fault current (A)" abs(isi)
+            @debug "Calculated generator internal voltage" abs.(vg[1])
+
             constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi, terminals)
         end
     end
@@ -373,7 +371,7 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractP
         vm = bus["vm"]
         va = bus["va"]
     end
-    
+
     vm = [.995 for c in terminals]
     va = [0 -2*pi/3 2*pi/3]
 
@@ -444,10 +442,10 @@ end
 
 "Constarint to set the ref bus voltage"
 function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, i::Int; nw::Int=pm.cnw)
-    terminals = ref(pm, nw, :bus, i)["terminals"] 
+    terminals = ref(pm, nw, :bus, i)["terminals"]
     vm = ref(pm, :bus, i, "vm")
     va = ref(pm, :bus, i, "va")
-    
+
     vr = [vm[i] * cos(va[i]) for i in terminals]
     vi = [vm[i] * sin(va[i]) for i in terminals]
 
