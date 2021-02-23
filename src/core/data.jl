@@ -18,15 +18,15 @@ function add_pf_data!(data::Dict{String,Any}, solver)
     if haskey(data, "method") && data["method"] in ["PMD", "solar-pf"]
         Memento.info(_LOGGER, "Adding PF results to network")
         result = run_mc_pf(data, solver)
-        add_mc_pf_data!(data, result)    
+        add_mc_pf_data!(data, result)
     elseif haskey(data, "method") && data["method"] == "dg-pf"
         Memento.info(_LOGGER, "Adding PF results to network")
         result = run_mc_dg_pf(data, solver)
-        add_pf_data!(data, result)  
+        add_pf_data!(data, result)
     elseif haskey(data, "method") && data["method"] in ["PMs", "pf"]
         Memento.info(_LOGGER, "Adding PF results to network")
         result = _PMD.run_mc_pf(data, _PM.ACPPowerModel, solver)
-        add_pf_data!(data, result)                  
+        add_pf_data!(data, result)
     elseif haskey(data, "method") && data["method"] == "opf"
         Memento.info(_LOGGER, "Adding OPF results to network")
         result = _PMD.run_mc_opf(data, _PM.ACPPowerModel, solver)
@@ -54,7 +54,7 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
             data["gen"][i]["qg"] = gen["qg"]
             Memento.debug(_LOGGER, "Adding powerflow solution to gen $i")
             # Memento.info(_LOGGER, "Adding powerflow solution to bus $i")
-        end        
+        end
     else
         Memento.info(_LOGGER, "The model power flow returned infeasible")
     end
@@ -178,7 +178,7 @@ function add_lg_fault!(data::Dict{String,Any}, i::String, phases, resistance)
     bus = data["bus_lookup"][i]
     b = string(bus)
     s_base = data["baseMVA"]
-    v_base = data["bus"][b]["vbase"] 
+    v_base = data["bus"][b]["vbase"]
     z_base = v_base^2 / s_base
     r = resistance / z_base
     gf = max(1 / r, 1e-6)
@@ -197,7 +197,7 @@ function add_ll_fault!(data::Dict{String,Any}, i::String, phases, phase_resistan
     bus = data["bus_lookup"][i]
     b = string(bus)
     s_base = data["baseMVA"]
-    v_base = data["bus"][b]["vbase"] 
+    v_base = data["bus"][b]["vbase"]
     z_base = v_base^2 / s_base
     r = phase_resistance / z_base
     gf = max(1 / r, 1e-6)
@@ -220,7 +220,7 @@ function add_3p_fault!(data::Dict{String,Any}, i::String, phases, phase_resistan
     bus = data["bus_lookup"][i]
     b = string(bus)
     s_base = data["baseMVA"]
-    v_base = data["bus"][b]["vbase"] 
+    v_base = data["bus"][b]["vbase"]
     z_base = v_base^2 / s_base
     r = phase_resistance / z_base
     gf = max(1 / r, 1e-6)
@@ -476,11 +476,13 @@ end
 
 "adds the switch impedance to data"
 function add_switch_impedance!(data::Dict{String,Any})
-    for (inx,switch) in data["switch"]
-        bus = data["bus"][string(switch["f_bus"])]
-        z_base = bus["vbase"]^2/data["baseMVA"]
-        z1 = (switch["dss"]["r1"] + switch["dss"]["x1"]*1im)
-        z0 = (switch["dss"]["r0"] + switch["dss"]["x0"]*1im)
-        switch["z"] = 1/3*(z0+2*z1)/z_base
+    if haskey(data, "switch")
+        for (inx,switch) in data["switch"]
+            bus = data["bus"][string(switch["f_bus"])]
+            z_base = bus["vbase"]^2/data["baseMVA"]
+            z1 = (switch["dss"]["r1"] + switch["dss"]["x1"]*1im)
+            z0 = (switch["dss"]["r0"] + switch["dss"]["x0"]*1im)
+            switch["z"] = 1/3*(z0+2*z1)/z_base
+        end
     end
 end
