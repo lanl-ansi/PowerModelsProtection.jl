@@ -94,7 +94,7 @@ end
 
 
 "Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence"
-function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi)
+function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, terminals)
     vr_to = var(pm, n, :vr, bus_id)
     vi_to = var(pm, n, :vi, bus_id)
 
@@ -103,7 +103,7 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus
 
     Memento.info(_LOGGER, "Adding drop for generator $i on bus $bus_id with xdp = $x")
 
-    for c in _PM.conductor_ids(pm; nw=n)
+    for c in terminals
         JuMP.@constraint(pm.model, vr_to[c] == vgr[c] - r[c] * crg[c] + x[c] * cig[c])
         JuMP.@constraint(pm.model, vi_to[c] == vgi[c] - r[c] * cig[c] - x[c] * crg[c])
         # JuMP.@constraint(pm.model, vr_to[c] == vgr[c])
@@ -114,130 +114,124 @@ end
 
 "Calculates the current at the faulted bus for multiconductor"
 function constraint_mc_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
-    bus = ref(pm, nw, :active_fault, "bus_i")
 
+    bus = ref(pm, nw, :active_fault, "bus_i")
+    terminals = ref(pm, nw, :bus, bus, "terminals")
     Gf = ref(pm, nw, :active_fault, "Gf")
 
     vr = var(pm, nw, :vr, bus)
     vi = var(pm, nw, :vi, bus)
 
     var(pm, nw)[:cfr] = JuMP.@variable(pm.model,
-        [c in _PM.conductor_ids(pm; nw=nw)], base_name = "$(nw)_cfr",
+        [c in terminals], base_name = "$(nw)_cfr",
         start = 0
     )
 
     var(pm, nw)[:cfi] = JuMP.@variable(pm.model,
-        [c in _PM.conductor_ids(pm; nw=nw)], base_name = "$(nw)_cfi",
+        [c in terminals], base_name = "$(nw)_cfi",
         start = 0
     )
 
     cr = var(pm, nw, :cfr)
     ci = var(pm, nw, :cfi)
 
-    cnds = _PM.conductor_ids(pm; nw=nw)
-
-    for c in _PM.conductor_ids(pm; nw=nw)
-        JuMP.@constraint(pm.model, cr[c] == sum(Gf[c,d] * vr[d] for d in cnds))
-        JuMP.@constraint(pm.model, ci[c] == sum(Gf[c,d] * vi[d] for d in cnds))
+    for c in terminals
+        JuMP.@constraint(pm.model, cr[c] == sum(Gf[c,d] * vr[d] for d in terminals))
+        JuMP.@constraint(pm.model, ci[c] == sum(Gf[c,d] * vi[d] for d in terminals))
     end
 end
 
 
-"Calculates the current balance at the non-faulted buses for multiconductor"
-function constraint_mc_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs)
-    vr = var(pm, n, :vr, i)
-    vi = var(pm, n, :vi, i)
+function constraint_mc_current_balance(pm::_PM.AbstractIVRModel, nw::Int, i::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
+    vr = var(pm, nw, :vr, i)
+    vi = var(pm, nw, :vi, i)
 
-    # TODO: add storage back with inverter fault model
-    cr    = get(var(pm, n),    :cr, Dict()); _PM._check_var_keys(cr, bus_arcs, "real current", "branch")
-    ci    = get(var(pm, n),    :ci, Dict()); _PM._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
-    crg   = get(var(pm, n),   :crg_bus, Dict()); _PM._check_var_keys(crg, bus_gens, "real current", "generator")
-    cig   = get(var(pm, n),   :cig_bus, Dict()); _PM._check_var_keys(cig, bus_gens, "imaginary current", "generator")
-    crsw  = get(var(pm, n),  :crsw, Dict()); _PM._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
-    cisw  = get(var(pm, n),  :cisw, Dict()); _PM._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
-    crt   = get(var(pm, n),   :crt, Dict()); _PM._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
-    cit   = get(var(pm, n),   :cit, Dict()); _PM._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
+    cr    = get(var(pm, nw),    :cr, Dict()); _PM._check_var_keys(cr, bus_arcs, "real current", "branch")
+    ci    = get(var(pm, nw),    :ci, Dict()); _PM._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
+    crg   = get(var(pm, nw),   :crg_bus, Dict()); _PM._check_var_keys(crg, bus_gens, "real current", "generator")
+    cig   = get(var(pm, nw),   :cig_bus, Dict()); _PM._check_var_keys(cig, bus_gens, "imaginary current", "generator")
+    crs   = get(var(pm, nw),   :crs, Dict()); _PM._check_var_keys(crs, bus_storage, "real currentr", "storage")
+    cis   = get(var(pm, nw),   :cis, Dict()); _PM._check_var_keys(cis, bus_storage, "imaginary current", "storage")
+    crsw  = get(var(pm, nw),  :crsw, Dict()); _PM._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
+    cisw  = get(var(pm, nw),  :cisw, Dict()); _PM._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
+    crt   = get(var(pm, nw),   :crt, Dict()); _PM._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
+    cit   = get(var(pm, nw),   :cit, Dict()); _PM._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
 
-    cnds = _PM.conductor_ids(pm; nw=n)
-    ncnds = length(cnds)
+    Gt, Bt = _PMD._build_bus_shunt_matrices(pm, nw, terminals, bus_shunts)
 
-    Gt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gs))
-    Bt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_bs))
+    ungrounded_terminals = [(idx,t) for (idx,t) in enumerate(terminals) if !grounded[idx]]
 
-    for c in cnds
-        JuMP.@NLconstraint(pm.model,  sum(cr[a][c] for a in bus_arcs)
-                                    + sum(crsw[a_sw][c] for a_sw in bus_arcs_sw)
-                                    + sum(crt[a_trans][c] for a_trans in bus_arcs_trans)
+    for (idx, t) in ungrounded_terminals
+        JuMP.@NLconstraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
+                                    + sum(crsw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
+                                    + sum(crt[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
                                     ==
-                                    sum(crg[g][c]        for g in bus_gens)
-                                    - sum(Gt[c,d] * vr[d] - Bt[c,d] * vi[d] for d in cnds) # shunts
-                                    - 0
+                                      sum(crg[g][t]         for (g, conns) in bus_gens if t in conns)
+                                    - sum(crs[s][t]         for (s, conns) in bus_storage if t in conns)
+                                    - sum( Gt[idx,jdx]*vr[u] -Bt[idx,jdx]*vi[u] for (jdx,u) in ungrounded_terminals) # shunts
                                     )
-        JuMP.@NLconstraint(pm.model, sum(ci[a][c] for a in bus_arcs)
-                                    + sum(cisw[a_sw][c] for a_sw in bus_arcs_sw)
-                                    + sum(cit[a_trans][c] for a_trans in bus_arcs_trans)
+        JuMP.@NLconstraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
+                                    + sum(cisw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
+                                    + sum(cit[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
                                     ==
-                                    sum(cig[g][c]        for g in bus_gens)
-                                    - sum(Gt[c,d] * vi[d] + Bt[c,d] * vr[d] for d in cnds) # shunts
-                                    - 0
+                                      sum(cig[g][t]         for (g, conns) in bus_gens if t in conns)
+                                    - sum(cis[s][t]         for (s, conns) in bus_storage if t in conns)
+                                    - sum( Gt[idx,jdx]*vi[u] +Bt[idx,jdx]*vr[u] for (jdx,u) in ungrounded_terminals) # shunts
                                     )
     end
 end
 
 
 "Calculates the current balance at the faulted bus for multiconductor"
-function constraint_mc_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_gs, bus_bs, bus)
-    vr = var(pm, n, :vr, i)
-    vi = var(pm, n, :vi, i)
+function constraint_mc_fault_current_balance(pm::_PM.AbstractIVRModel, nw::Int, i::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
+    vr = var(pm, nw, :vr, i)
+    vi = var(pm, nw, :vi, i)
 
-    # TODO: add storage back with inverter fault model
-    cr    = get(var(pm, n),    :cr, Dict()); _PM._check_var_keys(cr, bus_arcs, "real current", "branch")
-    ci    = get(var(pm, n),    :ci, Dict()); _PM._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
-    crg   = get(var(pm, n),   :crg_bus, Dict()); _PM._check_var_keys(crg, bus_gens, "real current", "generator")
-    cig   = get(var(pm, n),   :cig_bus, Dict()); _PM._check_var_keys(cig, bus_gens, "imaginary current", "generator")
-    crsw  = get(var(pm, n),  :crsw, Dict()); _PM._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
-    cisw  = get(var(pm, n),  :cisw, Dict()); _PM._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
-    crt   = get(var(pm, n),   :crt, Dict()); _PM._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
-    cit   = get(var(pm, n),   :cit, Dict()); _PM._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
+    cr    = get(var(pm, nw),    :cr, Dict()); _PM._check_var_keys(cr, bus_arcs, "real current", "branch")
+    ci    = get(var(pm, nw),    :ci, Dict()); _PM._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
+    crg   = get(var(pm, nw),   :crg_bus, Dict()); _PM._check_var_keys(crg, bus_gens, "real current", "generator")
+    cig   = get(var(pm, nw),   :cig_bus, Dict()); _PM._check_var_keys(cig, bus_gens, "imaginary current", "generator")
+    crs   = get(var(pm, nw),   :crs, Dict()); _PM._check_var_keys(crs, bus_storage, "real currentr", "storage")
+    cis   = get(var(pm, nw),   :cis, Dict()); _PM._check_var_keys(cis, bus_storage, "imaginary current", "storage")
+    crsw  = get(var(pm, nw),  :crsw, Dict()); _PM._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
+    cisw  = get(var(pm, nw),  :cisw, Dict()); _PM._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
+    crt   = get(var(pm, nw),   :crt, Dict()); _PM._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
+    cit   = get(var(pm, nw),   :cit, Dict()); _PM._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
 
-    cnds = _PM.conductor_ids(pm; nw=n)
-    ncnds = length(cnds)
+    cfr = var(pm, nw, :cfr)
+    cfi = var(pm, nw, :cfi)
 
-    Gt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_gs))
-    Bt = isempty(bus_bs) ? fill(0.0, ncnds, ncnds) : sum(values(bus_bs))
+    Gt, Bt = _PMD._build_bus_shunt_matrices(pm, nw, terminals, bus_shunts)
 
-    cfr = var(pm, n, :cfr)
-    cfi = var(pm, n, :cfi)
+    ungrounded_terminals = [(idx,t) for (idx,t) in enumerate(terminals) if !grounded[idx]]
 
-    for c in cnds
-        JuMP.@NLconstraint(pm.model,  sum(cr[a][c] for a in bus_arcs)
-                                    + sum(crsw[a_sw][c] for a_sw in bus_arcs_sw)
-                                    + sum(crt[a_trans][c] for a_trans in bus_arcs_trans)
+    for (idx, t) in ungrounded_terminals
+        JuMP.@NLconstraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
+                                    + sum(crsw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
+                                    + sum(crt[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
                                     ==
-                                    sum(crg[g][c]        for g in bus_gens)
-                                    - sum(Gt[c,d] * vr[d] - Bt[c,d] * vi[d] for d in cnds) # shunts
-                                    - cfr[c] # faults
+                                      sum(crg[g][t]         for (g, conns) in bus_gens if t in conns)
+                                    - sum(crs[s][t]         for (s, conns) in bus_storage if t in conns)
+                                    - sum( Gt[idx,jdx]*vr[u] -Bt[idx,jdx]*vi[u] for (jdx,u) in ungrounded_terminals) # shunts
+                                    - cfr[t] # faults
                                     )
-        JuMP.@NLconstraint(pm.model, sum(ci[a][c] for a in bus_arcs)
-                                    + sum(cisw[a_sw][c] for a_sw in bus_arcs_sw)
-                                    + sum(cit[a_trans][c] for a_trans in bus_arcs_trans)
+        JuMP.@NLconstraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
+                                    + sum(cisw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
+                                    + sum(cit[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
                                     ==
-                                    sum(cig[g][c]        for g in bus_gens)
-                                    - sum(Gt[c,d] * vi[d] + Bt[c,d] * vr[d] for d in cnds) # shunts
-                                    - cfi[c] # faults
+                                      sum(cig[g][t]         for (g, conns) in bus_gens if t in conns)
+                                    - sum(cis[s][t]         for (s, conns) in bus_storage if t in conns)
+                                    - sum( Gt[idx,jdx]*vi[u] +Bt[idx,jdx]*vr[u] for (jdx,u) in ungrounded_terminals) # shunts
+                                    - cfi[t] # faults
                                     )
     end
 end
 
 
 "Calculates the current at a wye connected gen with no power constraints"
-function constraint_mc_generation_wye(pm::_PM.IVRPowerModel, nw::Int, id::Int, bus_id::Int; report::Bool=true, bounded::Bool=true)
-    vr = var(pm, nw, :vr, bus_id)
-    vi = var(pm, nw, :vi, bus_id)
+function constraint_mc_generation_wye(pm::_PM.IVRPowerModel, nw::Int, id::Int, bus_id::Int,connections::Vector{Int}; report::Bool=true, bounded::Bool=true)
     crg = var(pm, nw, :crg, id)
     cig = var(pm, nw, :cig, id)
-
-    nph = 3
 
     var(pm, nw, :crg_bus)[id] = crg
     var(pm, nw, :cig_bus)[id] = cig
@@ -250,42 +244,53 @@ end
 
 
 "Calculates the current at a delta connected gen with no power constraints"
-function constraint_mc_generation_delta(pm::_PM.IVRPowerModel, nw::Int, id::Int, bus_id::Int; report::Bool=true, bounded::Bool=true)
+function constraint_mc_generation_delta(pm::_PM.IVRPowerModel, nw::Int, id::Int, bus_id::Int, connections::Vector{Int}; report::Bool=true, bounded::Bool=true)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
     crg = var(pm, nw, :crg, id)
     cig = var(pm, nw, :cig, id)
 
-    nph = 3
-    prev = Dict(i => (i + nph - 2) % nph + 1 for i in 1:nph)
-    next = Dict(i => i % nph + 1 for i in 1:nph)
+    nph = length(connections)
 
-    vrg = JuMP.@NLexpression(pm.model, [i in 1:nph], vr[i] - vr[next[i]])
-    vig = JuMP.@NLexpression(pm.model, [i in 1:nph], vi[i] - vi[next[i]])
+    prev = Dict(c=>connections[(idx+nph-2)%nph+1] for (idx,c) in enumerate(connections))
+    next = Dict(c=>connections[idx%nph+1] for (idx,c) in enumerate(connections))
+
+    vrg = Dict()
+    vig = Dict()
+    for c in connections
+        vrg[c] = JuMP.@NLexpression(pm.model, vr[c]-vr[next[c]])
+        vig[c] = JuMP.@NLexpression(pm.model, vi[c]-vi[next[c]])
+    end
+
+    crg_bus = Vector{JuMP.NonlinearExpression}([])
+    cig_bus = Vector{JuMP.NonlinearExpression}([])
+    for c in connections
+        push!(crg_bus, JuMP.@NLexpression(pm.model, crg[c]-crg[prev[c]]))
+        push!(cig_bus, JuMP.@NLexpression(pm.model, cig[c]-cig[prev[c]]))
+    end
 
     crg_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], crg[i] - crg[prev[i]])
     cig_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], cig[i] - cig[prev[i]])
 
-    var(pm, nw, :crg_bus)[id] = crg_bus
-    var(pm, nw, :cig_bus)[id] = cig_bus
+    var(pm, nw, :crg_bus)[id] = JuMP.Containers.DenseAxisArray(crg_bus, connections)
+    var(pm, nw, :cig_bus)[id] = JuMP.Containers.DenseAxisArray(cig_bus, connections)
 
     if report
-        sol(pm, nw, :gen, id)[:crg_bus] = crg_bus
-        sol(pm, nw, :gen, id)[:cig_bus] = cig_bus
+        sol(pm, nw, :gen, id)[:crg_bus] = JuMP.Containers.DenseAxisArray(crg_bus, connections)
+        sol(pm, nw, :gen, id)[:cig_bus] = JuMP.Containers.DenseAxisArray(cig_bus, connections)
     end
-        end
+end
+
+
 
 
 "Constraint to set the ref bus voltage"
-function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
+function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0, terminals)
     Memento.info(_LOGGER, "Setting voltage for reference bus $i")
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
 
-    cnds = _PM.conductor_ids(pm; nw=n)
-    ncnds = length(cnds)
-
-    for c in cnds
+    for c in terminals
         JuMP.@constraint(pm.model, vr[c] == vr0[c])
         JuMP.@constraint(pm.model, vi[c] == vi0[c])
     end
@@ -312,5 +317,25 @@ function constraint_mc_theta_ref(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
         JuMP.@constraint(pm.model, vr[c] * vi0[c] == vi[c] * vr0[c])
         JuMP.@constraint(pm.model, vr[c] * vr0[c] >= 0.0)
         JuMP.@constraint(pm.model, vi[c] * vi0[c] >= 0.0)
+    end
+end
+
+
+function constraint_mc_switch_state_closed(pm::_PM.AbstractIVRModel, nw::Int, f_bus::Int, t_bus::Int, f_idx::Tuple{Int,Int,Int}, f_connections::Vector{Int}, t_connections::Vector{Int}, z)
+    vr_fr = var(pm, nw, :vr, f_bus)
+    vr_to = var(pm, nw, :vr, t_bus)
+
+    vi_fr = var(pm, nw, :vi, f_bus)
+    vi_to = var(pm, nw, :vi, t_bus)
+
+    crsw = var(pm, nw, :crsw, f_idx)
+    cisw = var(pm, nw, :cisw, f_idx)
+
+    zr = real(z)
+    zi = imag(z)
+
+    for (idx,(fc,tc)) in enumerate(zip(f_connections, t_connections))
+        JuMP.@constraint(pm.model, vr_fr[fc] - crsw[fc]*zr + cisw[fc]*zi == vr_to[tc])
+        JuMP.@constraint(pm.model, vi_fr[fc] - cisw[fc]*zr - crsw[fc]*zi == vi_to[tc])
     end
 end

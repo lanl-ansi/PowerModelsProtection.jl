@@ -1,0 +1,66 @@
+
+CIRCUIT ELEMENT CURRENTS
+
+(Currents into element from indicated bus)
+
+Power Delivery Elements
+
+  Bus       Phase    Magnitude, A     Angle      (Real)   +j  (Imag)
+
+ELEMENT = "Vsource.SOURCE"
+SOURCEBUS       1           2305.8 /_  146.7 =    -1928.3 +j    1264.3
+SOURCEBUS       2           2305.8 /_   26.7 =     2059.1 +j    1037.8
+SOURCEBUS       3           2305.8 /_  -93.3 =    -130.79 +j   -2302.1
+------------
+SOURCEBUS       0           2305.8 /_  -33.3 =     1928.3 +j   -1264.3
+SOURCEBUS       0           2305.8 /_ -153.3 =    -2059.1 +j   -1037.8
+SOURCEBUS       0           2305.8 /_   86.7 =     130.79 +j    2302.1
+
+ELEMENT = "Line.LINE_SOURCE"
+SOURCEBUS       1           2305.8 /_  -33.3 =     1928.3 +j   -1264.3
+SOURCEBUS       2           2305.8 /_ -153.3 =    -2059.1 +j   -1037.8
+SOURCEBUS       3           2305.8 /_   86.7 =     130.79 +j    2302.1
+------------
+INVERTERBUS     1           2305.8 /_  146.7 =    -1928.3 +j    1264.3
+INVERTERBUS     2           2305.8 /_   26.7 =     2059.1 +j    1037.8
+INVERTERBUS     3           2305.8 /_  -93.3 =     -130.8 +j   -2302.1
+
+ELEMENT = "Line.LINE_1"
+INVERTERBUS     1           2370.4 /_  -32.3 =     2004.2 +j   -1265.7
+INVERTERBUS     2           2370.4 /_ -152.3 =    -2098.2 +j   -1102.9
+INVERTERBUS     3           2370.4 /_   87.7 =     93.991 +j    2368.6
+------------
+BUSMID          1           2370.4 /_  147.7 =    -2004.2 +j    1265.7
+BUSMID          2           2370.4 /_   27.7 =     2098.2 +j    1102.9
+BUSMID          3           2370.4 /_  -92.3 =    -93.992 +j   -2368.6
+
+ELEMENT = "Line.LINE_2"
+BUS2            1                0 /_    0.0 =          0 +j         0
+BUS2            2                0 /_    0.0 =          0 +j         0
+BUS2            3                0 /_    0.0 =          0 +j         0
+------------
+LOADBUS         1                0 /_    0.0 =          0 +j         0
+LOADBUS         2                0 /_    0.0 =          0 +j         0
+LOADBUS         3                0 /_    0.0 =          0 +j         0
+
+ELEMENT = "Fault.TEST"
+BUSMID          1           2370.4 /_  -32.3 =     2004.2 +j   -1265.7
+BUSMID          2           2370.4 /_ -152.3 =    -2098.2 +j   -1102.9
+BUSMID          3           2370.4 /_   87.7 =     93.992 +j    2368.6
+------------
+BUSMID          0           2370.4 /_  147.7 =    -2004.2 +j    1265.7
+BUSMID          0           2370.4 /_   27.7 =     2098.2 +j    1102.9
+BUSMID          0           2370.4 /_  -92.3 =    -93.992 +j   -2368.6
+
+= = = = = = = = = = = = = = = = = = =  = = = = = = = = = = =  = =
+
+Power Conversion Elements
+
+  Bus       Phase    Magnitude, A     Angle      (Real)   +j  (Imag)
+
+ELEMENT = "PVSystem.PV1"
+INVERTERBUS     1           75.967 /_  179.0 =    -75.955 +j    1.3554
+INVERTERBUS     2           75.967 /_   59.0 =     39.151 +j    65.101
+INVERTERBUS     3           75.967 /_  -61.0 =     36.804 +j   -66.457
+INVERTERBUS     0                0 /_    0.0 =          0 +j         0
+

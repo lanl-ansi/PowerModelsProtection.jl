@@ -1,16 +1,11 @@
-# using Debugger
-using Memento
-
 "Runs the mc fault study"
 function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
-    Memento.setlevel!(_LOGGER, "debug")
-
     # check_pf!(data, solver)
     check_microgrid!(data)
     add_mc_fault_data!(data)
     solution = Dict{String, Any}()
     faults = deepcopy(data["fault"])
-    delete!(data, "fault")  
+    delete!(data, "fault")
     for (i,bus) in faults
         solution[i] = Dict{String,Any}()
         for (j,type) in bus
@@ -36,10 +31,11 @@ end
 function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     Memento.info(_LOGGER, "Building fault study")
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
+    _PMD.variable_mc_switch_current(pm, bounded=false)
     variable_mc_branch_current(pm, bounded=false)
     variable_mc_transformer_current(pm, bounded=false)
-    variable_mc_generation(pm, bounded=false) 
-  
+    variable_mc_generation(pm, bounded=false)
+
     variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
 
@@ -53,8 +49,8 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
         constraint_mc_generation(pm, id)
     end
 
-    # TODO add back in the generator voltage drop with inverters in model  
-    Memento.info(_LOGGER, "Adding constraints for synchronous generators")   
+    # TODO add back in the generator voltage drop with inverters in model
+    Memento.info(_LOGGER, "Adding constraints for synchronous generators")
     constraint_mc_gen_voltage_drop(pm)
 
     constraint_mc_fault_current(pm)
@@ -69,17 +65,21 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
         _PMD.constraint_mc_bus_voltage_drop(pm, i)
     end
 
+    for i in ids(pm, :switch)
+        constraint_mc_switch_state(pm, i)
+    end
+
     for i in ids(pm, :transformer)
         _PMD.constraint_mc_transformer_power(pm, i)
     end
 
-    Memento.info(_LOGGER, "Adding constraints for grid-following inverters")   
+    Memento.info(_LOGGER, "Adding constraints for grid-following inverters")
     for i in ids(pm, :solar_gfli)
         Memento.info(_LOGGER, "Adding constraints for grid-following inverter $i")
         constraint_mc_pq_inverter(pm, i)
     end
 
-    Memento.info(_LOGGER, "Adding constraints for grid-forming inverters")   
+    Memento.info(_LOGGER, "Adding constraints for grid-forming inverters")
     for i in ids(pm, :solar_gfmi)
         Memento.info(_LOGGER, "Adding constraints for grid-forming inverter $i")
         # constraint_mc_grid_forming_inverter(pm, i)
