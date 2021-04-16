@@ -438,3 +438,109 @@ function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, p
         JuMP.@NLconstraint(pm.model, cmax^2 == crg[c]^2 + cig[c]^2)
     end
 end
+
+
+function constraint_pf_mc_storage_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
+    vr = var(pm, nw, :vr, bus_id)
+    vi = var(pm, nw, :vi, bus_id)
+
+    crg =  var(pm, nw, :crs, i)
+    cig =  var(pm, nw, :cis, i)
+  
+    p = var(pm, nw, :p_storage, i)
+    q = var(pm, nw, :q_storage, i)
+ 
+    vm = [vr0[c]^2 + vi0[c]^2 for c in connections]
+
+    for c in connections
+        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+        # JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 == vm[c])
+
+        if ang
+            # setpoint voltage phase
+            JuMP.@constraint(pm.model, 0.0 == vrstar[c]*vi0[c] - vistar[c]*vr0[c])
+            JuMP.@constraint(pm.model, vrstar[c] * vr0[c] >= 0.0)
+            JuMP.@constraint(pm.model, vistar[c] * vi0[c] >= 0.0)
+        end
+
+        JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] <= pmax[c])
+        JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] >= -pmax[c])
+        JuMP.@NLconstraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] <= qmax[c])
+        JuMP.@NLconstraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] >= qmin[c])
+    end
+
+    # DC-link power
+    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in connections) == p)
+    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in connections) == q)
+
+    JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax^2)
+    JuMP.@constraint(pm.model, energy - p >= 0.0)
+    JuMP.@constraint(pm.model, energy - p <= energy_rating)
+end
+
+
+"Constraints for fault current contribution of multiconductor inverter in grid-following mode"
+function constraint_mc_pf_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, cmax, smax, connections)
+    ar = -1/6
+    ai = sqrt(3)/6
+    a2r = -1/6
+    a2i = -sqrt(3)/6
+
+    vr = var(pm, nw, :vr, bus_id)
+    vi = var(pm, nw, :vi, bus_id)
+
+    crg =  var(pm, nw, :crg, i)
+    cig =  var(pm, nw, :cig, i)
+
+    p = var(pm, nw, :p_int, i)
+    q = var(pm, nw, :q_int, i)
+
+    for c in connections
+        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+    end
+    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in connections) == p)
+    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in connections) == q)
+    JuMP.@constraint(pm.model, p == pg)
+    JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax^2)
+end
+
+
+function constraint_mc_storage_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, ang, connections)
+    vr = var(pm, nw, :vr, bus_id)
+    vi = var(pm, nw, :vi, bus_id)
+
+    vrstar = var(pm, nw, :vrstp, i)
+    vistar = var(pm, nw, :vistp, i)
+
+    crg =  var(pm, nw, :crs, i)
+    cig =  var(pm, nw, :cis, i)
+
+    # current-limiting indicator variable
+    z = var(pm, nw, :z_storage, i)
+ 
+    p = var(pm, nw, :p_storage, i)
+    q = var(pm, nw, :q_storage, i)
+
+    vm = [vr0[c]^2 + vi0[c]^2 for c in connections]
+
+    for c in connections
+        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+        JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
+
+        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 >= vm[c]-z[c])
+        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[c]+z[c])
+
+        if ang
+            # setpoint voltage phase
+            JuMP.@constraint(pm.model, 0.0 == vrstar[c]*vi0[c] - vistar[c]*vr0[c])
+            JuMP.@constraint(pm.model, vrstar[c] * vr0[c] >= 0.0)
+            JuMP.@constraint(pm.model, vistar[c] * vi0[c] >= 0.0)
+        end
+    end
+
+    # DC-link power
+    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in connections) == p)
+    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in connections) == q)
+
+    JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax^2)
+end

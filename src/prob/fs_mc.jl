@@ -13,7 +13,7 @@ function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
             for (f,fault) in type
                 data["active_fault"] = fault
                 Memento.info(_LOGGER, "Running short circuit")
-                solution[i][j]["$f"] = run_mc_model(data, _PM.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!, ref_add_gen_dynamics!, ref_add_solar!], kwargs...)
+                solution[i][j]["$f"] = run_mc_model(data, _PM.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!, ref_add_gen_dynamics!, ref_add_solar!, ref_add_storage!], kwargs...)
             end
         end
     end
@@ -35,9 +35,11 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
     variable_mc_branch_current(pm, bounded=false)
     variable_mc_transformer_current(pm, bounded=false)
     variable_mc_generation(pm, bounded=false)
+    variable_mc_storage_current(pm; bounded=false)
 
     variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
+    variable_mc_storage_grid_formimg_inverter(pm)
 
     for (i,bus) in ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3
@@ -84,6 +86,11 @@ function build_mc_fault_study(pm::_PM.AbstractPowerModel)
         Memento.info(_LOGGER, "Adding constraints for grid-forming inverter $i")
         # constraint_mc_grid_forming_inverter(pm, i)
         constraint_mc_grid_forming_inverter_virtual_impedance(pm, i)
+    end
+
+    for i in ids(pm, :storage)
+        Memento.info(_LOGGER, "Adding constraints for grid-forming inverter $i")
+        constraint_mc_storage_grid_forming_inverter(pm, i)
     end
 
 end

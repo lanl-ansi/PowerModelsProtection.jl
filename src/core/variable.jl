@@ -302,3 +302,150 @@ function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
     )
 
 end
+
+
+function variable_mc_storage_current(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
+    variable_mc_storage_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
+    variable_mc_storage_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
+end
+
+
+function variable_mc_storage_current_real(pm::_PM.AbstractIVRModel, nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true; kwargs...)
+    connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
+    crs = var(pm, nw)[:crs] = Dict(i => JuMP.@variable(pm.model,
+            [c in connections[i]], base_name="$(nw)_crs_$(i)",
+            start = _PMD.comp_start_value(ref(pm, nw, :storage, i), "crs_start", c, 0.0)
+        ) for i in ids(pm, nw, :storage)
+    )
+    if bounded
+    end
+end
+
+function variable_mc_storage_current_imaginary(pm::_PM.AbstractIVRModel, nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true; kwargs...)
+    connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
+    cis = var(pm, nw)[:cis] = Dict(i => JuMP.@variable(pm.model,
+            [c in connections[i]], base_name="$(nw)_cis_$(i)",
+            start = _PMD.comp_start_value(ref(pm, nw, :storage, i), "cis_start", c, 0.0)
+        ) for i in ids(pm, nw, :storage)
+    )
+    if bounded
+    end
+end
+
+
+function variable_mc_storage_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+    connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
+
+    # inverter setpoints for virtual impedance formulation
+    # taking into account virtual impedance voltage drop
+    var(pm, nw)[:vrstp] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_vrstp_$(i)",
+               start = 0.0,
+        ) for i in ids(pm, nw, :storage)
+    )
+
+    var(pm, nw)[:vistp] = Dict(i => JuMP.@variable(pm.model,
+    [c in connections[i]], base_name = "$(nw)_vistp_$(i)",
+               start = 0.0,
+        ) for i in ids(pm, nw, :storage)
+    )
+
+    var(pm, nw)[:z_storage] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_:z_storage_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1.0
+        ) for i in ids(pm, nw, :storage)
+    )
+    
+    var(pm, nw)[:z2_storage] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_z2_storage_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1.0
+        ) for i in ids(pm, nw, :storage)
+    )
+
+    var(pm, nw)[:z3_storage] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_z3_storage_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1.0
+        ) for i in ids(pm, nw, :storage)
+    )
+
+    p = var(pm, nw)[:p_storage] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :storage)], base_name = "$(nw)_p_storage_$(i)",
+        start = 0
+    )
+
+    q = var(pm, nw)[:q_storage] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :storage)], base_name = "$(nw)_q_storage_$(i)",
+        start = 0
+    )
+
+    var(pm, nw)[:rv_storage] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_rv_storage_$(i)",
+               start = 0.0,
+        ) for i in ids(pm, nw, :storage)
+    )
+
+    var(pm, nw)[:xv_storage] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_xv_storage_$(i)",
+               start = 0.0,
+        ) for i in ids(pm, nw, :storage)
+    )
+
+end
+
+
+""
+function variable_mc_pf_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+    p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar_gfli)], base_name = "$(nw)_p_int_$(i)",
+        start = 0
+    )
+    for i in ids(pm, nw, :solar_gfli)
+        gen = pm.ref[:nw][nw][:gen][i]
+        pmax = 0.0
+        if gen["solar_max"] < gen["kva"] * gen["pf"]
+            pmax = gen["solar_max"]
+        else
+            pmax = gen["kva"] * gen["pf"]
+        end
+        JuMP.set_lower_bound(p_int[i], 0.0)
+        JuMP.set_upper_bound(p_int[i], pmax)
+    end
+
+    q_int = var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :solar_gfli)], base_name = "$(nw)_q_int_$(i)",
+        start = 0
+    )
+    for i in ids(pm, nw, :solar_gfli)
+        gen = pm.ref[:nw][nw][:gen][i]
+        pmax = 0.0
+        if gen["solar_max"] < gen["kva"] * gen["pf"]
+            pmax = gen["solar_max"]
+        else
+            pmax = gen["kva"] * gen["pf"]
+        end
+        JuMP.set_lower_bound(q_int[i], 0.0)
+        JuMP.set_upper_bound(q_int[i], pmax)
+    end
+end
+
+
+function variable_mc_pf_storage_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+    connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
+
+    p = var(pm, nw)[:p_storage] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :storage)], base_name = "$(nw)_p_storage_$(i)",
+        start = 0
+    )
+    q = var(pm, nw)[:q_storage] = JuMP.@variable(pm.model,
+        [i in ids(pm, nw, :storage)], base_name = "$(nw)_q_storage_$(i)",
+        start = 0
+    )
+
+end
+

@@ -269,11 +269,10 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
             @debug "Generator pre-fault current (A)" abs(isi)
             @debug "Calculated generator internal voltage" abs.(vg[1])
 
-            constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi, terminals)
+            constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vr, vi, terminals)
         end
     end
 end
-
 
 "Constraints for fault current contribution of multiconductor inverter in grid-following mode"
 function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
@@ -473,4 +472,63 @@ function constraint_mc_switch_state(pm::_PM.AbstractPowerModel, i::Int; nw::Int=
     else
         _PMD.constraint_mc_switch_state_open(pm, nw, f_idx)
     end
+end
+
+
+function constraint_mc_storage_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    storage = pm.ref[:nw][nw][:storage][i]
+    haskey(storage, "i_max") ? nothing : storage["i_max"] = 1.5*storage["dss"]["kva"] / (3 * 1000 * pm.ref[:nw][0][:baseMVA])
+    connections = storage["connections"]
+    bus_i = storage["storage_bus"]
+    bus = pm.ref[:nw][nw][:bus][bus_i]
+    bus["bus_type"] == 5 ? ang = true : ang = false
+    vm = [1.00 for c in connections]
+    va = [0 -2*pi/3 2*pi/3]
+    cmax = storage["i_max"]
+    vr = [vm[c] * cos(va[c]) for c in connections]
+    vi = [vm[c] * sin(va[c]) for c in connections]
+    pmax = storage["thermal_rating"]
+    qmin = storage["qmin"]
+    qmax = storage["qmax"]
+    smax = storage["kva"]
+
+    constraint_mc_storage_grid_formimg_inverter(pm, nw, i, bus_i, vr, vi, pmax, qmax, qmin, cmax, smax, ang, connections)
+end
+
+function constraint_pf_mc_storage_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    storage = pm.ref[:nw][nw][:storage][i]
+    haskey(storage, "i_max") ? nothing : storage["i_max"] = 1.5*storage["dss"]["kva"] / (3 * 1000 * pm.ref[:nw][0][:baseMVA])
+    connections = storage["connections"]
+    bus_i = storage["storage_bus"]
+    bus = pm.ref[:nw][nw][:bus][bus_i]
+    bus["bus_type"] == 5 ? ang = true : ang = false
+    vm = [1.000 for c in connections]
+    va = [0 -2*pi/3 2*pi/3]
+    cmax = storage["i_max"]
+    vr = [vm[c] * cos(va[c]) for c in connections]
+    vi = [vm[c] * sin(va[c]) for c in connections]
+    pmax = storage["thermal_rating"]
+    qmin = storage["qmin"]
+    qmax = storage["qmax"]
+    smax = storage["kva"]
+    energy = storage["energy"]
+    energy_rating = storage["energy_rating"]
+
+    constraint_pf_mc_storage_grid_formimg_inverter(pm, nw, i, bus_i, vr, vi, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
+end
+
+
+"Constraints for fault current contribution of multiconductor inverter in grid-following mode"
+function constraint_mc_pf_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+    index = pm.ref[:nw][nw][:solar_gfli][i]
+    gen = pm.ref[:nw][nw][:gen][i]
+    connections = gen["connections"]
+    cmax = gen["i_max"]
+    if gen["solar_max"] < gen["kva"] * gen["pf"]
+        pmax = gen["solar_max"]
+    else
+        pmax = gen["kva"] * gen["pf"]
+    end
+    smax = gen["kva"]
+    constraint_mc_pf_pq_inverter(pm, nw, i, index, pmax, cmax, smax, connections)
 end

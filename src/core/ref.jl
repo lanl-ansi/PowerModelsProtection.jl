@@ -54,6 +54,7 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
                 end
                 haskey(gen, "i_max") ? nothing : gen["i_max"] = (1/gen["dss"]["vminpu"]) * gen["dss"]["kva"] / (3 * 1000 * ref[:nw][0][:baseMVA])
                 Memento.info(_LOGGER, "Gen $i imax = $(gen["i_max"])")
+                haskey(gen["dss"], "irradiance") ? nothing : gen["dss"]["irradiance"] = 1
                 haskey(gen, "solar_max") ? nothing : gen["solar_max"] = gen["dss"]["irradiance"] * gen["dss"]["pmpp"] / ref[:nw][0][:baseMVA] / 1000
                 haskey(gen, "kva") ? nothing : gen["kva"] = gen["dss"]["kva"] / ref[:nw][0][:baseMVA] / 1000
                 haskey(gen, "pf") ? nothing : gen["pf"] = gen["dss"]["pf"]
@@ -62,6 +63,25 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
         end
     end
 end
+
+
+function ref_add_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+    Memento.info(_LOGGER, "Adding solar refs")
+    if _IM.ismultinetwork(data)
+        nws_data = data["nw"]
+    else
+        nws_data = Dict("0" => data)
+    end
+    for (n, nw_data) in nws_data
+        nw_id = parse(Int, n)
+        nw_ref = ref[:nw][nw_id]
+        nw_ref[:storage_gfmi] = Dict{Int,Any}()
+        for (i, storage) in nw_data["storage"]
+            haskey(storage, "kva") ? nothing : storage["kva"] = storage["dss"]["kva"] / ref[:nw][0][:baseMVA] / 1000 # three phase 
+        end
+    end
+end
+
 
 "Calculates the power from solar based on inputs"
 function ref_add_gen_dynamics!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})

@@ -13,13 +13,16 @@ end
 "Constructor for Power Flow Problem with Solar"
 function build_mc_pf(pm::_PM.AbstractPowerModel)
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
+    _PMD.variable_mc_switch_current(pm, bounded=false)
     _PMD.variable_mc_branch_current(pm, bounded=false)
     _PMD.variable_mc_transformer_current(pm, bounded=false)
     _PMD.variable_mc_generator_current(pm, bounded=false)
     _PMD.variable_mc_load_current(pm, bounded = false)
+    variable_mc_storage_current(pm; bounded=false)
 
     variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
+    variable_mc_storage_grid_formimg_inverter(pm)
 
     for (i, bus) in ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3
@@ -72,6 +75,11 @@ function build_mc_pf(pm::_PM.AbstractPowerModel)
     for i in ids(pm, :solar_gfmi)
         constraint_mc_grid_forming_inverter_impedance(pm, i)
         # constraint_mc_grid_forming_inverter(pm, i)
+    end
+
+    for i in ids(pm, :storage)
+        Memento.info(_LOGGER, "Adding constraints for grid-forming inverter $i")
+        constraint_mc_storage_grid_forming_inverter(pm, i)
     end
 
 end
