@@ -303,7 +303,7 @@ end
 
 # TODO complete formulation and test in multiple inverters
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
+function constraint_grid_forming_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -350,7 +350,7 @@ function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw
 end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang, terminals)
+function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang, terminals)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -440,7 +440,7 @@ function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, p
 end
 
 
-function constraint_pf_mc_storage_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
+function constraint_pf_mc_storage_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -505,7 +505,7 @@ function constraint_mc_pf_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, p
 end
 
 
-function constraint_mc_storage_grid_formimg_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, ang, connections)
+function constraint_mc_storage_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, ang, connections)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 

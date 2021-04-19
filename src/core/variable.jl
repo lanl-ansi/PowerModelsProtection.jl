@@ -238,7 +238,7 @@ end
 
 
 ""
-function variable_mc_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_mc_grid_forming_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     terminals = Dict(gfmi => ref(pm, nw, :bus, bus)["terminals"] for (gfmi,bus) in ref(pm, nw, :solar_gfmi))
 
     # inverter setpoints for virtual impedance formulation
@@ -333,7 +333,7 @@ function variable_mc_storage_current_imaginary(pm::_PM.AbstractIVRModel, nw::Int
 end
 
 
-function variable_mc_storage_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_mc_storage_grid_forming_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
 
     # inverter setpoints for virtual impedance formulation
@@ -435,7 +435,7 @@ function variable_mc_pf_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bo
 end
 
 
-function variable_mc_pf_storage_grid_formimg_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_mc_pf_storage_grid_forming_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
 
     p = var(pm, nw)[:p_storage] = JuMP.@variable(pm.model,

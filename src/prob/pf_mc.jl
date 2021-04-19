@@ -21,8 +21,8 @@ function build_mc_pf(pm::_PM.AbstractPowerModel)
     variable_mc_storage_current(pm; bounded=false)
 
     variable_mc_pq_inverter(pm)
-    variable_mc_grid_formimg_inverter(pm)
-    variable_mc_storage_grid_formimg_inverter(pm)
+    variable_mc_grid_forming_inverter(pm)
+    variable_mc_storage_grid_forming_inverter(pm)
 
     for (i, bus) in ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3

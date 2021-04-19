@@ -351,7 +351,7 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
         x = gen["zx"]
     end
 
-    constraint_grid_formimg_inverter_impedance(pm, nw, index, i, vrstar, vistar, r, x, pmax, cmax)
+    constraint_grid_forming_inverter_impedance(pm, nw, index, i, vrstar, vistar, r, x, pmax, cmax)
 end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
@@ -387,7 +387,7 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractP
 
     smax = gen["kva"]
 
-    constraint_mc_grid_formimg_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, cmax, smax, ang, terminals)
+    constraint_mc_grid_forming_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, cmax, smax, ang, terminals)
 end
 
 
@@ -492,7 +492,7 @@ function constraint_mc_storage_grid_forming_inverter(pm::_PM.AbstractPowerModel,
     qmax = storage["qmax"]
     smax = storage["kva"]
 
-    constraint_mc_storage_grid_formimg_inverter(pm, nw, i, bus_i, vr, vi, pmax, qmax, qmin, cmax, smax, ang, connections)
+    constraint_mc_storage_grid_forming_inverter(pm, nw, i, bus_i, vr, vi, pmax, qmax, qmin, cmax, smax, ang, connections)
 end
 
 function constraint_pf_mc_storage_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
@@ -514,7 +514,7 @@ function constraint_pf_mc_storage_grid_forming_inverter(pm::_PM.AbstractPowerMod
     energy = storage["energy"]
     energy_rating = storage["energy_rating"]
 
-    constraint_pf_mc_storage_grid_formimg_inverter(pm, nw, i, bus_i, vr, vi, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
+    constraint_pf_mc_storage_grid_forming_inverter(pm, nw, i, bus_i, vr, vi, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
 end
 
 
