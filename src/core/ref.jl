@@ -39,7 +39,7 @@ function ref_add_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     end
     for (n, nw_data) in nws_data
         nw_id = parse(Int, n)
-        nw_ref = ref[:nw][nw_id]
+        nw_ref = ref[_PMD.pmd_it_sym][:nw][nw_id]
         nw_ref[:solar_gfli] = Dict{Int,Any}()
         nw_ref[:solar_gfmi] = Dict{Int,Any}()
         for (i, gen) in nw_data["gen"]

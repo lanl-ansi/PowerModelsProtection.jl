@@ -1,6 +1,6 @@
 ""
 function run_mc_model(data::Dict{String,<:Any}, model_type::Type, solver, build_mc::Function; ref_extensions::Vector{<:Function}=Vector{Function}([]), make_si=!get(data, "per_unit", false), multinetwork::Bool=false, kwargs...)::Dict{String,Any}
-    result = _PMD.run_mc_model(data, model_type, solver, build_mc; ref_extensions=[_PMD.ref_add_core!, ref_extensions...], multinetwork=multinetwork, solution_processors=[solution_fs!], kwargs...)
+    result = _PMD.run_mc_model(data, model_type, solver, build_mc; ref_extensions=ref_extensions, multinetwork=multinetwork, solution_processors=[solution_fs!], kwargs...)
     if haskey(data, "active_fault") 
         fault_current = result["solution"]["fault_current"]  
         hold_solution = result["solution"]
