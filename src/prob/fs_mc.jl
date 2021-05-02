@@ -13,7 +13,7 @@ function run_mc_fault_study(data::Dict{String,<:Any}, solver; kwargs...)
             for (f,fault) in type
                 data["active_fault"] = fault
                 Memento.info(_LOGGER, "Running short circuit")
-                solution[i][j]["$f"] = run_mc_model(data, _PM.IVRPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!, ref_add_gen_dynamics!, ref_add_solar!, ref_add_storage!], kwargs...)
+                solution[i][j]["$f"] = run_mc_model(data, _PMD.IVRUPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_fault!, ref_add_gen_dynamics!, ref_add_solar!, ref_add_storage!], kwargs...)
             end
         end
     end
@@ -28,7 +28,7 @@ end
 
 
 "Build mc fault study"
-function build_mc_fault_study(pm::_PM.AbstractPowerModel)
+function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     Memento.info(_LOGGER, "Building fault study")
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
     _PMD.variable_mc_switch_current(pm, bounded=false)

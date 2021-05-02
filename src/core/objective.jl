@@ -12,7 +12,7 @@ end
 
 
 ""
-function objective_min_inverter_voltage_regulation(pm::_PM.AbstractIVRModel; report::Bool=true)
+function objective_min_inverter_voltage_regulation(pm::_PMD.AbstractUnbalancedIVRModel; report::Bool=true)
     return JuMP.@objective(pm.model, Min,
         sum(
             sum(
@@ -26,7 +26,7 @@ end
 
 
 "Tries to maximize the power from an inverter"
-function objective_max_inverter_power(pm::_PM.AbstractIVRModel; report::Bool=true)
+function objective_max_inverter_power(pm::_PMD.AbstractUnbalancedIVRModel; report::Bool=true)
     return JuMP.@objective(pm.model, Min,
         sum(
             - sum(var(pm, n, :crg, i)^2 - var(pm, n, :cig, i)^2 for (i, gen) in pq_gens(nw_ref))
@@ -36,7 +36,7 @@ end
 
 
 "Tries to minimize the power from an inverter"
-function objective_min_inverter_error(pm::_PM.AbstractIVRModel; report::Bool=true)
+function objective_min_inverter_error(pm::_PMD.AbstractUnbalancedIVRModel; report::Bool=true)
     return JuMP.@objective(pm.model, Min,
         sum(
             sum(

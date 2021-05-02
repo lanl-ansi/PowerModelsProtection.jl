@@ -7,7 +7,7 @@ function run_fault_study(data::Dict{String,Any}, solver; kwargs...)
         solution[i] = Dict{Int64,Any}()
         for (f, fault) in bus
             data["active_fault"] = fault
-            solution[i][f] = _PM.run_model(data, _PM.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
+            solution[i][f] = _PMD.run_model(data, _PMD.IVRUPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
         end
     end
     return solution
@@ -21,8 +21,8 @@ end
 
 
 "Build fault study"
-function build_fault_study(pm::_PM.AbstractPowerModel)
-    _PM.variable_bus_voltage(pm, bounded = true)
+function build_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
+    _PMD.variable_bus_voltage(pm, bounded = true)
     variable_branch_current(pm, bounded = false)
     variable_gen(pm, bounded = false) # inverter currents are always bounded
     variable_pq_inverter(pm)
@@ -61,8 +61,8 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
     end
 
     for i in ids(pm, :branch)
-        _PM.constraint_current_from(pm, i)
-        _PM.constraint_current_to(pm, i)
-        _PM.constraint_voltage_drop(pm, i)
+        _PMD.constraint_current_from(pm, i)
+        _PMD.constraint_current_to(pm, i)
+        _PMD.constraint_voltage_drop(pm, i)
     end
 end

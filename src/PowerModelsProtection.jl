@@ -3,12 +3,12 @@ module PowerModelsProtection
     import Memento
 
     import InfrastructureModels
-    import PowerModels
+    # import PowerModels
     import PowerModelsDistribution
     import MathOptInterface
 
     const _IM = InfrastructureModels
-    const _PM = PowerModels
+    # const _PMD = PowerModels
     const _PMD = PowerModelsDistribution
 
     import InfrastructureModels: ids, ref, var, con, sol, nw_ids, nws, ismultinetwork
@@ -16,7 +16,7 @@ module PowerModelsProtection
     const MOI = MathOptInterface
 
     function __init__()
-        global _LOGGER = Memento.getlogger(PowerModels)
+        global _LOGGER = Memento.getlogger("PowerModelsProtection.jl")
         # Memento.setlevel!(_LOGGER, "debug")
     end
 

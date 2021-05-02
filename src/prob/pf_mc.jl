@@ -1,6 +1,6 @@
 "Run Power Flow Problem with Solar"
 function run_mc_pf(data::Dict{String,<:Any}, solver; kwargs...)
-    return solution = run_mc_model(data, _PM.IVRPowerModel, solver, build_mc_pf; ref_extensions=[ref_add_solar!], kwargs...)
+    return solution = run_mc_model(data, _PMD.IVRUPowerModel, solver, build_mc_pf; ref_extensions=[ref_add_solar!], kwargs...)
 end
 
 
@@ -11,7 +11,7 @@ end
 
 
 "Constructor for Power Flow Problem with Solar"
-function build_mc_pf(pm::_PM.AbstractPowerModel)
+function build_mc_pf(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
     _PMD.variable_mc_switch_current(pm, bounded=false)
     _PMD.variable_mc_branch_current(pm, bounded=false)
@@ -87,7 +87,7 @@ end
 
 "Run Power Flow Problem with DG"
 function run_mc_dg_pf(data::Dict{String,<:Any}, solver; kwargs...)
-    return solution = _PMD.run_mc_model(data, _PM.ACPPowerModel, solver, build_mc_dg_pf; kwargs...)
+    return solution = _PMD.run_mc_model(data, _PMD.ACPUPowerModel, solver, build_mc_dg_pf; kwargs...)
 end
 
 "Run Power Flow Problem with DG"
@@ -96,7 +96,7 @@ function run_mc_dg_pf(file::String, solver; kwargs...)
 end
 
 "Constructor for Power Flow Problem with DG"
-function build_mc_dg_pf(pm::_PM.AbstractPowerModel)
+function build_mc_dg_pf(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_bus_voltage(pm; bounded=false)
     _PMD.variable_mc_branch_power(pm; bounded=false)
     # _PMD.variable_mc_branch_current(pm; bounded=false)
@@ -142,8 +142,8 @@ function build_mc_dg_pf(pm::_PM.AbstractPowerModel)
     end
 
     # for i in ids(pm, :storage)
-    #     _PM.constraint_storage_state(pm, i)
-    #     _PM.constraint_storage_complementarity_nl(pm, i)
+    #     _PMD.constraint_storage_state(pm, i)
+    #     _PMD.constraint_storage_complementarity_nl(pm, i)
     #     _PMD.constraint_mc_storage_losses(pm, i)
     #     _PMD.constraint_mc_storage_thermal_limit(pm, i)
     # end

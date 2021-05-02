@@ -1,6 +1,6 @@
 "Parse the input data"
 function parse_matpower(file::String)
-    pm_data = _PM.parse_file(file)
+    pm_data = _PMD.parse_file(file)
     pm_data["method"] = "PMs"
     if haskey(pm_data, "gensub")
         for (i,gen) in pm_data["gensub"]

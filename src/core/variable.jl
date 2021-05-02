@@ -1,17 +1,17 @@
 "Copies from PowerModels and PowerModelsDistribution without power vars"
-function variable_branch_current(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
-    _PM.variable_branch_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PM.variable_branch_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
+function variable_branch_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
+    _PMD.variable_branch_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
+    _PMD.variable_branch_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
 
-    _PM.variable_branch_series_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PM.variable_branch_series_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
+    _PMD.variable_branch_series_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
+    _PMD.variable_branch_series_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
 end
 
 
 ""
-function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
-    _PM.variable_gen_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PM.variable_gen_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
+function variable_gen(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
+    _PMD.variable_gen_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
+    _PMD.variable_gen_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     variable_gen_loading(pm, nw=nw, bounded=bounded, report=report; kwargs...)
 
 
@@ -47,18 +47,18 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=tr
 
     if bounded
         for (i, gen) in ref(pm, nw, :gen)
-            _PM.constraint_gen_active_bounds(pm, i, nw=nw)
-            _PM.constraint_gen_reactive_bounds(pm, i, nw=nw)
+            _PMD.constraint_gen_active_bounds(pm, i, nw=nw)
+            _PMD.constraint_gen_reactive_bounds(pm, i, nw=nw)
         end
     end
 end
 
 
 "variable: `pg[j]` for `j` in `gen`"
-function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true)
+function variable_gen_loading(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true)
     kg = var(pm, nw)[:kg] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :gen)], base_name = "$(nw)_kg",
-        start = _PM.comp_start_value(ref(pm, nw, :gen, i), "kg_start")
+        start = _PMD.comp_start_value(ref(pm, nw, :gen, i), "kg_start")
     )
 
 
@@ -74,7 +74,7 @@ end
 
 
 ""
-function variable_mc_branch_current(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
+function variable_mc_branch_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
     _PMD.variable_mc_branch_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PMD.variable_mc_branch_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
 
@@ -84,22 +84,22 @@ end
 
 
 ""
-function variable_mc_transformer_current(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
+function variable_mc_transformer_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
     _PMD.variable_mc_transformer_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PMD.variable_mc_transformer_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
 end
 
 
 ""
-function variable_mc_generation(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
+function variable_mc_generation(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
     _PMD.variable_mc_generator_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PMD.variable_mc_generator_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PM.var(pm, nw)[:crg_bus] = Dict{Int,Any}()
-    _PM.var(pm, nw)[:cig_bus] = Dict{Int,Any}()
+    _PMD.var(pm, nw)[:crg_bus] = Dict{Int,Any}()
+    _PMD.var(pm, nw)[:cig_bus] = Dict{Int,Any}()
 
     # TODO need to test DER with power as decision variable
-    # _PM.var(pm, nw)[:pg] = Dict{Int, Any}()
-    # _PM.var(pm, nw)[:qg] = Dict{Int, Any}()
+    # _PMD.var(pm, nw)[:pg] = Dict{Int, Any}()
+    # _PMD.var(pm, nw)[:qg] = Dict{Int, Any}()
 end
 
 
@@ -122,7 +122,7 @@ end
 
 
 ""
-function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in pq_gen_ids(pm, nw)], base_name = "$(nw)_p_int_$(i)",
         start = 0
@@ -165,7 +165,7 @@ end
 
 
 ""
-function variable_mc_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :solar_gfli)], base_name = "$(nw)_p_int_$(i)",
         start = 0
@@ -238,7 +238,7 @@ end
 
 
 ""
-function variable_mc_grid_forming_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     terminals = Dict(gfmi => ref(pm, nw, :bus, bus)["terminals"] for (gfmi,bus) in ref(pm, nw, :solar_gfmi))
 
     # inverter setpoints for virtual impedance formulation
@@ -304,13 +304,13 @@ function variable_mc_grid_forming_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.
 end
 
 
-function variable_mc_storage_current(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
+function variable_mc_storage_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true, kwargs...)
     variable_mc_storage_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     variable_mc_storage_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
 end
 
 
-function variable_mc_storage_current_real(pm::_PM.AbstractIVRModel, nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true; kwargs...)
+function variable_mc_storage_current_real(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true; kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
     crs = var(pm, nw)[:crs] = Dict(i => JuMP.@variable(pm.model,
             [c in connections[i]], base_name="$(nw)_crs_$(i)",
@@ -321,7 +321,7 @@ function variable_mc_storage_current_real(pm::_PM.AbstractIVRModel, nw::Int=pm.c
     end
 end
 
-function variable_mc_storage_current_imaginary(pm::_PM.AbstractIVRModel, nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true; kwargs...)
+function variable_mc_storage_current_imaginary(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int=pm.cnw, bounded::Bool=true, report::Bool=true; kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
     cis = var(pm, nw)[:cis] = Dict(i => JuMP.@variable(pm.model,
             [c in connections[i]], base_name="$(nw)_cis_$(i)",
@@ -333,7 +333,7 @@ function variable_mc_storage_current_imaginary(pm::_PM.AbstractIVRModel, nw::Int
 end
 
 
-function variable_mc_storage_grid_forming_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
 
     # inverter setpoints for virtual impedance formulation
@@ -400,7 +400,7 @@ end
 
 
 ""
-function variable_mc_pf_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_mc_pf_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     p_int = var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in ids(pm, nw, :solar_gfli)], base_name = "$(nw)_p_int_$(i)",
         start = 0
@@ -435,7 +435,7 @@ function variable_mc_pf_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bo
 end
 
 
-function variable_mc_pf_storage_grid_forming_inverter(pm::_PM.AbstractIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
+function variable_mc_pf_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=pm.cnw, bounded::Bool=true, kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in ref(pm, nw, :storage))
 
     p = var(pm, nw)[:p_storage] = JuMP.@variable(pm.model,

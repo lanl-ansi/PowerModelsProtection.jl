@@ -3,14 +3,14 @@ const FS = PowerModelsProtection
 
 import Memento
 
-import PowerModels
+# import PowerModels
 import PowerModelsDistribution
 
 const PMD = PowerModelsDistribution
-const PM = PowerModels
+# const PM = PowerModels
 
 # Suppress warnings during testing.
-const TESTLOG = Memento.getlogger(PowerModels)
+const TESTLOG = Memento.getlogger("PowerModelsProtection.jl")
 Memento.setlevel!(TESTLOG, "error")
 
 import JuMP
@@ -28,7 +28,7 @@ ipopt_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 
 @testset "PowerModelsProtection" begin
     include("common.jl")
-    include("fs.jl")
+    # include("fs.jl")
     include("fs_mc.jl")
     include("pf_mc.jl")
 end

@@ -50,13 +50,13 @@ function is_v_inverter(pm, i, nw)
 end
 
 "generator reactive power setpoint constraint"
-function constraint_mc_gen_power_setpoint_imag(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw, kwargs...)
+function constraint_mc_gen_power_setpoint_imag(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw, kwargs...)
     qg_set = ref(pm, nw, :gen, i)["qg"]
     constraint_mc_gen_power_setpoint_imag(pm, nw, i, qg_set)
 end
 
 "Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence"
-function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+function constraint_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=pm.cnw)
     for (k, gen) in ref(pm, nw, :gen)
         i = gen["index"]
 
@@ -95,7 +95,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-following mode with pq set points"
-function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+function constraint_pq_inverter(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=pm.cnw)
     for (k, gen) in ref(pm, nw, :gen)
         i = gen["index"]
 
@@ -119,7 +119,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly"
-function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+function constraint_i_inverter(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=pm.cnw)
     for (k, gen) in ref(pm, nw, :gen)
         i = gen["index"]
 
@@ -142,7 +142,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-forming mode"
-function constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+function constraint_v_inverter(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=pm.cnw)
     for (k, gen) in ref(pm, nw, :gen)
         i = gen["index"]
 
@@ -174,7 +174,7 @@ end
 
 
 "Constraint to calculate the fault current at a bus and the current at other buses"
-function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_current_balance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)["bus_i"]
     bus_arcs = ref(pm, nw, :bus_arcs, i)
     bus_gens = ref(pm, nw, :bus_gens, i)
@@ -192,7 +192,7 @@ end
 
 
 "Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor"
-function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=pm.cnw)
     for (k, gen) in ref(pm, nw, :gen)
 
         if k in ids(pm, :solar_gfli)
@@ -275,7 +275,7 @@ function constraint_mc_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=pm.c
 end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-following mode"
-function constraint_mc_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfli][i]
     gen = pm.ref[:nw][nw][:gen][i]
 
@@ -290,7 +290,7 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
-function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     Memento.info(_LOGGER, "Adding grid-forming inverter constraint without impedance")
     index = pm.ref[:nw][nw][:solar_gfmi][i]
     gen = pm.ref[:nw][nw][:gen][index]
@@ -298,13 +298,13 @@ function constraint_mc_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int;
     bus = pm.ref[:nw][nw][:bus][bus_i]
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
-        bus["vm"] = [1 for c in _PM.conductor_ids(pm; nw=nw)]
+        bus["vm"] = [1 for c in _PMD.conductor_ids(pm; nw=nw)]
         bus["va"] = [0, -2*pi/3, 2*pi/3]
     end
 
     cmax = gen["i_max"]
-    vrstar = [bus["vm"][c] * cos(bus["va"][c]) for c in _PM.conductor_ids(pm; nw=nw)]
-    vistar = [bus["vm"][c] * sin(bus["va"][c]) for c in _PM.conductor_ids(pm; nw=nw)]
+    vrstar = [bus["vm"][c] * cos(bus["va"][c]) for c in _PMD.conductor_ids(pm; nw=nw)]
+    vistar = [bus["vm"][c] * sin(bus["va"][c]) for c in _PMD.conductor_ids(pm; nw=nw)]
 
     # push into pmax on import and erase this
     if gen["solar_max"] < gen["kva"]
@@ -318,20 +318,20 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_grid_forming_inverter_impedance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfmi][i]
     gen = pm.ref[:nw][nw][:gen][index]
     bus_i = gen["gen_bus"]
     bus = pm.ref[:nw][nw][:bus][bus_i]
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
-        bus["vm"] = [1 for c in _PM.conductor_ids(pm; nw=nw)]
+        bus["vm"] = [1 for c in _PMD.conductor_ids(pm; nw=nw)]
         bus["va"] = [0, -2*pi/3, 2*pi/3]
     end
 
     cmax = gen["i_max"]
-    vrstar = [bus["vm"][c] * cos(bus["va"][c]) for c in _PM.conductor_ids(pm; nw=nw)]
-    vistar = [bus["vm"][c] * sin(bus["va"][c]) for c in _PM.conductor_ids(pm; nw=nw)]
+    vrstar = [bus["vm"][c] * cos(bus["va"][c]) for c in _PMD.conductor_ids(pm; nw=nw)]
+    vistar = [bus["vm"][c] * sin(bus["va"][c]) for c in _PMD.conductor_ids(pm; nw=nw)]
 
     # push into pmax on import and erase this
     if gen["solar_max"] < gen["kva"]
@@ -355,7 +355,7 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PM.AbstractPowerMode
 end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfmi][i]
     gen = pm.ref[:nw][nw][:gen][i]
     bus_i = gen["gen_bus"]
@@ -392,7 +392,7 @@ end
 
 
 "Constraint to calculate the fault current at a bus and the current at other buses for multiconductor"
-function constraint_mc_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_current_balance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)
     bus_arcs = ref(pm, nw, :bus_arcs_conns_branch, i)
     bus_arcs_sw = ref(pm, nw, :bus_arcs_conns_switch, i)
@@ -411,7 +411,7 @@ end
 
 
 ""
-function constraint_mc_current_balance_pf(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_current_balance_pf(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     bus = ref(pm, nw, :bus, i)["bus_i"]
     bus_arcs = ref(pm, nw, :bus_arcs, i)
     bus_arcs_sw = ref(pm, nw, :bus_arcs_sw, i)
@@ -427,7 +427,7 @@ end
 
 
 "Constraint on the current from gen based on connection"
-function constraint_mc_generation(pm::_PM.AbstractPowerModel, id::Int; nw::Int=pm.cnw, report::Bool=true, bounded::Bool=true)
+function constraint_mc_generation(pm::_PMD.AbstractUnbalancedPowerModel, id::Int; nw::Int=pm.cnw, report::Bool=true, bounded::Bool=true)
     generator = ref(pm, nw, :gen, id)
     bus = ref(pm, nw, :bus, generator["gen_bus"])
 
@@ -440,7 +440,7 @@ end
 
 
 "Constarint to set the ref bus voltage"
-function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_ref_bus_voltage(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=pm.cnw)
     terminals = ref(pm, nw, :bus, i)["terminals"]
     vm = ref(pm, :bus, i, "vm")
     va = ref(pm, :bus, i, "va")
@@ -453,13 +453,13 @@ end
 
 
 "Constarint to set the ref bus voltage magnitude only"
-function constraint_mc_voltage_magnitude_only(pm::_PM.AbstractIVRModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_voltage_magnitude_only(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=pm.cnw)
     vm = ref(pm, :bus, i, "vm")
     constraint_mc_voltage_magnitude_only(pm, nw, i, vm)
 end
 
 
-function constraint_mc_switch_state(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_switch_state(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     switch = ref(pm, nw, :switch, i)
     f_bus = switch["f_bus"]
     t_bus = switch["t_bus"]
@@ -475,7 +475,7 @@ function constraint_mc_switch_state(pm::_PM.AbstractPowerModel, i::Int; nw::Int=
 end
 
 
-function constraint_mc_storage_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     storage = pm.ref[:nw][nw][:storage][i]
     haskey(storage, "i_max") ? nothing : storage["i_max"] = 1.5*storage["dss"]["kva"] / (3 * 1000 * pm.ref[:nw][0][:baseMVA])
     connections = storage["connections"]
@@ -495,7 +495,7 @@ function constraint_mc_storage_grid_forming_inverter(pm::_PM.AbstractPowerModel,
     constraint_mc_storage_grid_forming_inverter(pm, nw, i, bus_i, vr, vi, pmax, qmax, qmin, cmax, smax, ang, connections)
 end
 
-function constraint_pf_mc_storage_grid_forming_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_pf_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     storage = pm.ref[:nw][nw][:storage][i]
     haskey(storage, "i_max") ? nothing : storage["i_max"] = 1.5*storage["dss"]["kva"] / (3 * 1000 * pm.ref[:nw][0][:baseMVA])
     connections = storage["connections"]
@@ -519,7 +519,7 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-following mode"
-function constraint_mc_pf_pq_inverter(pm::_PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_mc_pf_pq_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=pm.cnw)
     index = pm.ref[:nw][nw][:solar_gfli][i]
     gen = pm.ref[:nw][nw][:gen][i]
     connections = gen["connections"]

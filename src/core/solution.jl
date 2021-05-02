@@ -12,7 +12,7 @@ end
 
 
 "Output the solution"
-function solution_fs!(pm::_PM.AbstractPowerModel, sol::Dict{String,Any})
+function solution_fs!(pm::_PMD.AbstractUnbalancedPowerModel, sol::Dict{String,Any})
     # TODO create an output format
     if haskey(pm.var[:nw][0], :cfr)
         cfr = JuMP.value.(pm.var[:nw][0][:cfr])

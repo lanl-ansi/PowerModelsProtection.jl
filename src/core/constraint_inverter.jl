@@ -1,5 +1,5 @@
 "Constraints for fault current contribution of inverter in grid-following mode with pseudo-binary for current-limiting"
-function constraint_unity_pf_inverter_disjunctive(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
+function constraint_unity_pf_inverter_disjunctive(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, pg, qg, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -23,7 +23,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-following mode with a real voltage drop to handle low-zero terminal voltages"
-function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cmax)
+function constraint_pf_inverter_vs(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, vs, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -40,7 +40,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor"
-function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+function constraint_unity_pf_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -60,7 +60,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-following mode operating at arbitrary power factor. Requires objective term"
-function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+function constraint_pq_inverter_region(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -100,7 +100,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-following mode with pq set points"
-function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
+function constraint_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, pg, qg, cmax)
     @debug "Adding pq inverter constraint for gen $i at bus $bus_id"
 
     vr = var(pm, nw, :vr, bus_id)
@@ -129,7 +129,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor with a series resistance to handle low-zero terminal voltages"
-function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, pg, qg, cm)
+function constraint_unity_pf_inverter_rs(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, r, pg, qg, cm)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -148,7 +148,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly"
-function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cm)
+function constraint_i_inverter_vs(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, vs, pg, qg, cm)
     vr = var(pm, n, :vr, bus_id)
     vi = var(pm, n, :vi, bus_id)
 
@@ -165,7 +165,7 @@ end
 
 
 "Constraints for fault current contribution of inverter in grid-forming mode"
-function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, cmax)
+function constraint_v_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, cmax)
     # vr_to = var(pm, n, :vr, bus_id)
     # vi_to = var(pm, n, :vi, bus_id)
 
@@ -184,7 +184,7 @@ end
 # TODO adding the complex multiplier to constraint_unity_pf_inverter should do the same thing as this
 # with potentially better performance under low terminal voltages
 "McCormick relaxation of constraints for fault current contribution of inverter in grid-following mode"
-function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+function constraint_pq_inverter_mccormick(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     vrg = var(pm, n, :vr, bus_id)
     vig = var(pm, n, :vi, bus_id)
 
@@ -207,7 +207,7 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-following mode"
-function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
+function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, pg, qg, cmax)
     ar = -1/6
     ai = sqrt(3)/6
     a2r = -1/6
@@ -261,7 +261,7 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
-function constraint_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, pmax, cmax)
+function constraint_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vrstar, vistar, pmax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -272,7 +272,7 @@ function constraint_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_i
     p = var(pm, nw, :p_solar, i)
     q = var(pm, nw, :q_solar, i)
 
-    cnds = _PM.conductor_ids(pm; nw=nw)
+    cnds = _PMD.conductor_ids(pm; nw=nw)
     ncnds = length(cnds)
 
     vm = [vrstar[c]^2 + vistar[c]^2 for c in 1:ncnds]
@@ -303,7 +303,7 @@ end
 
 # TODO complete formulation and test in multiple inverters
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_grid_forming_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
+function constraint_grid_forming_inverter_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -318,7 +318,7 @@ function constraint_grid_forming_inverter_impedance(pm::_PM.AbstractIVRModel, nw
     p = var(pm, nw, :p_solar, bus_id)
     q = var(pm, nw, :q_solar, bus_id)
 
-    cnds = _PM.conductor_ids(pm; nw=nw)
+    cnds = _PMD.conductor_ids(pm; nw=nw)
     ncnds = length(cnds)
 
     vm = [vr0[c]^2 + vi0[c]^2 for c in 1:ncnds]
@@ -350,7 +350,7 @@ function constraint_grid_forming_inverter_impedance(pm::_PM.AbstractIVRModel, nw
 end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang, terminals)
+function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang, terminals)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -404,7 +404,7 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PM.AbstractI
 end
 
 "Constraints for fault current inverter with current set point"
-function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+function constraint_mc_i_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     ar = -1/2
     ai = sqrt(3)/2
     a2r = -1/2
@@ -418,7 +418,7 @@ function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, p
 
     kg = var(pm, n, :kg, i) # generator loading
 
-    cnds = _PMs.conductor_ids(pm; nw=n)
+    cnds = _PMDs.conductor_ids(pm; nw=n)
     ncnds = length(cnds)
 
     # Zero-Sequence
@@ -440,7 +440,7 @@ function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, p
 end
 
 
-function constraint_pf_mc_storage_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
+function constraint_pf_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 
@@ -480,7 +480,7 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-following mode"
-function constraint_mc_pf_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, cmax, smax, connections)
+function constraint_mc_pf_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, pg, cmax, smax, connections)
     ar = -1/6
     ai = sqrt(3)/6
     a2r = -1/6
@@ -505,7 +505,7 @@ function constraint_mc_pf_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, p
 end
 
 
-function constraint_mc_storage_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, ang, connections)
+function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, ang, connections)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
 

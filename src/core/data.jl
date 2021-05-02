@@ -25,11 +25,11 @@ function add_pf_data!(data::Dict{String,Any}, solver)
         add_pf_data!(data, result)
     elseif haskey(data, "method") && data["method"] in ["PMs", "pf"]
         Memento.info(_LOGGER, "Adding PF results to network")
-        result = _PMD.run_mc_pf(data, _PM.ACPPowerModel, solver)
+        result = _PMD.run_mc_pf(data, _PMD.ACPUPowerModel, solver)
         add_pf_data!(data, result)
     elseif haskey(data, "method") && data["method"] == "opf"
         Memento.info(_LOGGER, "Adding OPF results to network")
-        result = _PMD.run_mc_opf(data, _PM.ACPPowerModel, solver)
+        result = _PMD.run_mc_opf(data, _PMD.ACPUPowerModel, solver)
         add_pf_data!(data, result)
     else
         Memento.info(_LOGGER, "Not performing pre-fault power flow")
@@ -177,7 +177,7 @@ end
 function add_lg_fault!(data::Dict{String,Any}, i::String, phases, resistance)
     bus = data["bus_lookup"][i]
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"]
     z_base = v_base^2 / s_base
     r = resistance / z_base
@@ -196,7 +196,7 @@ end
 function add_ll_fault!(data::Dict{String,Any}, i::String, phases, phase_resistance)
     bus = data["bus_lookup"][i]
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"]
     z_base = v_base^2 / s_base
     r = phase_resistance / z_base
@@ -219,7 +219,7 @@ end
 function add_3p_fault!(data::Dict{String,Any}, i::String, phases, phase_resistance)
     bus = data["bus_lookup"][i]
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"]
     z_base = v_base^2 / s_base
     r = phase_resistance / z_base
@@ -246,7 +246,7 @@ end
 function add_llg_fault!(data::Dict{String,Any}, i::String, phases, resistance=0.0001, phase_resistance=0.0001)
     bus = data["bus_lookup"][i]
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"] / sqrt(3)
     z_base = v_base^2 / s_base
     r = resistance / z_base
@@ -272,7 +272,7 @@ end
 function add_3pg_fault!(data::Dict{String,Any}, i::String, phases, resistance=0.0001, phase_resistance=0.0001)
     bus = data["bus_lookup"][i]
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"] / sqrt(3)
     z_base = v_base^2 / s_base
     r = resistance / z_base
@@ -303,7 +303,7 @@ end
 "Add study line to ground fault for multiconductor"
 function add_lg_fault_study!(data::Dict{String,Any}, bus::Int, i; resistance=0.01)
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"] / sqrt(3)
     z_base = v_base^2 / s_base
     r = resistance / z_base
@@ -325,7 +325,7 @@ end
 "Add study line to line fault for multiconductor"
 function add_ll_fault_study!(data::Dict{String,Any}, bus::Int, i; phase_resistance=0.01)
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"] / sqrt(3)
     z_base = v_base^2 / s_base
     r = phase_resistance / z_base
@@ -353,7 +353,7 @@ end
 "Add study line to line to ground fault for multiconductor"
             function add_llg_fault_study!(data::Dict{String,Any}, bus::Int, i, resistance=0.01, phase_resistance=0.01)
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"] / sqrt(3)
     z_base = v_base^2 / s_base
     r = resistance / z_base
@@ -385,7 +385,7 @@ end
 "Add study 3 phase fault for multiconductor"
 function add_3p_fault_study!(data::Dict{String,Any}, bus::Int, i; phase_resistance=0.0001)
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"] / sqrt(3)
     z_base = v_base^2 / s_base
     p_r = phase_resistance / z_base
@@ -411,7 +411,7 @@ end
 "Add study 3 phase to ground fault for multiconductor"
 function add_3pg_fault_study!(data::Dict{String,Any}, bus::Int, i, resistance=0.0001, phase_resistance=0.0001)
     b = string(bus)
-    s_base = data["baseMVA"]
+    s_base = data["settings"]["sbase"]
     v_base = data["bus"][b]["vbase"] / sqrt(3)
     z_base = v_base^2 / s_base
     r = resistance / z_base
@@ -479,7 +479,7 @@ function add_switch_impedance!(data::Dict{String,Any})
     if haskey(data, "switch")
         for (inx,switch) in data["switch"]
             bus = data["bus"][string(switch["f_bus"])]
-            z_base = bus["vbase"]^2/data["baseMVA"]
+            z_base = bus["vbase"]^2/data["settings"]["sbase"]
             z1 = (switch["dss"]["r1"] + switch["dss"]["x1"]*1im)
             z0 = (switch["dss"]["r0"] + switch["dss"]["x0"]*1im)
             switch["z"] = 1/3*(z0+2*z1)/z_base

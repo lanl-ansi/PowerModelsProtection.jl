@@ -1,11 +1,11 @@
 "generator reactive power setpoint constraint"
-function constraint_mc_gen_power_setpoint_imag(pm::_PM.AbstractPowerModel, n::Int, i, qg)
+function constraint_mc_gen_power_setpoint_imag(pm::_PMD.AbstractUnbalancedPowerModel, n::Int, i, qg)
     qg_var = var(pm, n, :qg, i)
     JuMP.@constraint(pm.model, qg_var .== qg)
 end
 
 "States that the bus voltage is equal to the internal voltage minus voltage drop across subtransient impedance"
-function constraint_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi)
+function constraint_gen_voltage_drop(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, r, x, vgr, vgi)
     vr_to = var(pm, n, :vr, bus_id)
     vi_to = var(pm, n, :vi, bus_id)
 
@@ -18,7 +18,7 @@ end
 
 
 "Calculates the fault current at a bus"
-function constraint_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+function constraint_fault_current(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=pm.cnw)
     bus = ref(pm, nw, :active_fault, "bus_i")
     g = ref(pm, nw, :active_fault, "gf")
     vr = var(pm, nw, :vr, bus)
@@ -41,7 +41,7 @@ end
 
 
 "Calculates the current balance at the non-faulted buses"
-function constraint_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_gens, bus_gs, bus_bs)
+function constraint_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_arcs, bus_gens, bus_gs, bus_bs)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
 
@@ -65,7 +65,7 @@ end
 
 
 "Calculates the current balance at the faulted bus"
-function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_gens, bus_gs, bus_bs, bus)
+function constraint_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_arcs, bus_gens, bus_gs, bus_bs, bus)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
 
@@ -94,7 +94,7 @@ end
 
 
 "Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence"
-function constraint_mc_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, terminals)
+function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, terminals)
     vr_to = var(pm, n, :vr, bus_id)
     vi_to = var(pm, n, :vi, bus_id)
 
@@ -113,7 +113,7 @@ end
 
 
 "Calculates the current at the faulted bus for multiconductor"
-function constraint_mc_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
+function constraint_mc_fault_current(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=pm.cnw)
 
     bus = ref(pm, nw, :active_fault, "bus_i")
     terminals = ref(pm, nw, :bus, bus, "terminals")
@@ -142,20 +142,20 @@ function constraint_mc_fault_current(pm::_PM.AbstractPowerModel; nw::Int=pm.cnw)
 end
 
 
-function constraint_mc_current_balance(pm::_PM.AbstractIVRModel, nw::Int, i::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
+function constraint_mc_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
     vr = var(pm, nw, :vr, i)
     vi = var(pm, nw, :vi, i)
 
-    cr    = get(var(pm, nw),    :cr, Dict()); _PM._check_var_keys(cr, bus_arcs, "real current", "branch")
-    ci    = get(var(pm, nw),    :ci, Dict()); _PM._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
-    crg   = get(var(pm, nw),   :crg_bus, Dict()); _PM._check_var_keys(crg, bus_gens, "real current", "generator")
-    cig   = get(var(pm, nw),   :cig_bus, Dict()); _PM._check_var_keys(cig, bus_gens, "imaginary current", "generator")
-    crs   = get(var(pm, nw),   :crs, Dict()); _PM._check_var_keys(crs, bus_storage, "real currentr", "storage")
-    cis   = get(var(pm, nw),   :cis, Dict()); _PM._check_var_keys(cis, bus_storage, "imaginary current", "storage")
-    crsw  = get(var(pm, nw),  :crsw, Dict()); _PM._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
-    cisw  = get(var(pm, nw),  :cisw, Dict()); _PM._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
-    crt   = get(var(pm, nw),   :crt, Dict()); _PM._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
-    cit   = get(var(pm, nw),   :cit, Dict()); _PM._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
+    cr    = get(var(pm, nw),    :cr, Dict()); _PMD._check_var_keys(cr, bus_arcs, "real current", "branch")
+    ci    = get(var(pm, nw),    :ci, Dict()); _PMD._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
+    crg   = get(var(pm, nw),   :crg_bus, Dict()); _PMD._check_var_keys(crg, bus_gens, "real current", "generator")
+    cig   = get(var(pm, nw),   :cig_bus, Dict()); _PMD._check_var_keys(cig, bus_gens, "imaginary current", "generator")
+    crs   = get(var(pm, nw),   :crs, Dict()); _PMD._check_var_keys(crs, bus_storage, "real currentr", "storage")
+    cis   = get(var(pm, nw),   :cis, Dict()); _PMD._check_var_keys(cis, bus_storage, "imaginary current", "storage")
+    crsw  = get(var(pm, nw),  :crsw, Dict()); _PMD._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
+    cisw  = get(var(pm, nw),  :cisw, Dict()); _PMD._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
+    crt   = get(var(pm, nw),   :crt, Dict()); _PMD._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
+    cit   = get(var(pm, nw),   :cit, Dict()); _PMD._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
 
     Gt, Bt = _PMD._build_bus_shunt_matrices(pm, nw, terminals, bus_shunts)
 
@@ -183,20 +183,20 @@ end
 
 
 "Calculates the current balance at the faulted bus for multiconductor"
-function constraint_mc_fault_current_balance(pm::_PM.AbstractIVRModel, nw::Int, i::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
+function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
     vr = var(pm, nw, :vr, i)
     vi = var(pm, nw, :vi, i)
 
-    cr    = get(var(pm, nw),    :cr, Dict()); _PM._check_var_keys(cr, bus_arcs, "real current", "branch")
-    ci    = get(var(pm, nw),    :ci, Dict()); _PM._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
-    crg   = get(var(pm, nw),   :crg_bus, Dict()); _PM._check_var_keys(crg, bus_gens, "real current", "generator")
-    cig   = get(var(pm, nw),   :cig_bus, Dict()); _PM._check_var_keys(cig, bus_gens, "imaginary current", "generator")
-    crs   = get(var(pm, nw),   :crs, Dict()); _PM._check_var_keys(crs, bus_storage, "real currentr", "storage")
-    cis   = get(var(pm, nw),   :cis, Dict()); _PM._check_var_keys(cis, bus_storage, "imaginary current", "storage")
-    crsw  = get(var(pm, nw),  :crsw, Dict()); _PM._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
-    cisw  = get(var(pm, nw),  :cisw, Dict()); _PM._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
-    crt   = get(var(pm, nw),   :crt, Dict()); _PM._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
-    cit   = get(var(pm, nw),   :cit, Dict()); _PM._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
+    cr    = get(var(pm, nw),    :cr, Dict()); _PMD._check_var_keys(cr, bus_arcs, "real current", "branch")
+    ci    = get(var(pm, nw),    :ci, Dict()); _PMD._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
+    crg   = get(var(pm, nw),   :crg_bus, Dict()); _PMD._check_var_keys(crg, bus_gens, "real current", "generator")
+    cig   = get(var(pm, nw),   :cig_bus, Dict()); _PMD._check_var_keys(cig, bus_gens, "imaginary current", "generator")
+    crs   = get(var(pm, nw),   :crs, Dict()); _PMD._check_var_keys(crs, bus_storage, "real currentr", "storage")
+    cis   = get(var(pm, nw),   :cis, Dict()); _PMD._check_var_keys(cis, bus_storage, "imaginary current", "storage")
+    crsw  = get(var(pm, nw),  :crsw, Dict()); _PMD._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
+    cisw  = get(var(pm, nw),  :cisw, Dict()); _PMD._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
+    crt   = get(var(pm, nw),   :crt, Dict()); _PMD._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
+    cit   = get(var(pm, nw),   :cit, Dict()); _PMD._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
 
     cfr = var(pm, nw, :cfr)
     cfi = var(pm, nw, :cfi)
@@ -229,7 +229,7 @@ end
 
 
 "Calculates the current at a wye connected gen with no power constraints"
-function constraint_mc_generation_wye(pm::_PM.IVRPowerModel, nw::Int, id::Int, bus_id::Int,connections::Vector{Int}; report::Bool=true, bounded::Bool=true)
+function constraint_mc_generation_wye(pm::_PMD.IVRUPowerModel, nw::Int, id::Int, bus_id::Int,connections::Vector{Int}; report::Bool=true, bounded::Bool=true)
     crg = var(pm, nw, :crg, id)
     cig = var(pm, nw, :cig, id)
 
@@ -244,7 +244,7 @@ end
 
 
 "Calculates the current at a delta connected gen with no power constraints"
-function constraint_mc_generation_delta(pm::_PM.IVRPowerModel, nw::Int, id::Int, bus_id::Int, connections::Vector{Int}; report::Bool=true, bounded::Bool=true)
+function constraint_mc_generation_delta(pm::_PMD.IVRUPowerModel, nw::Int, id::Int, bus_id::Int, connections::Vector{Int}; report::Bool=true, bounded::Bool=true)
     vr = var(pm, nw, :vr, bus_id)
     vi = var(pm, nw, :vi, bus_id)
     crg = var(pm, nw, :crg, id)
@@ -285,7 +285,7 @@ end
 
 
 "Constraint to set the ref bus voltage"
-function constraint_mc_ref_bus_voltage(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0, terminals)
+function constraint_mc_ref_bus_voltage(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, vr0, vi0, terminals)
     Memento.info(_LOGGER, "Setting voltage for reference bus $i")
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
@@ -298,22 +298,22 @@ end
 
 
 "Constarint to set the ref bus voltage magnitude only"
-function constraint_mc_voltage_magnitude_only(pm::_PM.AbstractIVRModel, n::Int, i, vm)
+function constraint_mc_voltage_magnitude_only(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, vm)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
 
-    for c in _PM.conductor_ids(pm; nw=n)
+    for c in _PMD.conductor_ids(pm; nw=n)
         JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 == vm[c]^2)
     end
 end
 
 
 "Constarint to set the ref bus voltage angle only"
-function constraint_mc_theta_ref(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
+function constraint_mc_theta_ref(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, vr0, vi0)
     vr = var(pm, n, :vr, i)
     vi = var(pm, n, :vi, i)
 
-    for c in _PM.conductor_ids(pm; nw=n)
+    for c in _PMD.conductor_ids(pm; nw=n)
         JuMP.@constraint(pm.model, vr[c] * vi0[c] == vi[c] * vr0[c])
         JuMP.@constraint(pm.model, vr[c] * vr0[c] >= 0.0)
         JuMP.@constraint(pm.model, vi[c] * vi0[c] >= 0.0)
@@ -321,7 +321,7 @@ function constraint_mc_theta_ref(pm::_PM.AbstractIVRModel, n::Int, i, vr0, vi0)
 end
 
 
-function constraint_mc_switch_state_closed(pm::_PM.AbstractIVRModel, nw::Int, f_bus::Int, t_bus::Int, f_idx::Tuple{Int,Int,Int}, f_connections::Vector{Int}, t_connections::Vector{Int}, z)
+function constraint_mc_switch_state_closed(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, f_bus::Int, t_bus::Int, f_idx::Tuple{Int,Int,Int}, f_connections::Vector{Int}, t_connections::Vector{Int}, z)
     vr_fr = var(pm, nw, :vr, f_bus)
     vr_to = var(pm, nw, :vr, t_bus)
 
