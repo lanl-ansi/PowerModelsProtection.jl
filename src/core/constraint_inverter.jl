@@ -1,14 +1,14 @@
 "Constraints for fault current contribution of inverter in grid-following mode with pseudo-binary for current-limiting"
 function constraint_unity_pf_inverter_disjunctive(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
-    vr = var(pm, nw, :vr, bus_id)
-    vi = var(pm, nw, :vi, bus_id)
+    vr = _PM.var(pm, nw, :vr, bus_id)
+    vi = _PM.var(pm, nw, :vi, bus_id)
 
-    crg =  var(pm, nw, :crg, i)
-    cig =  var(pm, nw, :cig, i)
+    crg =  _PM.var(pm, nw, :crg, i)
+    cig =  _PM.var(pm, nw, :cig, i)
 
-    b = var(pm, nw, :c_limit, i)
-    p_int = var(pm, nw, :p_int, i)
-    q_int = var(pm, nw, :q_int, i)
+    b = _PM.var(pm, nw, :c_limit, i)
+    p_int = _PM.var(pm, nw, :p_int, i)
+    q_int = _PM.var(pm, nw, :q_int, i)
 
     JuMP.@NLconstraint(pm.model, crg^2 + cig^2 >= cmax^2 * b)
     JuMP.@NLconstraint(pm.model, crg^2 + cig^2 <= cmax^2)
@@ -24,13 +24,13 @@ end
 
 "Constraints for fault current contribution of inverter in grid-following mode with a real voltage drop to handle low-zero terminal voltages"
 function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cmax)
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
+    vr = _PM.var(pm, n, :vr, bus_id)
+    vi = _PM.var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  _PM.var(pm, n, :crg, i)
+    cig =  _PM.var(pm, n, :cig, i)
 
-    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
+    kg = _PM.var(pm, n, :kg, i) # generator loading, varies between 0 and 1
 
     # this is equivalent to having a real voltage drop vs in series with the inverter
     JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig + vs*crg)
@@ -41,13 +41,13 @@ end
 
 "Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor"
 function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
+    vr = _PM.var(pm, n, :vr, bus_id)
+    vi = _PM.var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  _PM.var(pm, n, :crg, i)
+    cig =  _PM.var(pm, n, :cig, i)
 
-    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
+    kg = _PM.var(pm, n, :kg, i) # generator loading, varies between 0 and 1
 
     # I think this can be generalized to arbitrary power factors by multiplying k with alpha + j*beta
     JuMP.@NLconstraint(pm.model, vr == kg*crg)
@@ -61,11 +61,11 @@ end
 
 "Constraints for fault current contribution of inverter in grid-following mode operating at arbitrary power factor. Requires objective term"
 function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
+    vr = _PM.var(pm, n, :vr, bus_id)
+    vi = _PM.var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  _PM.var(pm, n, :crg, i)
+    cig =  _PM.var(pm, n, :cig, i)
 
     sg = complex(pg, qg) # complex power
     ag = abs(sg) # apparent power
@@ -76,11 +76,11 @@ function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i, bus_
 
     @debug "alpha + j*beta = $alpha + j$beta"
 
-    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
+    kg = _PM.var(pm, n, :kg, i) # generator loading, varies between 0 and 1
 
     # scaled real & imag current
-    scrg =  var(pm, n, :scrg, i)
-    scig =  var(pm, n, :scig, i)
+    scrg =  _PM.var(pm, n, :scrg, i)
+    scig =  _PM.var(pm, n, :scig, i)
 
     # TODO verify if this can be relaxed
     # inverter current scaled by a real amount
@@ -103,17 +103,17 @@ end
 function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
     @debug "Adding pq inverter constraint for gen $i at bus $bus_id"
 
-    vr = var(pm, nw, :vr, bus_id)
-    vi = var(pm, nw, :vi, bus_id)
+    vr = _PM.var(pm, nw, :vr, bus_id)
+    vi = _PM.var(pm, nw, :vi, bus_id)
 
-    crg =  var(pm, nw, :crg, i)
-    cig =  var(pm, nw, :cig, i)
+    crg =  _PM.var(pm, nw, :crg, i)
+    cig =  _PM.var(pm, nw, :cig, i)
 
-    p_int = var(pm, nw, :p_int, i)
-    q_int = var(pm, nw, :q_int, i)
-    crg_max = var(pm, nw, :crg_pos_max, i)
-    cig_max = var(pm, nw, :cig_pos_max, i)
-    z = var(pm, nw, :z, i)
+    p_int = _PM.var(pm, nw, :p_int, i)
+    q_int = _PM.var(pm, nw, :q_int, i)
+    crg_max = _PM.var(pm, nw, :crg_pos_max, i)
+    cig_max = _PM.var(pm, nw, :cig_pos_max, i)
+    z = _PM.var(pm, nw, :z, i)
 
     JuMP.@NLconstraint(pm.model, 0.0 == crg_max*cig - cig_max*crg)
     JuMP.@NLconstraint(pm.model, crg_max^2 + cig_max^2 == cmax^2)
@@ -130,13 +130,13 @@ end
 
 "Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor with a series resistance to handle low-zero terminal voltages"
 function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, pg, qg, cm)
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
+    vr = _PM.var(pm, n, :vr, bus_id)
+    vi = _PM.var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  _PM.var(pm, n, :crg, i)
+    cig =  _PM.var(pm, n, :cig, i)
 
-    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
+    kg = _PM.var(pm, n, :kg, i) # generator loading, varies between 0 and 1
 
     # TODO verify setting reactive power to zero for feasiblity
     # this is equivalent to having a resistance in series with the inverter
@@ -149,13 +149,13 @@ end
 
 "Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly"
 function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, vs, pg, qg, cm)
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
+    vr = _PM.var(pm, n, :vr, bus_id)
+    vi = _PM.var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  _PM.var(pm, n, :crg, i)
+    cig =  _PM.var(pm, n, :cig, i)
 
-    kg = var(pm, n, :kg, i) # generator loading, varies between 0 and 1
+    kg = _PM.var(pm, n, :kg, i) # generator loading, varies between 0 and 1
 
     # this is equivalent to having a resistance in series with the inverter
     JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig + vs*crg)
@@ -169,8 +169,8 @@ function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x
     # vr_to = var(pm, n, :vr, bus_id)
     # vi_to = var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  _PM.var(pm, n, :crg, i)
+    cig =  _PM.var(pm, n, :cig, i)
 
     # TODO verify setting reactive power to zero for feasiblity
     # add a voltage drop so we don't need to worry about infeasibility near a short s
@@ -185,16 +185,16 @@ end
 # with potentially better performance under low terminal voltages
 "McCormick relaxation of constraints for fault current contribution of inverter in grid-following mode"
 function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
-    vrg = var(pm, n, :vr, bus_id)
-    vig = var(pm, n, :vi, bus_id)
+    vrg = _PM.var(pm, n, :vr, bus_id)
+    vig = _PM.var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  _PM.var(pm, n, :crg, i)
+    cig =  _PM.var(pm, n, :cig, i)
 
-    pg1 =  var(pm, n, :pg1, i)
-    pg2 =  var(pm, n, :pg2, i)
-    qg1 =  var(pm, n, :qg1, i)
-    qg2 =  var(pm, n, :qg2, i)
+    pg1 =  _PM.var(pm, n, :pg1, i)
+    pg2 =  _PM.var(pm, n, :pg2, i)
+    qg1 =  _PM.var(pm, n, :qg1, i)
+    qg2 =  _PM.var(pm, n, :qg2, i)
 
     _IM.relaxation_product(pm.model, vrg, crg, pg1)
     _IM.relaxation_product(pm.model, vig, cig, pg2)
@@ -207,29 +207,29 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-following mode"
-function constraint_mc_pq_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, pg, qg, cmax)
+function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, pg, qg, cmax)
     ar = -1/6
     ai = sqrt(3)/6
     a2r = -1/6
     a2i = -sqrt(3)/6
 
-    vr = var(pm, nw, :vr, bus_id)
-    vi = var(pm, nw, :vi, bus_id)
+    vr = _PMD.var(pm, nw, :vr, bus_id)
+    vi = _PMD.var(pm, nw, :vi, bus_id)
 
-    crg =  var(pm, nw, :crg, i)
-    cig =  var(pm, nw, :cig, i)
+    crg =  _PMD.var(pm, nw, :crg, i)
+    cig =  _PMD.var(pm, nw, :cig, i)
 
-    p_int = var(pm, nw, :p_int, i)
-    q_int = var(pm, nw, :q_int, i)
-    crg_pos= var(pm, nw, :crg_pos, i)
-    cig_pos = var(pm, nw, :cig_pos, i)
-    vrg_pos= var(pm, nw, :vrg_pos, i)
-    vig_pos = var(pm, nw, :vig_pos, i)
-    crg_pos_max = var(pm, nw, :crg_pos_max, i)
-    cig_pos_max = var(pm, nw, :cig_pos_max, i)
-    z = var(pm, nw, :z_gfli, i)
+    p_int = _PMD.var(pm, nw, :p_int, i)
+    q_int = _PMD.var(pm, nw, :q_int, i)
+    crg_pos= _PMD.var(pm, nw, :crg_pos, i)
+    cig_pos = _PMD.var(pm, nw, :cig_pos, i)
+    vrg_pos= _PMD.var(pm, nw, :vrg_pos, i)
+    vig_pos = _PMD.var(pm, nw, :vig_pos, i)
+    crg_pos_max = _PMD.var(pm, nw, :crg_pos_max, i)
+    cig_pos_max = _PMD.var(pm, nw, :cig_pos_max, i)
+    z = _PMD.var(pm, nw, :z_gfli, i)
 
-    cnds = ref(pm, nw, :bus, bus_id)["terminals"]
+    cnds = _PMD.ref(pm, nw, :bus, bus_id)["terminals"]
     ncnds = length(cnds)
 
 
@@ -261,18 +261,18 @@ end
 
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
-function constraint_grid_forming_inverter(pm::_PM.AbstractIVRModel, nw, i, bus_id, vrstar, vistar, pmax, cmax)
-    vr = var(pm, nw, :vr, bus_id)
-    vi = var(pm, nw, :vi, bus_id)
+function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vrstar, vistar, pmax, cmax)
+    vr = _PMD.var(pm, nw, :vr, bus_id)
+    vi = _PMD.var(pm, nw, :vi, bus_id)
 
-    crg =  var(pm, nw, :crg, i)
-    cig =  var(pm, nw, :cig, i)
+    crg =  _PMD.var(pm, nw, :crg, i)
+    cig =  _PMD.var(pm, nw, :cig, i)
 
-    z = var(pm, nw, :z, i)
-    p = var(pm, nw, :p_solar, i)
-    q = var(pm, nw, :q_solar, i)
+    z = _PMD.var(pm, nw, :z, i)
+    p = _PMD.var(pm, nw, :p_solar, i)
+    q = _PMD.var(pm, nw, :q_solar, i)
 
-    cnds = _PM.conductor_ids(pm; nw=nw)
+    cnds = _PMD.ref(pm, n, :bus, bus_id, "terminals")
     ncnds = length(cnds)
 
     vm = [vrstar[c]^2 + vistar[c]^2 for c in 1:ncnds]
@@ -303,22 +303,22 @@ end
 
 # TODO complete formulation and test in multiple inverters
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
-    vr = var(pm, nw, :vr, bus_id)
-    vi = var(pm, nw, :vi, bus_id)
+function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vr0, vi0, r, x, pmax, cmax)
+    vr = _PMD.var(pm, nw, :vr, bus_id)
+    vi = _PMD.var(pm, nw, :vi, bus_id)
 
-    vrstar = var(pm, nw, :vrsp, bus_id)
-    vistar = var(pm, nw, :visp, bus_id)
+    vrstar = _PMD.var(pm, nw, :vrsp, bus_id)
+    vistar = _PMD.var(pm, nw, :visp, bus_id)
 
-    crg =  var(pm, nw, :crg, i)
-    cig =  var(pm, nw, :cig, i)
+    crg =  _PMD.var(pm, nw, :crg, i)
+    cig =  _PMD.var(pm, nw, :cig, i)
 
     # current-limiting indicator variable
-    z = var(pm, nw, :z, bus_id)
-    p = var(pm, nw, :p_solar, bus_id)
-    q = var(pm, nw, :q_solar, bus_id)
+    z = _PMD.var(pm, nw, :z, bus_id)
+    p = _PMD.var(pm, nw, :p_solar, bus_id)
+    q = _PMD.var(pm, nw, :q_solar, bus_id)
 
-    cnds = _PM.conductor_ids(pm; nw=nw)
+    cnds = _PMD.ref(pm, nw, :bus, bus_id, "terminals")
     ncnds = length(cnds)
 
     vm = [vr0[c]^2 + vi0[c]^2 for c in 1:ncnds]
@@ -350,24 +350,24 @@ function constraint_grid_formimg_inverter_impedance(pm::_PM.AbstractIVRModel, nw
 end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
-function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PM.AbstractIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang, terminals)
-    vr = var(pm, nw, :vr, bus_id)
-    vi = var(pm, nw, :vi, bus_id)
+function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang, terminals)
+    vr = _PMD.var(pm, nw, :vr, bus_id)
+    vi = _PMD.var(pm, nw, :vi, bus_id)
 
-    vrstar = var(pm, nw, :vrsp, i)
-    vistar = var(pm, nw, :visp, i)
+    vrstar = _PMD.var(pm, nw, :vrsp, i)
+    vistar = _PMD.var(pm, nw, :visp, i)
 
-    crg =  var(pm, nw, :crg, i)
-    cig =  var(pm, nw, :cig, i)
+    crg =  _PMD.var(pm, nw, :crg, i)
+    cig =  _PMD.var(pm, nw, :cig, i)
 
     # current-limiting indicator variable
-    z = var(pm, nw, :z, i)
-    z2 = var(pm, nw, :z2, i)
-    z3 = var(pm, nw, :z3, i)
-    rv = var(pm, nw, :rv, i)
-    xv = var(pm, nw, :xv, i)
-    p = var(pm, nw, :p_solar, i)
-    q = var(pm, nw, :q_solar, i)
+    z = _PMD.var(pm, nw, :z, i)
+    z2 = _PMD.var(pm, nw, :z2, i)
+    z3 = _PMD.var(pm, nw, :z3, i)
+    rv = _PMD.var(pm, nw, :rv, i)
+    xv = _PMD.var(pm, nw, :xv, i)
+    p = _PMD.var(pm, nw, :p_solar, i)
+    q = _PMD.var(pm, nw, :q_solar, i)
 
     vm = [vr0[c]^2 + vi0[c]^2 for c in terminals]
 
@@ -404,21 +404,21 @@ function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PM.AbstractI
 end
 
 "Constraints for fault current inverter with current set point"
-function constraint_mc_i_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, pg, qg, cmax)
+function constraint_mc_i_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, pg, qg, cmax)
     ar = -1/2
     ai = sqrt(3)/2
     a2r = -1/2
     a2i = -sqrt(3)/2
 
-    vr = var(pm, n, :vr, bus_id)
-    vi = var(pm, n, :vi, bus_id)
+    vr = _PMD.var(pm, n, :vr, bus_id)
+    vi = _PMD.var(pm, n, :vi, bus_id)
 
-    crg =  var(pm, n, :crg, i)
-    cig =  var(pm, n, :cig, i)
+    crg =  _PMD.var(pm, n, :crg, i)
+    cig =  _PMD.var(pm, n, :cig, i)
 
-    kg = var(pm, n, :kg, i) # generator loading
+    kg = _PMD.var(pm, n, :kg, i) # generator loading
 
-    cnds = _PMs.conductor_ids(pm; nw=n)
+    cnds = _PMD.ref(pm, n, :bus, bus_id, "terminals")
     ncnds = length(cnds)
 
     # Zero-Sequence

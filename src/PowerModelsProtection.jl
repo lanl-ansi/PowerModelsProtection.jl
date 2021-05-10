@@ -1,6 +1,5 @@
 module PowerModelsProtection
     import JuMP
-    import Memento
 
     import InfrastructureModels
     import PowerModels
@@ -11,14 +10,9 @@ module PowerModelsProtection
     const _PM = PowerModels
     const _PMD = PowerModelsDistribution
 
-    import InfrastructureModels: ids, ref, var, con, sol, nw_ids, nws, ismultinetwork
+    import InfrastructureModels: ismultinetwork, nw_id_default
 
     const MOI = MathOptInterface
-
-    function __init__()
-        global _LOGGER = Memento.getlogger(PowerModels)
-        # Memento.setlevel!(_LOGGER, "debug")
-    end
 
     include("core/variable.jl")
     include("core/constraint_template.jl")

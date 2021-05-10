@@ -30,7 +30,7 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
     has_pq_gens = false
     has_v_gens = false
 
-    for (n, nw_ref) in nws(pm)
+    for (n, nw_ref) in _PM.nws(pm)
         for (i, gen) in nw_ref[:gen]
             if gen["inverter_mode"] == "pq"
                 has_pq_gens = true
@@ -56,11 +56,11 @@ function build_fault_study(pm::_PM.AbstractPowerModel)
 
     constraint_fault_current(pm)
 
-    for (i, bus) in ref(pm, :bus)
+    for (i, bus) in _PM.ref(pm, :bus)
         constraint_current_balance(pm, i)
     end
 
-    for i in ids(pm, :branch)
+    for i in _PM.ids(pm, :branch)
         _PM.constraint_current_from(pm, i)
         _PM.constraint_current_to(pm, i)
         _PM.constraint_voltage_drop(pm, i)

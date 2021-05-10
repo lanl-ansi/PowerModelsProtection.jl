@@ -23,8 +23,8 @@ end
 # `using PowerModelsProtection`
 
 # so that users do not need to import JuMP to use a solver with PowerModelsProtection
-import JuMP: with_optimizer
-export with_optimizer
+import JuMP: optimizer_with_attributes
+export optimizer_with_attributes
 
 import MathOptInterface: TerminationStatusCode
 export TerminationStatusCode
@@ -38,6 +38,3 @@ for status_code_enum in [TerminationStatusCode, ResultStatusCode]
         @eval export $(Symbol(status_code))
     end
 end
-
-# InfrastructureModels Exports
-export ids, ref, var, con, sol, nw_ids, nws, ismultinetwork

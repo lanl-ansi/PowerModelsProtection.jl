@@ -25,11 +25,11 @@
 
         data["fault"] = Dict{String,Any}()
         data["fault"]["1"] = Dict("bus" => 2, "r" => 0.0001)
-        study_results = FS.run_fault_study(data, ipopt_solver)
+        study_results = run_fault_study(data, ipopt_solver)
         result = study_results["2"][1]
         solution = result["solution"]
 
-        @test result["termination_status"] == MOI.LOCALLY_SOLVED
+        @test result["termination_status"] == LOCALLY_SOLVED
 
         bus = result["solution"]["bus"]["1"]
         @test isapprox(abs(bus["vr"] + 1im * bus["vi"]), 0.0610503; atol = 1e-3)
@@ -65,11 +65,11 @@
 
         data["fault"] = Dict{String,Any}()
         data["fault"]["1"] = Dict("bus" => 2, "r" => 0.0001)
-        study_results = FS.run_fault_study(data, ipopt_solver)
+        study_results = run_fault_study(data, ipopt_solver)
         result = study_results["2"][1]
         solution = result["solution"]
 
-        @test result["termination_status"] == MOI.LOCALLY_SOLVED
+        @test result["termination_status"] == LOCALLY_SOLVED
 
         @test isapprox(result["objective"], -4.323499; atol = 1e-3)
 
