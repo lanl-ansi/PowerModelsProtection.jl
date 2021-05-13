@@ -25,7 +25,10 @@ module PowerModelsProtection
     include("core/solution.jl")
 
     include("data_model/eng2math.jl")
+    include("data_model/math2eng.jl")
+
     include("io/common.jl")
+    include("io/dss/dss2eng.jl")
     include("io/matpower.jl")
     include("io/opendss.jl")
 
