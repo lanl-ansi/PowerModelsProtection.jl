@@ -72,36 +72,6 @@ end
 
 
 ""
-function variable_mc_branch_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
-    _PMD.variable_mc_branch_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PMD.variable_mc_branch_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-
-    _PMD.variable_mc_branch_current_series_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PMD.variable_mc_branch_current_series_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-end
-
-
-""
-function variable_mc_transformer_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
-    _PMD.variable_mc_transformer_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PMD.variable_mc_transformer_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-end
-
-
-""
-function variable_mc_generation(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
-    _PMD.variable_mc_generator_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PMD.variable_mc_generator_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
-    _PMD.var(pm, nw)[:crg_bus] = Dict{Int,Any}()
-    _PMD.var(pm, nw)[:cig_bus] = Dict{Int,Any}()
-
-    # TODO need to test DER with power as decision variable
-    # _PM.var(pm, nw)[:pg] = Dict{Int, Any}()
-    # _PM.var(pm, nw)[:qg] = Dict{Int, Any}()
-end
-
-
-""
 function pq_gen_ids(pm, nw)
     return [i for (i, gen) in _PM.ref(pm, nw, :gen) if gen["inverter_mode"] == "pq"]
 end

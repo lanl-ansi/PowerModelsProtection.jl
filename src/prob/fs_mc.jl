@@ -33,9 +33,9 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     @debug "Building fault study"
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
     _PMD.variable_mc_switch_current(pm, bounded=false)
-    variable_mc_branch_current(pm, bounded=false)
-    variable_mc_transformer_current(pm, bounded=false)
-    variable_mc_generation(pm, bounded=false)
+    _PMD.variable_mc_branch_current(pm, bounded=false)
+    _PMD.variable_mc_transformer_current(pm, bounded=false)
+    _PMD.variable_mc_generator_current(pm, bounded=false)
 
     variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
