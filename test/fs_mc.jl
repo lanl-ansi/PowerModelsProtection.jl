@@ -9,15 +9,17 @@
     simulink_model = parse_file("../test/data/dist/simulink_model.dss")
 
     @testset "ut_trans_2w_yy_fault_study test fault study" begin
-        # data = deepcopy(ut_trans_2w_yy_fault_study)
-        # sol = run_fault_study(data, ipopt_solver)
-        # sol = solve_mc_fault_study(ut_trans_2w_yy_fault_study, ipopt_solver)
-        # @test sol["1"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
-        # @test calulate_error_percentage(sol["1"]["lg"]["1"]["solution"]["fault"]["currents"]["line1"][1], 1381.0) < .05
-        # @test sol["1"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
-        # @test calulate_error_percentage(sol["1"]["ll"]["1"]["solution"]["fault"]["currents"]["line1"][1], 818.0) < .05
-        # @test sol["1"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
-        # @test calulate_error_percentage(sol["1"]["3p"]["1"]["solution"]["fault"]["currents"]["line1"][1], 945.0) < .05
+        data = deepcopy(ut_trans_2w_yy_fault_study)
+
+        fault_studies = build_mc_fault_studies(data)
+        sol = solve_mc_fault_study(data, fault_studies, ipopt_solver)
+
+        @test sol["1"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["1"]["lg"]["1"]["solution"]["line"]["line1"]["fault_current"][1], 1381.0) < .05
+        @test sol["1"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["1"]["ll"]["1"]["solution"]["line"]["line1"]["fault_current"][1], 818.0) < .05
+        @test sol["1"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["1"]["3p"]["1"]["solution"]["line"]["line1"]["fault_current"][1], 945.0) < .05
     end
 
     @testset "ut_trans_2w_yy_fault_study line to ground fault" begin

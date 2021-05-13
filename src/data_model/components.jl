@@ -17,6 +17,12 @@ end
 
 
 ""
+function create_fault(type::String, bus::String, f_connections::Vector{Int}, resistance::Real, phase_resistance::Real)::Dict{String,Any}
+    return getfield(PowerModelsProtection, Symbol("_create_$(type)_fault"))(bus, f_connections, resistance, phase_resistance)
+end
+
+
+""
 function _create_3p_fault(bus::String, f_connections::Vector{Int}, phase_resistance::Real)::Dict{String,Any}
     @assert length(f_connections) == 3
     ncnds = length(f_connections)
@@ -198,6 +204,19 @@ function add_fault!(data::Dict{String,Any}, name::String, type::String, bus::Str
     end
 
     fault = create_fault(type, bus, f_connections, resistance)
+
+    fault["name"] = name
+    data["fault"][name] = fault
+end
+
+
+""
+function add_fault!(data::Dict{String,Any}, name::String, type::String, bus::String, f_connections::Vector{Int}, resistance::Real, phase_resistance::Real)
+    if !haskey(data, "fault")
+        data["fault"] = Dict{String,Any}()
+    end
+
+    fault = create_fault(type, bus, f_connections, resistance, phase_resistance)
 
     fault["name"] = name
     data["fault"][name] = fault

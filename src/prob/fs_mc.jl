@@ -32,6 +32,25 @@ function solve_mc_fault_study(file::String, solver; kwargs...)
 end
 
 
+"run series of fault studies"
+function solve_mc_fault_study(case::Dict{String,<:Any}, fault_studies::Dict{String,<:Any}, solver; kwargs...)
+    results = deepcopy(fault_studies)
+
+    for (bus, fault_types) in fault_studies
+        for (fault_type, faults) in fault_types
+            for (fault_id, fault) in faults
+                data = deepcopy(case)
+                data["fault"] = Dict{String,Any}(fault_id => fault)
+                _result = solve_mc_fault_study(data, solver, kwargs...)
+
+                results[bus][fault_type][fault_id] = _result
+            end
+        end
+    end
+    return results
+end
+
+
 "Build mc fault study"
 function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     @debug "Building fault study"

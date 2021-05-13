@@ -118,34 +118,37 @@ end
 function build_mc_fault_studies(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
     fault_studies = Dict{String,Any}()
     vsource_buses = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
-    for (id, line) in get(data, "line", Dict())
-        if !(line["f_bus"] in vsource_buses)
-            for fault_type in ["lg", "ll", "llg", "3p", "3pg"]
-                connections = []
-                if fault_type == "lg"
-                    for (fc, tc) in zip(line["f_connections"], line["t_connections"])
-                        push!(connections, (Int[fc], Int[tc]))
-                    end
-                elseif fault_type == "ll" || fault_type == "llg"
-                    if length(line["f_connections"]) >= 2
-                        for i in 1:(mod(length(line["f_connections"]), 2)+rem(length(line["f_connections"]), 2))
-                            push!(connections, (line["f_connections"][i:i+1], line["t_connections"][i:i+1]))
+
+    for (id, bus) in get(data, "bus", Dict())
+        if !(id in vsource_buses)
+            fault_studies[id] = Dict{String,Any}(
+                "lg" => Dict{String,Any}(),
+                "ll" => Dict{String,Any}(),
+                "llg" => Dict{String,Any}(),
+                "3p" => Dict{String,Any}(),
+                "3pg" => Dict{String,Any}(),
+            )
+
+            # lg fault
+            i = 1
+            for t in bus["terminals"]
+                if !(t in bus["grounded"])
+                    fault_studies[id]["lg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "lg", id, [t], resistance)
+                    for u in bus["terminals"]
+                        if !(u in bus["grounded"]) && t != u
+                            fault_studies[id]["ll"]["$i"] = add_fault!(Dict{String,Any}(), "1", "ll", id, [t], [u], phase_resistance)
+                            fault_studies[id]["llg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "llg", id, [t], [u], resistance, phase_resistance)
                         end
                     end
-                elseif fault_type == "3p" || fault_type == "3pg"
-                    if length(line["f_connections"]) == 3
-                        push!(connections, (line["f_connections"], line["t_connections"]))
-                    end
-                end
-
-                for (i, (f_connections, t_connections)) in enumerate(connections)
-                    fault = create_fault(fault_type, line["f_bus"], line["t_bus"], f_connections, t_connections, resistance, phase_resistance)
-                    fault["name"] = "$(id)_$(fault_type)_$(i)"
-                    fault_studies[fault["name"]] = fault
+                    i += 1
                 end
             end
+
+            fault_studies[id]["3p"]["1"] = add_fault!(Dict{String,Any}(), "1", "3p", id, bus["terminals"][1:3], phase_resistance)
+            fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, bus["terminals"][1:3], resistance, phase_resistance)
         end
     end
+
     return fault_studies
 end
 
