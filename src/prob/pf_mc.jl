@@ -1,12 +1,24 @@
 "Run Power Flow Problem with Solar"
 function solve_mc_pf(data::Dict{String,<:Any}, solver; kwargs...)
-    return solution = run_mc_model(data, _PMD.IVRUPowerModel, solver, build_mc_pf; ref_extensions=[ref_add_solar!], kwargs...)
+    solution = _PMD.solve_mc_model(
+        data,
+        _PMD.IVRUPowerModel,
+        solver,
+        build_mc_pf;
+        eng2math_passthrough=_pmp_eng2math_passthrough,
+        make_pu_extensions=[_rebase_pu_gen_dynamics!],
+        dimensionalize_math_extensions=_pmp_dimensionalize_math_extensions,
+        ref_extensions=[ref_add_mc_solar!, ref_add_grid_forming_bus!],
+        kwargs...
+    )
+
+    return solution
 end
 
 
 "Run Power Flow Problem with Solar"
 function solve_mc_pf(file::String, solver; kwargs...)
-    return solve_mc_pf(parse_file(file; import_all = true), solver; kwargs...)
+    return solve_mc_pf(parse_file(file), solver; kwargs...)
 end
 
 
@@ -77,7 +89,7 @@ end
 
 "Run Power Flow Problem with DG"
 function solve_mc_dg_pf(data::Dict{String,<:Any}, solver; kwargs...)
-    return solution = _PMD.solve_mc_model(data, _PMD.ACPUPowerModel, solver, build_mc_dg_pf; kwargs...)
+    return _PMD.solve_mc_model(data, _PMD.ACPUPowerModel, solver, build_mc_dg_pf; kwargs...)
 end
 
 "Run Power Flow Problem with DG"
