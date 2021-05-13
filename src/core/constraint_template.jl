@@ -440,37 +440,6 @@ function constraint_mc_generation(pm::_PMD.AbstractUnbalancedPowerModel, id::Int
 end
 
 
-"Constarint to set the ref bus voltage"
-function constraint_mc_ref_bus_voltage(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
-    terminals = _PMD.ref(pm, nw, :bus, i)["terminals"]
-    vm = _PMD.ref(pm, :bus, i, "vm")
-    va = _PMD.ref(pm, :bus, i, "va")
-
-    vr = [vm[i] * cos(va[i]) for i in terminals]
-    vi = [vm[i] * sin(va[i]) for i in terminals]
-
-    constraint_mc_ref_bus_voltage(pm, nw, i, vr, vi, terminals)
-end
 
 
-"Constarint to set the ref bus voltage magnitude only"
-function constraint_mc_voltage_magnitude_only(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
-    vm = _PMD.ref(pm, :bus, i, "vm")
-    constraint_mc_voltage_magnitude_only(pm, nw, i, vm)
-end
 
-
-function constraint_mc_switch_state(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
-    switch = _PMD.ref(pm, nw, :switch, i)
-    f_bus = switch["f_bus"]
-    t_bus = switch["t_bus"]
-    z = switch["z"]
-
-    f_idx = (i, f_bus, t_bus)
-
-    if switch["state"] != 0
-        constraint_mc_switch_state_closed(pm, nw, f_bus, t_bus, f_idx, switch["f_connections"], switch["t_connections"], z)
-    else
-        _PMD.constraint_mc_switch_state_open(pm, nw, f_idx)
-    end
-end

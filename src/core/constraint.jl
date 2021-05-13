@@ -284,25 +284,7 @@ end
 
 
 
-"Constraint to set the ref bus voltage"
-function constraint_mc_ref_bus_voltage(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, vr0, vi0, terminals)
-    @debug "Setting voltage for reference bus $i"
-    vr = _PMD.var(pm, n, :vr, i)
-    vi = _PMD.var(pm, n, :vi, i)
-
-    for c in terminals
-        JuMP.@constraint(pm.model, vr[c] == vr0[c])
-        JuMP.@constraint(pm.model, vi[c] == vi0[c])
-    end
-end
 
 
-"Constarint to set the ref bus voltage magnitude only"
-function constraint_mc_voltage_magnitude_only(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, vm)
-    vr = _PMD.var(pm, n, :vr, i)
-    vi = _PMD.var(pm, n, :vi, i)
 
-    for c in _PMD.ref(pm, n, :bus, i, "terminals")
-        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 == vm[c]^2)
-    end
-end
+

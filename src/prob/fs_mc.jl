@@ -42,8 +42,8 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
 
     for (i,bus) in _PMD.ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3
-        constraint_mc_ref_bus_voltage(pm, i)
-        # constraint_mc_voltage_magnitude_only(pm, i)
+        _PMD.constraint_mc_theta_ref(pm, i)
+        _PMD.constraint_mc_voltage_magnitude_only(pm, i)
     end
 
     for id in _PMD.ids(pm, :gen)
