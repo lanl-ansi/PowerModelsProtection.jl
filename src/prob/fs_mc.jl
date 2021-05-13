@@ -47,7 +47,7 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     end
 
     for id in _PMD.ids(pm, :gen)
-        constraint_mc_generation(pm, id)
+        _PMD.constraint_mc_generator_power(pm, id; bounded=false)
     end
 
     # TODO add back in the generator voltage drop with inverters in model

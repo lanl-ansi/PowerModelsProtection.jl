@@ -427,17 +427,6 @@ function constraint_mc_current_balance_pf(pm::_PMD.AbstractUnbalancedPowerModel,
 end
 
 
-"Constraint on the current from gen based on connection"
-function constraint_mc_generation(pm::_PMD.AbstractUnbalancedPowerModel, id::Int; nw::Int=nw_id_default, report::Bool=true, bounded::Bool=true)
-    generator = _PMD.ref(pm, nw, :gen, id)
-    bus = _PMD.ref(pm, nw, :bus, generator["gen_bus"])
-
-    if get(generator, "configuration", _PMD.WYE) == _PMD.WYE
-        constraint_mc_generation_wye(pm, nw, id, bus["index"], generator["connections"]; report=report, bounded=bounded)
-    else
-        constraint_mc_generation_delta(pm, nw, id, bus["index"], generator["connections"]; report=report, bounded=bounded)
-    end
-end
 
 
 

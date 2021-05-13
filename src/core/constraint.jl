@@ -228,58 +228,17 @@ function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel
 end
 
 
-"Calculates the current at a wye connected gen with no power constraints"
-function constraint_mc_generation_wye(pm::_PMD.IVRUPowerModel, nw::Int, id::Int, bus_id::Int,connections::Vector{Int}; report::Bool=true, bounded::Bool=true)
-    crg = _PMD.var(pm, nw, :crg, id)
-    cig = _PMD.var(pm, nw, :cig, id)
-
-    _PMD.var(pm, nw, :crg_bus)[id] = crg
-    _PMD.var(pm, nw, :cig_bus)[id] = cig
-
-    if report
-        _PMD.sol(pm, nw, :gen, id)[:crg_bus] = _PMD.var(pm, nw, :crg_bus, id)
-        _PMD.sol(pm, nw, :gen, id)[:cig_bus] = _PMD.var(pm, nw, :crg_bus, id)
-    end
-end
 
 
-"Calculates the current at a delta connected gen with no power constraints"
-function constraint_mc_generation_delta(pm::_PMD.IVRUPowerModel, nw::Int, id::Int, bus_id::Int, connections::Vector{Int}; report::Bool=true, bounded::Bool=true)
-    vr = _PMD.var(pm, nw, :vr, bus_id)
-    vi = _PMD.var(pm, nw, :vi, bus_id)
-    crg = _PMD.var(pm, nw, :crg, id)
-    cig = _PMD.var(pm, nw, :cig, id)
 
-    nph = length(connections)
 
-    prev = Dict(c=>connections[(idx+nph-2)%nph+1] for (idx,c) in enumerate(connections))
-    next = Dict(c=>connections[idx%nph+1] for (idx,c) in enumerate(connections))
 
-    vrg = Dict()
-    vig = Dict()
-    for c in connections
-        vrg[c] = JuMP.@NLexpression(pm.model, vr[c]-vr[next[c]])
-        vig[c] = JuMP.@NLexpression(pm.model, vi[c]-vi[next[c]])
-    end
 
-    crg_bus = Vector{JuMP.NonlinearExpression}([])
-    cig_bus = Vector{JuMP.NonlinearExpression}([])
-    for c in connections
-        push!(crg_bus, JuMP.@NLexpression(pm.model, crg[c]-crg[prev[c]]))
-        push!(cig_bus, JuMP.@NLexpression(pm.model, cig[c]-cig[prev[c]]))
-    end
 
-    crg_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], crg[i] - crg[prev[i]])
-    cig_bus = JuMP.@NLexpression(pm.model, [i in 1:nph], cig[i] - cig[prev[i]])
 
-    _PMD.var(pm, nw, :crg_bus)[id] = JuMP.Containers.DenseAxisArray(crg_bus, connections)
-    _PMD.var(pm, nw, :cig_bus)[id] = JuMP.Containers.DenseAxisArray(cig_bus, connections)
 
-    if report
-        _PMD.sol(pm, nw, :gen, id)[:crg_bus] = JuMP.Containers.DenseAxisArray(crg_bus, connections)
-        _PMD.sol(pm, nw, :gen, id)[:cig_bus] = JuMP.Containers.DenseAxisArray(cig_bus, connections)
-    end
-end
+
+
 
 
 
