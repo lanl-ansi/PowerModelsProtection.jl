@@ -1,10 +1,10 @@
 module PowerModelsProtection
     import JuMP
+    import MathOptInterface
 
     import InfrastructureModels
     import PowerModels
     import PowerModelsDistribution
-    import MathOptInterface
 
     const _IM = InfrastructureModels
     const _PM = PowerModels
@@ -12,8 +12,6 @@ module PowerModelsProtection
 
     import InfrastructureModels: ismultinetwork, nw_id_default
     import PowerModelsDistribution: ENABLED, DISABLED
-
-    const MOI = MathOptInterface
 
     include("core/variable.jl")
     include("core/constraint_template.jl")
