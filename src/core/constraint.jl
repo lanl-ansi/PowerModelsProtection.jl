@@ -127,48 +127,8 @@ function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedPowerModel, 
 end
 
 
-function constraint_mc_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
-    vr = _PMD.var(pm, nw, :vr, i)
-    vi = _PMD.var(pm, nw, :vi, i)
-
-    cr    = get(_PMD.var(pm, nw),    :cr, Dict()); _PMD._check_var_keys(cr, bus_arcs, "real current", "branch")
-    ci    = get(_PMD.var(pm, nw),    :ci, Dict()); _PMD._check_var_keys(ci, bus_arcs, "imaginary current", "branch")
-    crg   = get(_PMD.var(pm, nw),   :crg_bus, Dict()); _PMD._check_var_keys(crg, bus_gens, "real current", "generator")
-    cig   = get(_PMD.var(pm, nw),   :cig_bus, Dict()); _PMD._check_var_keys(cig, bus_gens, "imaginary current", "generator")
-    crs   = get(_PMD.var(pm, nw),   :crs, Dict()); _PMD._check_var_keys(crs, bus_storage, "real currentr", "storage")
-    cis   = get(_PMD.var(pm, nw),   :cis, Dict()); _PMD._check_var_keys(cis, bus_storage, "imaginary current", "storage")
-    crsw  = get(_PMD.var(pm, nw),  :crsw, Dict()); _PMD._check_var_keys(crsw, bus_arcs_sw, "real current", "switch")
-    cisw  = get(_PMD.var(pm, nw),  :cisw, Dict()); _PMD._check_var_keys(cisw, bus_arcs_sw, "imaginary current", "switch")
-    crt   = get(_PMD.var(pm, nw),   :crt, Dict()); _PMD._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
-    cit   = get(_PMD.var(pm, nw),   :cit, Dict()); _PMD._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
-
-    Gt, Bt = _PMD._build_bus_shunt_matrices(pm, nw, terminals, bus_shunts)
-
-    ungrounded_terminals = [(idx,t) for (idx,t) in enumerate(terminals) if !grounded[idx]]
-
-    for (idx, t) in ungrounded_terminals
-        JuMP.@NLconstraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
-                                    + sum(crsw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
-                                    + sum(crt[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
-                                    ==
-                                      sum(crg[g][t]         for (g, conns) in bus_gens if t in conns)
-                                    - sum(crs[s][t]         for (s, conns) in bus_storage if t in conns)
-                                    - sum( Gt[idx,jdx]*vr[u] -Bt[idx,jdx]*vi[u] for (jdx,u) in ungrounded_terminals) # shunts
-                                    )
-        JuMP.@NLconstraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
-                                    + sum(cisw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
-                                    + sum(cit[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
-                                    ==
-                                      sum(cig[g][t]         for (g, conns) in bus_gens if t in conns)
-                                    - sum(cis[s][t]         for (s, conns) in bus_storage if t in conns)
-                                    - sum( Gt[idx,jdx]*vi[u] +Bt[idx,jdx]*vr[u] for (jdx,u) in ungrounded_terminals) # shunts
-                                    )
-    end
-end
-
-
 "Calculates the current balance at the faulted bus for multiconductor"
-function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
+function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, fault::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
     vr = _PMD.var(pm, nw, :vr, i)
     vi = _PMD.var(pm, nw, :vi, i)
 
@@ -183,52 +143,52 @@ function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel
     crt   = get(_PMD.var(pm, nw),   :crt, Dict()); _PMD._check_var_keys(crt, bus_arcs_trans, "real current", "transformer")
     cit   = get(_PMD.var(pm, nw),   :cit, Dict()); _PMD._check_var_keys(cit, bus_arcs_trans, "imaginary current", "transformer")
 
-    cfr = _PMD.var(pm, nw, :cfr)
-    cfi = _PMD.var(pm, nw, :cfi)
+    cfr = _PMD.var(pm, nw, :cfr, fault)
+    cfi = _PMD.var(pm, nw, :cfi, fault)
+
+    fault_conns = _PMD.ref(pm, nw, :fault, fault, "f_connections")
 
     Gt, Bt = _PMD._build_bus_shunt_matrices(pm, nw, terminals, bus_shunts)
 
     ungrounded_terminals = [(idx,t) for (idx,t) in enumerate(terminals) if !grounded[idx]]
 
     for (idx, t) in ungrounded_terminals
-        JuMP.@NLconstraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
-                                    + sum(crsw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
-                                    + sum(crt[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
-                                    ==
-                                      sum(crg[g][t]         for (g, conns) in bus_gens if t in conns)
-                                    - sum(crs[s][t]         for (s, conns) in bus_storage if t in conns)
-                                    - sum( Gt[idx,jdx]*vr[u] -Bt[idx,jdx]*vi[u] for (jdx,u) in ungrounded_terminals) # shunts
-                                    - cfr[t] # faults
-                                    )
-        JuMP.@NLconstraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
-                                    + sum(cisw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
-                                    + sum(cit[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
-                                    ==
-                                      sum(cig[g][t]         for (g, conns) in bus_gens if t in conns)
-                                    - sum(cis[s][t]         for (s, conns) in bus_storage if t in conns)
-                                    - sum( Gt[idx,jdx]*vi[u] +Bt[idx,jdx]*vr[u] for (jdx,u) in ungrounded_terminals) # shunts
-                                    - cfi[t] # faults
-                                    )
+        if t in fault_conns
+            JuMP.@NLconstraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
+                                        + sum(crsw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
+                                        + sum(crt[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
+                                        ==
+                                        sum(crg[g][t]         for (g, conns) in bus_gens if t in conns)
+                                        - sum(crs[s][t]         for (s, conns) in bus_storage if t in conns)
+                                        - sum( Gt[idx,jdx]*vr[u] -Bt[idx,jdx]*vi[u] for (jdx,u) in ungrounded_terminals) # shunts
+                                        - cfr[t] # faults
+                                        )
+            JuMP.@NLconstraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
+                                        + sum(cisw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
+                                        + sum(cit[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
+                                        ==
+                                        sum(cig[g][t]         for (g, conns) in bus_gens if t in conns)
+                                        - sum(cis[s][t]         for (s, conns) in bus_storage if t in conns)
+                                        - sum( Gt[idx,jdx]*vi[u] +Bt[idx,jdx]*vr[u] for (jdx,u) in ungrounded_terminals) # shunts
+                                        - cfi[t] # faults
+                                        )
+        else
+            JuMP.@NLconstraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
+                                        + sum(crsw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
+                                        + sum(crt[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
+                                        ==
+                                        sum(crg[g][t]         for (g, conns) in bus_gens if t in conns)
+                                        - sum(crs[s][t]         for (s, conns) in bus_storage if t in conns)
+                                        - sum( Gt[idx,jdx]*vr[u] -Bt[idx,jdx]*vi[u] for (jdx,u) in ungrounded_terminals) # shunts
+                                        )
+            JuMP.@NLconstraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
+                                        + sum(cisw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
+                                        + sum(cit[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
+                                        ==
+                                        sum(cig[g][t]         for (g, conns) in bus_gens if t in conns)
+                                        - sum(cis[s][t]         for (s, conns) in bus_storage if t in conns)
+                                        - sum( Gt[idx,jdx]*vi[u] +Bt[idx,jdx]*vr[u] for (jdx,u) in ungrounded_terminals) # shunts
+                                        )
+        end
     end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

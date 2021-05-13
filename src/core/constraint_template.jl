@@ -403,10 +403,10 @@ function constraint_mc_current_balance(pm::_PMD.AbstractUnbalancedPowerModel, i:
     bus_shunts = _PMD.ref(pm, nw, :bus_conns_shunt, i)
 
 
-    if bus["bus_i"] != _PMD.ref(pm, nw, :active_fault, "bus_i")
-        constraint_mc_current_balance(pm, nw, i, bus["terminals"], bus["grounded"], bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_storage, bus_shunts)
+    if bus["bus_i"] in _PMD.ids(pm, nw, :fault_buses)
+        constraint_mc_fault_current_balance(pm, nw, i, _PMD.ref(pm, nw, :fault_buses, bus["bus_i"]), bus["terminals"], bus["grounded"], bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_storage, bus_shunts)
     else
-        constraint_mc_fault_current_balance(pm, nw, i, bus["terminals"], bus["grounded"], bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_storage, bus_shunts)
+        _PMD.constraint_mc_current_balance(pm, nw, i, bus["terminals"], bus["grounded"], bus_arcs, bus_arcs_sw, bus_arcs_trans, bus_gens, bus_storage, Tuple{Int,Vector{Int}}[], bus_shunts)
     end
 end
 
