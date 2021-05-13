@@ -99,15 +99,10 @@ end
 "Add study fault data to model"
 function add_fault_study!(data::Dict{String,Any})
     data["fault"] = Dict{String,Any}()
-    get_active_phases!(data)
-    get_fault_buses!(data)
     for (i, bus) in data["bus"]
-        if i in data["fault_buses"]
-            data["fault"][i] = Dict{String,Any}()
-            add_fault!(data, bus, i, 0.0001)
-        end
+        data["fault"][i] = Dict{String,Any}()
+        add_fault!(data, bus, i, 0.0001)
     end
-    delete!(data, "fault_buses")
 end
 
 
