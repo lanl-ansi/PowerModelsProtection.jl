@@ -67,7 +67,7 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     end
 
     for i in _PMD.ids(pm, :switch)
-        constraint_mc_switch_state(pm, i)
+        _PMD.constraint_mc_switch_state(pm, i)
     end
 
     for i in _PMD.ids(pm, :transformer)
@@ -86,5 +86,4 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
         # constraint_mc_grid_forming_inverter(pm, i)
         constraint_mc_grid_forming_inverter_virtual_impedance(pm, i)
     end
-
 end

@@ -468,17 +468,3 @@ function check_microgrid!(data::Dict{String,Any})
         end
     end
 end
-
-
-"adds the switch impedance to data"
-function add_switch_impedance!(data::Dict{String,Any})
-    if haskey(data, "switch")
-        for (inx,switch) in data["switch"]
-            bus = data["bus"][string(switch["f_bus"])]
-            z_base = bus["vbase"]^2/(data["settings"]["sbase"] * data["settings"]["power_scale_factor"] / 1e6)
-            z1 = (switch["dss"]["r1"] + switch["dss"]["x1"]*1im)
-            z0 = (switch["dss"]["r0"] + switch["dss"]["x0"]*1im)
-            switch["z"] = 1/3*(z0+2*z1)/z_base
-        end
-    end
-end

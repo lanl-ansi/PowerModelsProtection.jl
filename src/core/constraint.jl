@@ -306,36 +306,3 @@ function constraint_mc_voltage_magnitude_only(pm::_PMD.AbstractUnbalancedIVRMode
         JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 == vm[c]^2)
     end
 end
-
-
-"Constarint to set the ref bus voltage angle only"
-function constraint_mc_theta_ref(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, vr0, vi0)
-    vr = _PMD.var(pm, n, :vr, i)
-    vi = _PMD.var(pm, n, :vi, i)
-
-    for c in _PMD.ref(pm, n, :bus, i, "terminals")
-        JuMP.@constraint(pm.model, vr[c] * vi0[c] == vi[c] * vr0[c])
-        JuMP.@constraint(pm.model, vr[c] * vr0[c] >= 0.0)
-        JuMP.@constraint(pm.model, vi[c] * vi0[c] >= 0.0)
-    end
-end
-
-
-function constraint_mc_switch_state_closed(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, f_bus::Int, t_bus::Int, f_idx::Tuple{Int,Int,Int}, f_connections::Vector{Int}, t_connections::Vector{Int}, z)
-    vr_fr = _PMD.var(pm, nw, :vr, f_bus)
-    vr_to = _PMD.var(pm, nw, :vr, t_bus)
-
-    vi_fr = _PMD.var(pm, nw, :vi, f_bus)
-    vi_to = _PMD.var(pm, nw, :vi, t_bus)
-
-    crsw = _PMD.var(pm, nw, :crsw, f_idx)
-    cisw = _PMD.var(pm, nw, :cisw, f_idx)
-
-    zr = real(z)
-    zi = imag(z)
-
-    for (idx,(fc,tc)) in enumerate(zip(f_connections, t_connections))
-        JuMP.@constraint(pm.model, vr_fr[fc] - crsw[fc]*zr + cisw[fc]*zi == vr_to[tc])
-        JuMP.@constraint(pm.model, vi_fr[fc] - cisw[fc]*zr - crsw[fc]*zi == vi_to[tc])
-    end
-end
