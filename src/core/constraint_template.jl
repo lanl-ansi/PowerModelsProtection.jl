@@ -412,15 +412,6 @@ end
 
 
 ""
-function constraint_mc_current_balance_pf(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
-    bus = _PMD.ref(pm, nw, :bus, i)["bus_i"]
-    bus_arcs = _PMD.ref(pm, nw, :bus_arcs, i)
-    bus_arcs_sw = _PMD.ref(pm, nw, :bus_arcs_sw, i)
-    bus_arcs_trans = _PMD.ref(pm, nw, :bus_arcs_trans, i)
-    bus_gens = _PMD.ref(pm, nw, :bus_gens, i)
-    bus_shunts = _PMD.ref(pm, nw, :bus_shunts, i)
-
-
 function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
     bus = _PMD.ref(pm, nw, :fault, i, "fault_bus")
     f_connections = _PMD.ref(pm, nw, :fault, i, "f_connections")
