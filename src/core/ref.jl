@@ -1,30 +1,25 @@
 "Adds the fault to the model"
 function ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
-    if _IM.ismultinetwork(data)
-        nws_data = data["nw"]
-    else
-        nws_data = Dict("0" => data)
-    end
-    for (n, nw_data) in nws_data
-        nw_id = parse(Int, n)
-        nw_ref = ref[:it][_PM.pm_it_sym][:nw][nw_id]
-        nw_ref[:active_fault] = data["active_fault"]
-    end
+    _PM.apply_pm!(_ref_add_fault!, ref, data; apply_to_subnetworks=true)
+end
+
+
+"Adds the fault to the model"
+function _ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+    ref[:active_fault] = data["active_fault"]
 end
 
 
 "Adds the fault to the model for multiconductor"
 function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
-    if _IM.ismultinetwork(data)
-        nws_data = data["nw"]
-    else
-        nws_data = Dict("0" => data)
-    end
-    for (n, nw_data) in nws_data
-        nw_id = parse(Int, n)
-        nw_ref = ref[:it][_PMD.pmd_it_sym][:nw][nw_id]
-        nw_ref[:active_fault] = data["active_fault"]
-    end
+    _PMD.apply_pmd!(_ref_add_mc_fault!, ref, data; apply_to_subnetworks=true)
+end
+
+
+"Adds the fault to the model for multiconductor"
+function _ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+    ref[:fault] = Dict(x for x in get(ref, :fault, Dict{Int,Any}()) if x.second["status"] != 0)
+    ref[:fault_buses] = Dict{Int,Int}(x.second["fault_bus"] => x.first for x in ref[:fault])
 end
 
 
