@@ -1,23 +1,27 @@
 "Runs the mc fault study"
 function solve_mc_fault_study(case::Dict{String,<:Any}, solver; kwargs...)
     data = deepcopy(case)
-    # check_pf!(data, solver)
+
+    # TODO can this be moved?
     check_microgrid!(data)
-    add_mc_fault_data!(data)
-    solution = Dict{String, Any}()
-    faults = deepcopy(data["fault"])
-    delete!(data, "fault")
-    for (i,bus) in faults
-        solution[i] = Dict{String,Any}()
-        for (j,type) in bus
-            solution[i][j] = Dict{String,Any}()
-            for (f,fault) in type
-                data["active_fault"] = fault
-                @debug "Running short circuit"
-                solution[i][j]["$f"] = run_mc_model(data, _PMD.IVRUPowerModel, solver, build_mc_fault_study; ref_extensions=[ref_add_mc_fault!, ref_add_gen_dynamics!, ref_add_solar!], kwargs...)
-            end
-        end
-    end
+
+
+    solution = _PMD.solve_mc_model(
+        data,
+        _PMD.IVRUPowerModel,
+        solver,
+        build_mc_fault_study;
+        eng2math_extensions=[_eng2math_fault!],
+        eng2math_passthrough=_pmp_eng2math_passthrough,
+        make_pu_extensions=[_rebase_pu_fault!, _rebase_pu_gen_dynamics!],
+        map_math2eng_extensions=Dict{String,Function}("_map_math2eng_fault!"=>_map_math2eng_fault!),
+        make_si_extensions=[make_fault_si!],
+        dimensionalize_math_extensions=_pmp_dimensionalize_math_extensions,
+        ref_extensions=[ref_add_mc_fault!, ref_add_mc_solar!, ref_add_grid_forming_bus!],
+        solution_processors=[solution_fs!],
+        kwargs...
+    )
+
     return solution
 end
 
