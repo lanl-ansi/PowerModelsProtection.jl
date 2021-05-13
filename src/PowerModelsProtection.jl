@@ -24,6 +24,8 @@ module PowerModelsProtection
     include("core/objective.jl")
     include("core/solution.jl")
 
+    include("data_model/units.jl")
+    include("data_model/components.jl")
     include("data_model/eng2math.jl")
     include("data_model/math2eng.jl")
 
