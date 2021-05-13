@@ -38,3 +38,5 @@ for status_code_enum in [TerminationStatusCode, ResultStatusCode]
         @eval export $(Symbol(status_code))
     end
 end
+
+export ENABLED, DISABLED

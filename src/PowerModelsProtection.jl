@@ -11,6 +11,7 @@ module PowerModelsProtection
     const _PMD = PowerModelsDistribution
 
     import InfrastructureModels: ismultinetwork, nw_id_default
+    import PowerModelsDistribution: ENABLED, DISABLED
 
     const MOI = MathOptInterface
 
