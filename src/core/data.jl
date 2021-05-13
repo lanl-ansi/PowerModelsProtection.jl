@@ -114,60 +114,54 @@ function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, re
 end
 
 
-"Add fault data to model single or study for multiconductor"
-function add_mc_fault_data!(data::Dict{String,Any})
-    if haskey(data, "fault")
-        add_mc_fault!(data)
-    else
-        add_mc_fault_study!(data)
-    end
-end
+"Add all fault type data to model for study for multiconductor"
+function build_mc_fault_studies(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
+    fault_studies = Dict{String,Any}()
+    vsource_buses = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
+    for (id, line) in get(data, "line", Dict())
+        if !(line["f_bus"] in vsource_buses)
+            for fault_type in ["lg", "ll", "llg", "3p", "3pg"]
+                connections = []
+                if fault_type == "lg"
+                    for (fc, tc) in zip(line["f_connections"], line["t_connections"])
+                        push!(connections, (Int[fc], Int[tc]))
+                    end
+                elseif fault_type == "ll" || fault_type == "llg"
+                    if length(line["f_connections"]) >= 2
+                        for i in 1:(mod(length(line["f_connections"]), 2)+rem(length(line["f_connections"]), 2))
+                            push!(connections, (line["f_connections"][i:i+1], line["t_connections"][i:i+1]))
+                        end
+                    end
+                elseif fault_type == "3p" || fault_type == "3pg"
+                    if length(line["f_connections"]) == 3
+                        push!(connections, (line["f_connections"], line["t_connections"]))
+                    end
+                end
 
-
-"Add single fault data to model based off fault type for multiconductor"
-function add_mc_fault!(data::Dict{String,Any})
-    hold = deepcopy(data["fault"])
-    data["fault"] = Dict{String,Any}()
-    for (k, fault) in hold
-        i = fault["bus"]
-        haskey(data["fault"], i) || (data["fault"][i] = Dict{String,Any}())
-        if fault["type"] == "lg"
-            add_lg_fault!(data, i, fault["phases"], fault["gr"])
-        elseif fault["type"] == "ll"
-            add_ll_fault!(data, i, fault["phases"], fault["gr"])
-        elseif fault["type"] == "llg"
-            add_llg_fault!(data, i, fault["phases"], fault["gr"], fault["pr"])
-        elseif fault["type"] == "3p"
-            add_3p_fault!(data, i, fault["phases"], fault["gr"])
-        elseif fault["type"] == "3pg"
-            add_3pg_fault!(data, i, fault["phases"], fault["gr"], fault["pr"])
+                for (i, (f_connections, t_connections)) in enumerate(connections)
+                    fault = create_fault(fault_type, line["f_bus"], line["t_bus"], f_connections, t_connections, resistance, phase_resistance)
+                    fault["name"] = "$(id)_$(fault_type)_$(i)"
+                    fault_studies[fault["name"]] = fault
+                end
+            end
         end
     end
+    return fault_studies
 end
 
 
+"Creates a list of buses in the model to fault for study"
+function get_mc_fault_buses(data::Dict{String,Any})
+    hold = []
+    vsource_buses = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    for (id,_) in get(data, "bus", Dict())
+        if !(id in vsource_buses)
+            push!(hold, id)
+        end
+    end
+    hold
+end
 
 
 "Checks for a microgrid and deactivates infinite bus"
