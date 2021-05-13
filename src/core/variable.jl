@@ -169,7 +169,7 @@ function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw
         start = 0
     )
     for i in _PMD.ids(pm, nw, :solar_gfli)
-        gen = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:gen][i]
+        gen = _PMD.ref(pm, nw, :gen, i)
         pmax = 0.0
         if gen["solar_max"] < gen["kva"] * gen["pf"]
             pmax = gen["solar_max"]
@@ -185,7 +185,7 @@ function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw
         start = 0
     )
     for i in _PMD.ids(pm, nw, :solar_gfli)
-        gen = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:gen][i]
+        gen = _PMD.ref(pm, nw, :gen, i)
         pmax = 0.0
         if gen["solar_max"] < gen["kva"] * gen["pf"]
             pmax = gen["solar_max"]

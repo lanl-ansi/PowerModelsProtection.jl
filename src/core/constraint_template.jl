@@ -194,7 +194,6 @@ end
 "Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor"
 function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=nw_id_default)
     for (k, gen) in _PMD.ref(pm, nw, :gen)
-
         if k in _PMD.ids(pm, :solar_gfli)
             @debug "Skipping gen $k in gen constraints"
             continue
@@ -277,8 +276,8 @@ end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-following mode"
 function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
-    index = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:solar_gfli][i]
-    gen = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:gen][i]
+    index = _PMD.ref(pm, nw, :solar_gfli, i)
+    gen = _PMD.ref(pm, nw, :gen, i)
 
     cmax = gen["i_max"]
     if gen["solar_max"] < gen["kva"] * gen["pf"]
@@ -293,10 +292,10 @@ end
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
 function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
     @debug "Adding grid-forming inverter constraint without impedance"
-    index = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:solar_gfmi][i]
-    gen = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:gen][index]
+    index = _PMD.ref(pm, nw, :solar_gfmi, i)
+    gen = _PMD.ref(pm, nw, :gen, index)
     bus_i = gen["gen_bus"]
-    bus = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:bus][bus_i]
+    bus = _PMD.ref(pm, nw, :bus, bus_i)
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
         bus["vm"] = [1 for c in bus["terminals"]]
@@ -320,10 +319,10 @@ end
 
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
 function constraint_mc_grid_forming_inverter_impedance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
-    index = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:solar_gfmi][i]
-    gen = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:gen][index]
+    index = _PMD.ref(pm, nw, :solar_gfmi, i)
+    gen = _PMD.ref(pm, nw, :gen, index)
     bus_i = gen["gen_bus"]
-    bus = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:bus][bus_i]
+    bus = _PMD.ref(pm, nw, :bus, bus_i)
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
         bus["vm"] = [1 for c in bus["terminals"]]
@@ -355,14 +354,15 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PMD.AbstractUnbalanc
     constraint_grid_formimg_inverter_impedance(pm, nw, index, i, vrstar, vistar, r, x, pmax, cmax)
 end
 
+
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
 function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
-    index = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:solar_gfmi][i]
-    gen = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:gen][i]
+    index = _PMD.ref(pm, nw, :solar_gfmi, i)
+    gen = _PMD.ref(pm, nw, :gen, i)
     bus_i = gen["gen_bus"]
-    bus = pm.ref[:it][_PMD.pmd_it_sym][:nw][nw][:bus][bus_i]
+    bus = _PMD.ref(pm, nw, :bus, bus_i)
     terminals = bus["terminals"]
-    bus["bus_type"] == 5 ? ang = true : ang = false
+    _PMD.ref(pm, nw, :grid_forming, bus_i) ? ang = true : ang = false
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
         vm = [.995 for c in bus["terminals"]]

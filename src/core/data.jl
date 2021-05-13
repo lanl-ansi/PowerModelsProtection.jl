@@ -12,7 +12,6 @@ end
 
 "Adds the result from pf based on model type"
 function add_pf_data!(data::Dict{String,Any}, solver)
-
     if haskey(data, "method") && data["method"] in ["PMD", "solar-pf"]
         @debug "Adding PF results to network"
         result = solve_mc_pf(data, solver)
@@ -62,14 +61,13 @@ end
 "Add the result from pf returning in the engineer model format"
 function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     if result["primal_status"] == FEASIBLE_POINT
-        # println(data["bus_lookup"])
         for (i, bus) in result["solution"]["bus"]
             bus_index = string(data["bus_lookup"][i])
             data["bus"][bus_index]["vr"] = bus["vr"]
             data["bus"][bus_index]["vi"] = bus["vi"]
         end
     else
-        @debug "The model power flow returned infeasible"
+        @warn "The model power flow returned infeasible"
     end
 end
 
