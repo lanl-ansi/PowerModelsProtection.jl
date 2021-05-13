@@ -113,31 +113,16 @@ end
 
 
 "Calculates the current at the faulted bus for multiconductor"
-function constraint_mc_fault_current(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=nw_id_default)
-
-    bus = _PMD.ref(pm, nw, :active_fault, "bus_i")
-    terminals = _PMD.ref(pm, nw, :bus, bus, "terminals")
-    Gf = _PMD.ref(pm, nw, :active_fault, "Gf")
-
+function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int, i::Int, bus::Int, f_connections::Vector{Int}, t_connections::Vector{Int}, Gf::Matrix{<:Real})
     vr = _PMD.var(pm, nw, :vr, bus)
     vi = _PMD.var(pm, nw, :vi, bus)
 
-    _PMD.var(pm, nw)[:cfr] = JuMP.@variable(pm.model,
-        [c in terminals], base_name = "$(nw)_cfr",
-        start = 0
-    )
+    cr = _PMD.var(pm, nw, :cfr, i)
+    ci = _PMD.var(pm, nw, :cfi, i)
 
-    _PMD.var(pm, nw)[:cfi] = JuMP.@variable(pm.model,
-        [c in terminals], base_name = "$(nw)_cfi",
-        start = 0
-    )
-
-    cr = _PMD.var(pm, nw, :cfr)
-    ci = _PMD.var(pm, nw, :cfi)
-
-    for c in terminals
-        JuMP.@constraint(pm.model, cr[c] == sum(Gf[c,d] * vr[d] for d in terminals))
-        JuMP.@constraint(pm.model, ci[c] == sum(Gf[c,d] * vi[d] for d in terminals))
+    for (idx, fc) in enumerate(f_connections)
+        JuMP.@constraint(pm.model, cr[fc] == sum(Gf[idx,jdx] * vr[tc] for (jdx,tc) in enumerate(t_connections)))
+        JuMP.@constraint(pm.model, ci[fc] == sum(Gf[idx,jdx] * vi[tc] for (jdx,tc) in enumerate(t_connections)))
     end
 end
 

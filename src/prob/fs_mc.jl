@@ -37,6 +37,7 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_transformer_current(pm, bounded=false)
     _PMD.variable_mc_generator_current(pm, bounded=false)
 
+    variable_mc_bus_fault_current(pm)
     variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
 
@@ -54,7 +55,9 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     @debug "Adding constraints for synchronous generators"
     constraint_mc_gen_voltage_drop(pm)
 
-    constraint_mc_fault_current(pm)
+    for i in _PMD.ids(pm, :fault)
+        constraint_mc_bus_fault_current(pm, i)
+    end
 
     for (i,bus) in _PMD.ref(pm, :bus)
         constraint_mc_current_balance(pm, i)

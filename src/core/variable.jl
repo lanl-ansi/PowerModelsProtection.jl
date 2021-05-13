@@ -270,3 +270,31 @@ function variable_mc_grid_formimg_inverter(pm::_PMD.AbstractUnbalancedIVRModel; 
     )
 
 end
+
+
+""
+function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, report::Bool=true)
+    cr = _PMD.var(pm, nw)[:cfr] = Dict(
+        i => JuMP.@variable(
+            pm.model,
+            [t in _PMD.ref(pm, nw, :fault, i, "f_connections")],
+            base_name = "$(nw)_cfr",
+            start = 0
+        ) for i in _PMD.ids(pm, nw, :fault)
+    )
+
+    ci = _PMD.var(pm, nw)[:cfi] = Dict(
+        i => JuMP.@variable(
+            pm.model,
+            [t in _PMD.ref(pm, nw, :fault, i, "f_connections")],
+            base_name = "$(nw)_cfr",
+            start = 0
+        ) for i in _PMD.ids(pm, nw, :fault)
+    )
+
+    _PMD.var(pm, nw)[:cfr_bus] = Dict(_PMD.ref(pm, nw, :fault, i, "fault_bus") => cfr for (i, cfr) in cr)
+    _PMD.var(pm, nw)[:cfi_bus] = Dict(_PMD.ref(pm, nw, :fault, i, "fault_bus") => cfi for (i, cfi) in ci)
+
+    report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :fault, :cfr, _PMD.ids(pm, nw, :fault), cr)
+    report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :fault, :cfi, _PMD.ids(pm, nw, :fault), ci)
+end
