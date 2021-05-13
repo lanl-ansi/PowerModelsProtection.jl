@@ -27,7 +27,6 @@ module PowerModelsProtection
     include("io/matpower.jl")
     include("io/opendss.jl")
 
-    include("prob/common.jl")
     include("prob/fs.jl")
     include("prob/fs_mc.jl")
     include("prob/pf_mc.jl")
