@@ -277,7 +277,7 @@ function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::
     cr = _PMD.var(pm, nw)[:cfr] = Dict(
         i => JuMP.@variable(
             pm.model,
-            [t in _PMD.ref(pm, nw, :fault, i, "f_connections")],
+            [t in _PMD.ref(pm, nw, :fault, i, "connections")],
             base_name = "$(nw)_cfr",
             start = 0
         ) for i in _PMD.ids(pm, nw, :fault)
@@ -286,7 +286,7 @@ function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::
     ci = _PMD.var(pm, nw)[:cfi] = Dict(
         i => JuMP.@variable(
             pm.model,
-            [t in _PMD.ref(pm, nw, :fault, i, "f_connections")],
+            [t in _PMD.ref(pm, nw, :fault, i, "connections")],
             base_name = "$(nw)_cfr",
             start = 0
         ) for i in _PMD.ids(pm, nw, :fault)

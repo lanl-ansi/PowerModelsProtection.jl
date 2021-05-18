@@ -414,9 +414,9 @@ end
 ""
 function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
     bus = _PMD.ref(pm, nw, :fault, i, "fault_bus")
-    f_connections = _PMD.ref(pm, nw, :fault, i, "f_connections")
-    t_connections = _PMD.ref(pm, nw, :fault, i, "t_connections")
+    connections = _PMD.ref(pm, nw, :fault, i, "connections")
     Gf = _PMD.ref(pm, nw, :fault, i, "g")
+    Bf = _PMD.ref(pm, nw, :fault, i, "b")
 
-    constraint_mc_bus_fault_current(pm, nw, i, bus, f_connections, t_connections, Gf)
+    constraint_mc_bus_fault_current(pm, nw, i, bus, connections, Gf, Bf)
 end

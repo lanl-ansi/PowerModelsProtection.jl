@@ -113,16 +113,16 @@ end
 
 
 "Calculates the current at the faulted bus for multiconductor"
-function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int, i::Int, bus::Int, f_connections::Vector{Int}, t_connections::Vector{Int}, Gf::Matrix{<:Real})
+function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int, i::Int, bus::Int, connections::Vector{Int}, Gf::Matrix{<:Real}, Bf::Matrix{<:Real})
     vr = _PMD.var(pm, nw, :vr, bus)
     vi = _PMD.var(pm, nw, :vi, bus)
 
     cr = _PMD.var(pm, nw, :cfr, i)
     ci = _PMD.var(pm, nw, :cfi, i)
 
-    for (idx, fc) in enumerate(f_connections)
-        JuMP.@constraint(pm.model, cr[fc] == sum(Gf[idx,jdx] * vr[tc] for (jdx,tc) in enumerate(t_connections)))
-        JuMP.@constraint(pm.model, ci[fc] == sum(Gf[idx,jdx] * vi[tc] for (jdx,tc) in enumerate(t_connections)))
+    for (idx, fc) in enumerate(connections)
+        JuMP.@constraint(pm.model, cr[fc] == sum(Gf[idx,jdx] * vr[tc] for (jdx,tc) in enumerate(connections)))
+        JuMP.@constraint(pm.model, ci[fc] == sum(Gf[idx,jdx] * vi[tc] for (jdx,tc) in enumerate(connections)))
     end
 end
 
@@ -146,7 +146,7 @@ function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel
     cfr = _PMD.var(pm, nw, :cfr, fault)
     cfi = _PMD.var(pm, nw, :cfi, fault)
 
-    fault_conns = _PMD.ref(pm, nw, :fault, fault, "f_connections")
+    fault_conns = _PMD.ref(pm, nw, :fault, fault, "connections")
 
     Gt, Bt = _PMD._build_bus_shunt_matrices(pm, nw, terminals, bus_shunts)
 

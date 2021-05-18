@@ -4,9 +4,17 @@ function _eng2math_fault!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<
         data_math["fault"] = Dict{String,Any}()
     end
 
-    pass_props = ["status", "f_connections", "t_connections", "g", "b"]
+    pass_props = ["status", "connections", "g", "b"]
 
     for (name, eng_obj) in get(data_eng, "fault", Dict())
+        # TODO bug in PMD, kron_reduced not in data_eng, apply by default for now
+        if true # get(data_eng, "kron_reduced", false)
+            # kron reduce g, b, connections
+            # TODO better kr_neutral detection
+            f = _PMD._kron_reduce_branch!(eng_obj, String[], ["g", "b"], eng_obj["connections"], 4)
+            _PMD._apply_filter!(eng_obj, ["connections"], f)
+        end
+
         math_obj = _PMD._init_math_obj("fault", name, eng_obj, length(data_math["fault"])+1; pass_props=pass_props)
 
         math_obj["fault_bus"] = data_math["bus_lookup"][eng_obj["bus"]]
