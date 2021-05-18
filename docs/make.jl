@@ -4,7 +4,7 @@ using PowerModelsProtection
 import Pluto
 import Gumbo
 
-const _FAST = findfist(isequal("--fast"), ARGS) !== nothing
+const _FAST = findfirst(isequal("--fast"), ARGS) !== nothing
 
 makedocs(
     modules = [PowerModelsProtection],
