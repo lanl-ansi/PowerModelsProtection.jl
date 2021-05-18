@@ -9,10 +9,12 @@ function parse_matpower(file::String)
         end
         delete!(pm_data, "gensub")
     else
-        # TODO verify pu values as inputs 
-        for (i,gen) in pm_data["gensub"]
-            pm_data["gen"][i]["rs"] = 0
-            pm_data["gen"][i]["xs"] = .1
+        # TODO verify pu values as inputs
+        if haskey(pm_data, "gen")
+            for (_,gen) in pm_data["gen"]
+                gen["rs"] = 0
+                gen["xs"] = .1
+            end
         end
     end
     return pm_data
