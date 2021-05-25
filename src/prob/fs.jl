@@ -3,15 +3,6 @@ function solve_fault_study(case::Dict{String,Any}, solver; kwargs...)
     data = deepcopy(case)
     check_pf!(data, solver)
 
-    # solution = Dict{String,Any}()
-    # for (i, bus) in data["fault"]
-    #     solution[i] = Dict{Int64,Any}()
-    #     for (f, fault) in bus
-    #         data["active_fault"] = fault
-    #         solution[i][f] = _PM.run_model(data, _PM.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], kwargs...)
-    #     end
-    # end
-
     result = _PM.run_model(data, _PM.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], solution_processors=[solution_fs!], kwargs...)
 
     return result
@@ -23,13 +14,12 @@ function solve_fault_study(case::Dict{String,<:Any}, fault_studies::Dict{String,
     solutions = deepcopy(fault_studies)
 
     data = deepcopy(case)
-    check_pf!(data)
+    check_pf!(data, solver)
 
     for (i,fault) in fault_studies
         data["fault"]["1"] = fault
 
         solutions[i] = _PM.run_model(data, _PM.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], solution_processors=[solution_fs!], kwargs...)
-
     end
 
 
