@@ -18,23 +18,13 @@ end
 
 
 "Calculates the fault current at a bus"
-function constraint_fault_current(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
-    bus = _PM.ref(pm, nw, :active_fault, "bus_i")
-    g = _PM.ref(pm, nw, :active_fault, "gf")
-    vr = _PM.var(pm, nw, :vr, bus)
-    vi = _PM.var(pm, nw, :vi, bus)
+function constraint_bus_fault_current(pm::_PM.AbstractIVRModel, nw::Int, i::Int, fault_bus::Int, g::Real)
+    vr = _PM.var(pm, nw, :vr, fault_bus)
+    vi = _PM.var(pm, nw, :vi, fault_bus)
 
-    _PM.var(pm, nw)[:cfr] = JuMP.@variable(pm.model,
-        [bus], base_name = "$(nw)_cfr",
-        start = 0
-    )
-    _PM.var(pm, nw)[:cfi] = JuMP.@variable(pm.model,
-        [bus], base_name = "$(nw)_cfi",
-        start = 0
-    )
+    cr = _PM.var(pm, nw, :cfr, i)
+    ci = _PM.var(pm, nw, :cfi, i)
 
-    cr = _PM.var(pm, nw, :cfr, bus)
-    ci = _PM.var(pm, nw, :cfi, bus)
     JuMP.@constraint(pm.model, g * vr == cr)
     JuMP.@constraint(pm.model, g * vi == ci)
 end
@@ -65,7 +55,7 @@ end
 
 
 "Calculates the current balance at the faulted bus"
-function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, bus_arcs, bus_gens, bus_gs, bus_bs, bus)
+function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_arcs, bus_gens, bus_gs, bus_bs)
     vr = _PM.var(pm, n, :vr, i)
     vi = _PM.var(pm, n, :vi, i)
 
@@ -75,8 +65,8 @@ function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i, b
     crg =  _PM.var(pm, n, :crg)
     cig =  _PM.var(pm, n, :cig)
 
-    cfr = _PM.var(pm, n, :cfr, bus)
-    cfi = _PM.var(pm, n, :cfi, bus)
+    cfr = _PM.var(pm, n, :cfr_bus, i)
+    cfi = _PM.var(pm, n, :cfi_bus, i)
 
     JuMP.@NLconstraint(pm.model, sum(cr[a] for a in bus_arcs)
                                 ==

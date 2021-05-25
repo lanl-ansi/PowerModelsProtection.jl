@@ -49,6 +49,13 @@ function is_v_inverter(pm, i, nw)
     return gen["inverter_mode"] == "v"
 end
 
+
+""
+function constraint_bus_fault_current(pm::_PM.AbstractIVRModel, i::Int; nw::Int=nw_id_default)
+    constraint_bus_fault_current(pm, nw, i, _PM.ref(pm, nw, :fault, i, "fault_bus"), _PM.ref(pm, nw, :fault, i, "gf"))
+end
+
+
 "generator reactive power setpoint constraint"
 function constraint_mc_gen_power_setpoint_imag(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default, kwargs...)
     qg_set = _PMD.ref(pm, nw, :gen, i, "qg")
@@ -175,7 +182,6 @@ end
 
 "Constraint to calculate the fault current at a bus and the current at other buses"
 function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=nw_id_default)
-    bus = _PM.ref(pm, nw, :bus, i)["bus_i"]
     bus_arcs = _PM.ref(pm, nw, :bus_arcs, i)
     bus_gens = _PM.ref(pm, nw, :bus_gens, i)
     bus_shunts = _PM.ref(pm, nw, :bus_shunts, i)
@@ -183,10 +189,10 @@ function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=
     bus_gs = Dict(k => _PM.ref(pm, nw, :shunt, k, "gs") for k in bus_shunts)
     bus_bs = Dict(k => _PM.ref(pm, nw, :shunt, k, "bs") for k in bus_shunts)
 
-    if bus != _PM.ref(pm, nw, :active_fault, "bus_i")
-        constraint_current_balance(pm, nw, i, bus_arcs, bus_gens, bus_gs, bus_bs)
+    if i in _PM.ids(pm, nw, :fault_buses)
+        constraint_fault_current_balance(pm, nw, i, bus_arcs, bus_gens, bus_gs, bus_bs)
     else
-        constraint_fault_current_balance(pm, nw, i, bus_arcs, bus_gens, bus_gs, bus_bs, bus)
+        constraint_current_balance(pm, nw, i, bus_arcs, bus_gens, bus_gs, bus_bs)
     end
 end
 

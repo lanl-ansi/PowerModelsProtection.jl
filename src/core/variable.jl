@@ -90,6 +90,28 @@ end
 
 
 ""
+function variable_bus_fault_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, report::Bool=true)
+    cr = _PM.var(pm, nw)[:cfr] = JuMP.@variable(pm.model,
+        [i in _PM.ids(pm, nw, :fault)], base_name="$(nw)_cfr",
+        start = _PM.comp_start_value(_PM.ref(pm, nw, :fault, i), "cfr_start", 0.0)
+    )
+    ci = _PM.var(pm, nw)[:cfi] = JuMP.@variable(pm.model,
+        [i in _PM.ids(pm, nw, :fault)], base_name="$(nw)_cfi",
+        start = _PM.comp_start_value(_PM.ref(pm, nw, :fault, i), "cfi_start", 0.0)
+    )
+
+    cr_bus = _PM.var(pm, nw)[:cfr_bus] = Dict(_PM.ref(pm, nw, :fault, i, "fault_bus") => _PM.var(pm, nw, :cfr, i) for i in _PM.ids(pm, nw, :fault))
+    ci_bus = _PM.var(pm, nw)[:cfi_bus] = Dict(_PM.ref(pm, nw, :fault, i, "fault_bus") => _PM.var(pm, nw, :cfi, i) for i in _PM.ids(pm, nw, :fault))
+
+    report && _IM.sol_component_value(pm, _PM.pm_it_sym, nw, :fault, :cfr, _PM.ids(pm, nw, :fault), cr)
+    report && _IM.sol_component_value(pm, _PM.pm_it_sym, nw, :fault, :cfi, _PM.ids(pm, nw, :fault), ci)
+
+    report && _IM.sol_component_value(pm, _PM.pm_it_sym, nw, :bus, :cfr_bus, _PM.ids(pm, nw, :fault_buses), cr_bus)
+    report && _IM.sol_component_value(pm, _PM.pm_it_sym, nw, :bus, :cfi_bus, _PM.ids(pm, nw, :fault_buses), ci_bus)
+end
+
+
+""
 function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     p_int = _PM.var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in pq_gen_ids(pm, nw)], base_name = "$(nw)_p_int_$(i)",

@@ -1,33 +1,10 @@
 @testset "Balanced fault study" begin
     @testset "5-bus fault example" begin
-        data = PM.parse_file("../test/data/trans/case5_fault.m", import_all=true)
+        data = parse_file("../test/data/trans/case5_fault.m"; flat_start=true, neglect_line_charging=true, neglect_transformer=true, zero_gen_setpoints=true)
 
-        # use flat start
-        for (i, b) in data["bus"]
-            b["vm"] = 1
-            b["va"] = 0
-            b["vmax"] = 2
-            b["vmin"] = 0
-        end
+        add_fault!(data, 1, 2, 0.0001)
 
-        # neglect line charging
-        for (k, br) in data["branch"]
-            br["b_fr"] = 0
-            br["b_to"] = 0
-            br["tap"] = 1
-            br["shift"] = 0
-        end
-
-        for (k, g) in data["gen"]
-            g["pg"] = 0
-            g["qg"] = 0
-        end
-
-        data["fault"] = Dict{String,Any}()
-        data["fault"]["1"] = Dict("bus" => 2, "r" => 0.0001)
-        study_results = run_fault_study(data, ipopt_solver)
-        result = study_results["2"][1]
-        solution = result["solution"]
+        result = solve_fault_study(data, ipopt_solver)
 
         @test result["termination_status"] == LOCALLY_SOLVED
 
@@ -45,29 +22,11 @@
     end
 
     @testset "3-bus fault example with inverter" begin
-        data = PM.parse_file("../test/data/trans/case3_fault_inverter.m", import_all=true)
+        data = parse_file("../test/data/trans/case3_fault_inverter.m"; flat_start=true, neglect_line_charging=true)
 
-        # use flat start
-        # use flat start
-        for (i, b) in data["bus"]
-            b["vm"] = 1
-            b["va"] = 0
-            b["vmax"] = 2
-            b["vmin"] = 0
-        end
+        add_fault!(data, 1, 2, 0.0001)
 
-
-        # neglect line charging
-        for (k, br) in data["branch"]
-            br["b_fr"] = 0
-            br["b_to"] = 0
-        end
-
-        data["fault"] = Dict{String,Any}()
-        data["fault"]["1"] = Dict("bus" => 2, "r" => 0.0001)
-        study_results = run_fault_study(data, ipopt_solver)
-        result = study_results["2"][1]
-        solution = result["solution"]
+        result = solve_fault_study(data, ipopt_solver)
 
         @test result["termination_status"] == LOCALLY_SOLVED
 

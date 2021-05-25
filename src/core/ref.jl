@@ -6,7 +6,8 @@ end
 
 "Adds the fault to the model"
 function _ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
-    ref[:active_fault] = data["active_fault"]
+    ref[:fault] = Dict(x for x in get(ref, :fault, Dict{Int,Any}()) if x.second["status"] != 0)
+    ref[:fault_buses] = Dict{Int,Int}(x.second["fault_bus"] => x.first for x in ref[:fault])
 end
 
 

@@ -72,45 +72,31 @@ end
 
 
 ""
-function add_fault_data!(data::Dict{String,Any})
-    if haskey(data, "fault")
-        add_fault!(data)
-    else
-        add_fault_study!(data)
-    end
-end
+function build_fault_studies(data::Dict{String,<:Any}; default_fault_resistance::Real=0.0001)::Dict{String,Any}
+    fault_studies = Dict{String,Any}()
 
-
-"Add single fault data to model"
-function add_fault!(data::Dict{String,Any})
-    hold = deepcopy(data["fault"])
-    data["fault"] = Dict{String,Any}()
-    for (k, fault) in hold
+    if haskey(data, "bus")
         for (i, bus) in data["bus"]
-            if bus["index"] == fault["bus"]
-                add_fault!(data, bus, i, fault["r"])
-            end
+            fault_studies[i] = add_fault!(Dict{String,Any}(), parse(Int, i), bus["bus_i"], default_fault_resistance)
         end
     end
+
+    return fault_studies
 end
 
 
-"Add study fault data to model"
-function add_fault_study!(data::Dict{String,Any})
-    data["fault"] = Dict{String,Any}()
-    for (i, bus) in data["bus"]
-        data["fault"][i] = Dict{String,Any}()
-        add_fault!(data, bus, i, 0.0001)
+""
+function  add_fault!(data::Dict{String,<:Any}, id::Int, bus_i::Int, resistance::Real)
+    if !haskey(data, "fault")
+        data["fault"] = Dict{String,Any}()
     end
-end
 
-
-"Add single fault data to model for study"
-function add_fault!(data::Dict{String,Any}, bus::Dict{String,Any}, i::String, resistance=0.0001)
-    gf = max(1 / resistance, 1e-6)
-    haskey(data["fault"], i) || (data["fault"][i] = Dict{Int,Any}())
-    index = length(keys(data["fault"][i])) + 1
-    data["fault"][i][index] = Dict("bus_i" => bus["bus_i"], "gf" => gf)
+    data["fault"]["$id"] = Dict{String,Any}(
+        "fault_bus" => bus_i,
+        "gf" => max(1 / resistance, 1e-6),
+        "status" => 1,
+        "index" => id,
+    )
 end
 
 
@@ -194,6 +180,67 @@ function check_microgrid!(data::Dict{String,Any})
             end
             delete!(data["bus"], index_bus)
             delete!(data["gen"], index_gen)
+        end
+    end
+end
+
+
+""
+function prepare_transmission_data!(
+    data::Dict{String,<:Any};
+    flat_start::Bool=false,
+    neglect_line_charging::Bool=false,
+    neglect_transformer::Bool=false,
+    zero_gen_setpoints::Bool=false)
+
+    flat_start && flat_start!(data)
+    neglect_line_charging && neglect_line_charging!(data)
+    neglect_transformer && neglect_transformer!(data)
+    zero_gen_setpoints && zero_gen_setpoints!(data)
+end
+
+
+""
+function flat_start!(data::Dict{String,<:Any})
+    if haskey(data, "bus")
+        for (_,b) in data["bus"]
+            b["vm"] = 1
+            b["va"] = 0
+            b["vmax"] = 2
+            b["vmin"] = 0
+        end
+    end
+end
+
+
+""
+function neglect_line_charging!(data::Dict{String,<:Any})
+    if haskey(data, "branch")
+        for (_,br) in data["branch"]
+            br["b_fr"] = 0
+            br["b_to"] = 0
+        end
+    end
+end
+
+
+""
+function neglect_transformer!(data::Dict{String,<:Any})
+    if haskey(data, "branch")
+        for (_,br) in data["branch"]
+            br["tap"] = 1
+            br["shift"] = 0
+        end
+    end
+end
+
+
+""
+function zero_gen_setpoints!(data::Dict{String,<:Any})
+    if haskey(data, "gen")
+        for (_,g) in data["gen"]
+            g["pg"] = 0
+            g["qg"] = 0
         end
     end
 end
