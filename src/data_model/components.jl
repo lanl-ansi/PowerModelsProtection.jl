@@ -1,16 +1,27 @@
-""
+"""
+    create_fault(type::String, bus::String, connections::Vector{Int}, resistance::Real, phase_resistance::Real)::Dict{String,Any}
+
+Creates a fault dictionary given the `type` of fault, i.e., one of "3pq", "llg", the `bus` on which the fault is active,
+the `connections` on which the fault applies, the `resistance` between the phase and ground, and the `phase_resistance`
+between phases
+"""
 function create_fault(type::String, bus::String, connections::Vector{Int}, resistance::Real, phase_resistance::Real)::Dict{String,Any}
     return getfield(PowerModelsProtection, Symbol("_create_$(type)_fault"))(bus, connections, resistance, phase_resistance)
 end
 
 
-""
+"""
+    create_fault(type::String, bus::String, connections::Vector{Int}, resistance::Real, phase_resistance::Real)::Dict{String,Any}
+
+Creates a fault dictionary given the `type` of fault, i.e., one of "3p", "ll", "lg", the `bus` on which the fault is active,
+the `connections` on which the fault applies, the `resistance` between the phase and ground, in the case of "lg", or phase and phase.
+"""
 function create_fault(type::String, bus::String, connections::Vector{Int}, resistance::Real)::Dict{String,Any}
     return getfield(PowerModelsProtection, Symbol("_create_$(type)_fault"))(bus, connections, resistance)
 end
 
 
-""
+"creates a three-phase fault"
 function _create_3p_fault(bus::String, connections::Vector{Int}, phase_resistance::Real)::Dict{String,Any}
     @assert length(connections) == 3
     ncnds = length(connections)
@@ -37,7 +48,7 @@ function _create_3p_fault(bus::String, connections::Vector{Int}, phase_resistanc
 end
 
 
-""
+"creates a three-phase-ground fault"
 function _create_3pg_fault(bus::String, connections::Vector{Int}, resistance::Real, phase_resistance::Real)::Dict{String,Any}
     @assert length(connections) == 4
     ncnds = length(connections)
@@ -79,7 +90,7 @@ function _create_3pg_fault(bus::String, connections::Vector{Int}, resistance::Re
 end
 
 
-""
+"creates a line-line fault"
 function _create_ll_fault(bus::String, connections::Vector{Int}, phase_resistance::Real)::Dict{String,Any}
     @assert length(connections) == 2
     ncnds = length(connections)
@@ -106,7 +117,7 @@ function _create_ll_fault(bus::String, connections::Vector{Int}, phase_resistanc
 end
 
 
-""
+"creates a line-line-ground fault"
 function _create_llg_fault(bus::String, connections::Vector{Int}, resistance::Real, phase_resistance::Real)::Dict{String,Any}
     @assert length(connections) == 3
     ncnds = length(connections)
@@ -148,7 +159,7 @@ function _create_llg_fault(bus::String, connections::Vector{Int}, resistance::Re
 end
 
 
-""
+"creates a line-ground fault"
 function _create_lg_fault(bus::String, connections::Vector{Int}, resistance::Real)::Dict{String,Any}
     @assert length(connections) == 2
     ncnds = length(connections)
@@ -175,7 +186,13 @@ function _create_lg_fault(bus::String, connections::Vector{Int}, resistance::Rea
 end
 
 
-""
+"""
+    add_fault!(data::Dict{String,Any}, name::String, type::String, bus::String, connections::Vector{Int}, resistance::Real, phase_resistance::Real)
+
+Creates a fault dictionary given the `type` of fault, i.e., one of "3p", "ll", "lg", the `bus` on which the fault is active,
+the `connections` on which the fault applies, the `resistance` between the phase and ground, in the case of "lg", or phase and phase,
+and adds it to `data["fault"]` under `"name"`
+"""
 function add_fault!(data::Dict{String,Any}, name::String, type::String, bus::String, connections::Vector{Int}, resistance::Real, phase_resistance::Real)
     if !haskey(data, "fault")
         data["fault"] = Dict{String,Any}()
@@ -188,7 +205,13 @@ function add_fault!(data::Dict{String,Any}, name::String, type::String, bus::Str
 end
 
 
-""
+"""
+    add_fault!(data::Dict{String,Any}, name::String, type::String, bus::String, connections::Vector{Int}, resistance::Real)
+
+Creates a fault dictionary given the `type` of fault, i.e., one of "3pq", "llg", the `bus` on which the fault is active,
+the `connections` on which the fault applies, the `resistance` between the phase and ground, and the `phase_resistance`
+between phases, and adds it to `data["fault"]` under `"name"`
+"""
 function add_fault!(data::Dict{String,Any}, name::String, type::String, bus::String, connections::Vector{Int}, resistance::Real)
     if !haskey(data, "fault")
         data["fault"] = Dict{String,Any}()

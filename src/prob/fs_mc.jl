@@ -1,10 +1,15 @@
-"Runs the mc fault study"
+"""
+    solve_mc_fault_study(case::Dict{String,<:Any}, solver; kwargs...)
+
+Function to solve a multiconductor (distribution) fault study given a data set `case` and optimization `solver`
+
+`kwargs` can be any valid keyword argument for PowerModelsDistribution's `solve_mc_model`
+"""
 function solve_mc_fault_study(case::Dict{String,<:Any}, solver; kwargs...)
     data = deepcopy(case)
 
     # TODO can this be moved?
     check_microgrid!(data)
-
 
     solution = _PMD.solve_mc_model(
         data,
@@ -26,13 +31,21 @@ function solve_mc_fault_study(case::Dict{String,<:Any}, solver; kwargs...)
 end
 
 
-"Call to run fs on file"
+"""
+    solve_mc_fault_study(file::String, solver; kwargs...)
+
+Given a `file`, parses the file, and runs the fault study.
+"""
 function solve_mc_fault_study(file::String, solver; kwargs...)
     return solve_mc_fault_study(parse_file(file), solver; kwargs...)
 end
 
 
-"run series of fault studies"
+"""
+    solve_mc_fault_study(case::Dict{String,<:Any}, fault_studies::Dict{String,<:Any}, solver; kwargs...)
+
+Solves a series of fault studies given by `fault_studies`, e.g., built from [`build_mc_fault_studies`](@ref build_mc_fault_studies).
+"""
 function solve_mc_fault_study(case::Dict{String,<:Any}, fault_studies::Dict{String,<:Any}, solver; kwargs...)
     results = deepcopy(fault_studies)
 
@@ -51,7 +64,7 @@ function solve_mc_fault_study(case::Dict{String,<:Any}, fault_studies::Dict{Stri
 end
 
 
-"Build mc fault study"
+"Builds a multiconductor (distribution) fault study optimization problem"
 function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     @debug "Building fault study"
     _PMD.variable_mc_bus_voltage(pm, bounded=false)

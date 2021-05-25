@@ -71,7 +71,26 @@ function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
 end
 
 
-""
+"""
+    build_fault_studies(data::Dict; default_fault_resistance::Real=0.0001)
+
+Builds a dictionary of fault studies on a transmission (single-phase positive sequence) network
+that are intended to be used in conjunction with [`solve_fault_study`](@ref solve_fault_study).
+
+The function will iterate over all buses and create faults using the default fault resistance.
+The fault study dictionary will have the following structure:
+
+```julia
+    Dict{String,Any}(
+        "bus_i" => Dict{String,Any}(
+            "fault_bus" => bus_i
+            "gf" => 1 / resistance,
+            "status" => 1
+        ),
+        ...
+    )
+```
+"""
 function build_fault_studies(data::Dict{String,<:Any}; default_fault_resistance::Real=0.0001)::Dict{String,Any}
     fault_studies = Dict{String,Any}()
 
@@ -85,7 +104,11 @@ function build_fault_studies(data::Dict{String,<:Any}; default_fault_resistance:
 end
 
 
-""
+"""
+    add_fault!(data::Dict, fault_id::Int, bus_id::Int, resistance::Real)
+
+Helper function to add a fault using a fault resistance to a transmission data set.
+"""
 function  add_fault!(data::Dict{String,<:Any}, id::Int, bus_i::Int, resistance::Real)
     if !haskey(data, "fault")
         data["fault"] = Dict{String,Any}()
@@ -100,7 +123,11 @@ function  add_fault!(data::Dict{String,<:Any}, id::Int, bus_i::Int, resistance::
 end
 
 
-"Add all fault type data to model for study for multiconductor"
+"""
+    build_mc_fault_studies(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
+
+Add all fault type data to model for study for multiconductor networks
+"""
 function build_mc_fault_studies(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
     # TODO better detection of neutral vs ground phases, ground is currently hardcoded as 4
 
@@ -185,7 +212,25 @@ function check_microgrid!(data::Dict{String,Any})
 end
 
 
-""
+"""
+    prepare_transmission_data!(
+        data::Dict{String,<:Any};
+        flat_start::Bool=false,
+        neglect_line_charging::Bool=false,
+        neglect_transformer::Bool=false,
+        zero_gen_setpoints::Bool=false
+    )
+
+Helper function to help perform some common data preparation tasks on transmission data sets.
+
+Includes the following action options
+
+- [`flat_start!`](@ref flat_start!)
+- [`neglect_line_charging!`](@ref neglect_line_charging!)
+- [`neglect_transformer!`](@ref neglect_transformer!)
+- [`zero_gen_setpoints!`](@ref zero_gen_setpoints!)
+
+"""
 function prepare_transmission_data!(
     data::Dict{String,<:Any};
     flat_start::Bool=false,
@@ -200,7 +245,11 @@ function prepare_transmission_data!(
 end
 
 
-""
+"""
+    flat_start!(data::Dict{String,<:Any})
+
+Sets bus voltage magnitudes to one, and voltage angles to zero, and widens bounds on voltage magnitude to [0,2]
+"""
 function flat_start!(data::Dict{String,<:Any})
     if haskey(data, "bus")
         for (_,b) in data["bus"]
@@ -213,7 +262,11 @@ function flat_start!(data::Dict{String,<:Any})
 end
 
 
-""
+"""
+    neglect_line_charging!(data::Dict{String,<:Any})
+
+Sets b_fr and b_to on branches to zero
+"""
 function neglect_line_charging!(data::Dict{String,<:Any})
     if haskey(data, "branch")
         for (_,br) in data["branch"]
@@ -224,7 +277,11 @@ function neglect_line_charging!(data::Dict{String,<:Any})
 end
 
 
-""
+"""
+    neglect_transformer!(data::Dict{String,<:Any})
+
+Sets tap to one and shift to zero on all branches
+"""
 function neglect_transformer!(data::Dict{String,<:Any})
     if haskey(data, "branch")
         for (_,br) in data["branch"]
@@ -235,7 +292,11 @@ function neglect_transformer!(data::Dict{String,<:Any})
 end
 
 
-""
+"""
+    zero_gen_setpoints!(data::Dict{String,<:Any})
+
+Sets pg and qg to zero on all generators
+"""
 function zero_gen_setpoints!(data::Dict{String,<:Any})
     if haskey(data, "gen")
         for (_,g) in data["gen"]

@@ -1,4 +1,4 @@
-""
+"helper function to build extra dynamics information for pvsystem objects"
 function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     if haskey(data_eng, "solar")
         for (id,solar) in data_eng["solar"]
@@ -16,7 +16,7 @@ function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{S
 end
 
 
-""
+"helper function to build extra dynamics information for generator or vsource objects"
 function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
    if haskey(data_eng, "generator")
         for (id, generator) in data_eng["generator"]

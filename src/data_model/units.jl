@@ -1,4 +1,4 @@
-""
+"function to rebase units into pu on fault objects"
 function _rebase_pu_fault!(nw::Dict{String,<:Any}, data_math::Dict{String,<:Any}, bus_vbase, line_vbase, sbase::Real, sbase_old::Real, voltage_scale_factor)
     if haskey(nw, "fault")
         for (_,fault) in nw["fault"]
@@ -12,7 +12,7 @@ function _rebase_pu_fault!(nw::Dict{String,<:Any}, data_math::Dict{String,<:Any}
 end
 
 
-""
+"function to rebase extra fields for generator dynamics into per unit"
 function _rebase_pu_gen_dynamics!(nw::Dict{String,<:Any}, data_math::Dict{String,<:Any}, bus_vbase, line_vbase, sbase::Real, sbase_old::Real, voltage_scale_factor)
     if haskey(nw, "gen")
         for (_,gen) in nw["gen"]
@@ -28,7 +28,7 @@ function _rebase_pu_gen_dynamics!(nw::Dict{String,<:Any}, data_math::Dict{String
 end
 
 
-""
+"pointers for fields to get unit transformations back to si units in solutions"
 const _pmp_dimensionalize_math_extensions = Dict{String,Dict{String,Vector{String}}}(
     "branch" => Dict{String,Vector{String}}(
         "ibase" => String["csr_fr", "csi_fr", "fault_current"]
@@ -39,7 +39,7 @@ const _pmp_dimensionalize_math_extensions = Dict{String,Dict{String,Vector{Strin
 )
 
 
-""
+"helper function to convert fault object units back into si units"
 function make_fault_si!(nw_sol::Dict{String,<:Any}, nw_data::Dict{String,<:Any}, solution::Dict{String,<:Any}, math_model::Dict{String,<:Any})
     if haskey(nw_sol, "fault")
         for (id,fault) in nw_sol["fault"]

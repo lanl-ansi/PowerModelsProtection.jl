@@ -50,7 +50,7 @@ function is_v_inverter(pm, i, nw)
 end
 
 
-""
+"constraint for the fault current at the fault_bus"
 function constraint_bus_fault_current(pm::_PM.AbstractIVRModel, i::Int; nw::Int=nw_id_default)
     constraint_bus_fault_current(pm, nw, i, _PM.ref(pm, nw, :fault, i, "fault_bus"), _PM.ref(pm, nw, :fault, i, "gf"))
 end

@@ -8,7 +8,7 @@ function variable_branch_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default
 end
 
 
-""
+"builds generator variables for transmission networks"
 function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
     _PM.variable_gen_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PM.variable_gen_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
@@ -71,25 +71,25 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, b
 end
 
 
-""
+"helper function to get gen ids of 'pq' gens"
 function pq_gen_ids(pm, nw)
     return [i for (i, gen) in _PM.ref(pm, nw, :gen) if gen["inverter_mode"] == "pq"]
 end
 
 
-""
+"helper function to get gen dict of 'pq' gens"
 function pq_gen_vals(pm, nw)
     return [gen for (i, gen) in _PM.ref(pm, nw, :gen) if gen["inverter_mode"] == "pq"]
 end
 
 
-""
+"helper function to get gen ref of 'pq' gens"
 function pq_gen_refs(pm, nw)
     return [(i, gen) for (i, gen) in _PM.ref(pm, nw, :gen) if gen["inverter_mode"] == "pq"]
 end
 
 
-""
+"fault current variables for active faults"
 function variable_bus_fault_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, report::Bool=true)
     cr = _PM.var(pm, nw)[:cfr] = JuMP.@variable(pm.model,
         [i in _PM.ids(pm, nw, :fault)], base_name="$(nw)_cfr",
@@ -111,7 +111,7 @@ function variable_bus_fault_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_defa
 end
 
 
-""
+"variables for pq inverters"
 function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     p_int = _PM.var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in pq_gen_ids(pm, nw)], base_name = "$(nw)_p_int_$(i)",
@@ -154,7 +154,7 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, b
 end
 
 
-""
+"variables for multiconductor pq inverters"
 function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     p_int = _PMD.var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_p_int_$(i)",
@@ -227,7 +227,7 @@ function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw
 end
 
 
-""
+"variables for multiconductor grid forming inverters"
 function variable_mc_grid_formimg_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     terminals = Dict(gfmi => _PMD.ref(pm, nw, :bus, bus)["terminals"] for (gfmi,bus) in _PMD.ref(pm, nw, :solar_gfmi))
 
@@ -294,7 +294,7 @@ function variable_mc_grid_formimg_inverter(pm::_PMD.AbstractUnbalancedIVRModel; 
 end
 
 
-""
+"variables for multiconductor fault currents for active faults"
 function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, report::Bool=true)
     cr = _PMD.var(pm, nw)[:cfr] = Dict(
         i => JuMP.@variable(
@@ -314,9 +314,12 @@ function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::
         ) for i in _PMD.ids(pm, nw, :fault)
     )
 
-    _PMD.var(pm, nw)[:cfr_bus] = Dict(_PMD.ref(pm, nw, :fault, i, "fault_bus") => cfr for (i, cfr) in cr)
-    _PMD.var(pm, nw)[:cfi_bus] = Dict(_PMD.ref(pm, nw, :fault, i, "fault_bus") => cfi for (i, cfi) in ci)
+    cr_bus = _PMD.var(pm, nw)[:cfr_bus] = Dict(_PMD.ref(pm, nw, :fault, i, "fault_bus") => cfr for (i, cfr) in cr)
+    ci_bus = _PMD.var(pm, nw)[:cfi_bus] = Dict(_PMD.ref(pm, nw, :fault, i, "fault_bus") => cfi for (i, cfi) in ci)
 
     report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :fault, :cfr, _PMD.ids(pm, nw, :fault), cr)
     report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :fault, :cfi, _PMD.ids(pm, nw, :fault), ci)
+
+    report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :bus, :cfr_bus, _PMD.ids(pm, nw, :fault_buses), cr_bus)
+    report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :bus, :cfi_bus, _PMD.ids(pm, nw, :fault_buses), ci_bus)
 end

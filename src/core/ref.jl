@@ -54,13 +54,13 @@ function _ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
 end
 
 
-"idenifies grid forming buses"
+"identifies grid forming buses"
 function ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_grid_forming_bus!, ref, data; apply_to_subnetworks=true)
 end
 
 
-""
+"identifies grid forming buses"
 function _ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     grid_forming_buses = Set([gen["gen_bus"] for (_,gen) in ref[:gen] if get(gen, "grid_forming", false)])
     ref[:grid_forming] = Dict{Int,Bool}(i => i in grid_forming_buses for (i,_) in ref[:bus])

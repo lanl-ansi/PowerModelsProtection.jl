@@ -1,4 +1,4 @@
-""
+"helper function to transformer fault objects from ENGINEERING to MATHEMATICAL data models"
 function _eng2math_fault!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
     if !haskey(data_math, "fault")
         data_math["fault"] = Dict{String,Any}()
@@ -31,6 +31,7 @@ function _eng2math_fault!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<
 end
 
 
+"field/values to passthrough from the ENGINEERING to MATHEMATICAL data models"
 const _pmp_eng2math_passthrough = Dict{String,Vector{String}}(
         "generator" => String["zr", "zx", "grid_forming"],
         "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming"],
@@ -38,6 +39,7 @@ const _pmp_eng2math_passthrough = Dict{String,Vector{String}}(
     )
 
 
+"custom version of `transform_data_model` from PowerModelsDistribution for easy model transformation"
 transform_data_model(
     data::Dict{String,<:Any};
     eng2math_extensions::Vector{<:Function}=Function[],

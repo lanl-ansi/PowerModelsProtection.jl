@@ -349,6 +349,7 @@ function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalanc
     # JuMP.@constraint(pm.model, p <= pmax)
 end
 
+
 "Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
 function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw, i, bus_id, vr0, vi0, pmax, cmax, smax, ang, terminals)
     vr = _PMD.var(pm, nw, :vr, bus_id)
@@ -402,6 +403,7 @@ function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.Abstract
     JuMP.@constraint(pm.model, p <= pmax)
     JuMP.@constraint(pm.model, p >= -pmax)
 end
+
 
 "Constraints for fault current inverter with current set point"
 function constraint_mc_i_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i, bus_id, pg, qg, cmax)
