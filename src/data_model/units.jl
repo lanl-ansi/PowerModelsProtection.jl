@@ -31,7 +31,7 @@ end
 "pointers for fields to get unit transformations back to si units in solutions"
 const _pmp_dimensionalize_math_extensions = Dict{String,Dict{String,Vector{String}}}(
     "branch" => Dict{String,Vector{String}}(
-        "ibase" => String["csr_fr", "csi_fr", "fault_current"]
+        "ibase" => String["csr_fr", "csi_fr", "fault_current", "cf0", "cf1", "cf2"]
     ),
     "bus" => Dict{String,Vector{String}}(
         "ibase" => String["cfr_bus", "cfi_bus"]

@@ -103,6 +103,7 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
         _PMD.constraint_mc_current_from(pm, i)
         _PMD.constraint_mc_current_to(pm, i)
         _PMD.constraint_mc_bus_voltage_drop(pm, i)
+        expression_mc_branch_fault_sequence_current(pm, i)
     end
 
     for i in _PMD.ids(pm, :switch)
