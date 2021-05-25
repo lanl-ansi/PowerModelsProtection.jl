@@ -17,7 +17,7 @@ function solve_fault_study(case::Dict{String,<:Any}, fault_studies::Dict{String,
     check_pf!(data, solver)
 
     for (i,fault) in fault_studies
-        data["fault"]["1"] = fault
+        data["fault"] = Dict{String,Any}("1" => fault)
 
         solutions[i] = _PM.run_model(data, _PM.IVRPowerModel, solver, build_fault_study; ref_extensions=[ref_add_fault!], solution_processors=[solution_fs!], kwargs...)
     end
