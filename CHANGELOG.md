@@ -15,6 +15,7 @@
 - Updated documentation, and added tutorials in `examples`, which adds Pluto and Gumbo dependencies to the documentation builds
 - Refactored all functions related to Distribution data models so that the ENGINEERING data model is used by default
 - Removed dependencies on Memento, JSON (this was unused in current code-base)
+- Added `parse_json` for parsing outputs from e.g. `build_mc_fault_studies` saved as JSON, which contains matrices and Enums whose format needs to be corrected
 
 ## v0.2.0
 
