@@ -11,7 +11,7 @@ function _solution_fs!(sol::Dict{String,<:Any})
             if haskey(branch, "csr_fr") && haskey(branch, "csi_fr")
                 branch["fault_current"] = sqrt.(branch["csr_fr"].^2 + branch["csi_fr"].^2)
                 if length(branch["csr_fr"]) == 3
-                    branch["zero_sequence_current"] = sqrt.((1/3*sum(branch["csr_fr"]))^2 + (1/3*sum(branch["csi_fr"]))^2)
+                    branch["zero_sequence_current"] = abs(sum(branch["csr_fr"] + 1im*branch["csi_fr"]))/3
                 end
             end
         end
@@ -22,7 +22,7 @@ function _solution_fs!(sol::Dict{String,<:Any})
             if haskey(fault, "cfr") && haskey(fault, "cfi")
                 fault["fault_current"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
                 if length(fault["cfr"]) == 3
-                    fault["zero_sequence_current"] = sqrt.((1/3*sum(fault["cfr"]))^2 + (1/3*sum(fault["cfi"]))^2)
+                    branch["zero_sequence_current"] = abs(sum(branch["csr_fr"] + 1im*branch["csi_fr"]))/3
                 end
             end
         end
@@ -38,7 +38,7 @@ function _solution_fs!(sol::Dict{String,<:Any})
             if haskey(bus, "cfr_bus") && haskey(bus, "cfi_bus")
                 bus["fault_current"] = sqrt.(bus["cfr_bus"].^2 + bus["cfi_bus"].^2)
                 if length(bus["cfr_bus"]) == 3
-                    bus["zero_sequence_current"] = sqrt.((1/3*sum(bus["cfr_bus"]))^2 + (1/3*sum(bus["cfi_bus"]))^2)
+                    branch["zero_sequence_current"] = abs(sum(branch["csr_fr"] + 1im*branch["csi_fr"]))/3
                 end
             end
         end
