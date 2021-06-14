@@ -33,15 +33,15 @@ function _solution_fs!(sol::Dict{String,<:Any})
             if haskey(fault, "cfr") && haskey(fault, "cfi")
                 fault["fault_current"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
                 if length(fault["cfr"]) == 3
-					Iabc = branch["csr_fr"] + 1im*branch["csi_fr"]
+					Iabc = fault["cfr"] + 1im*fault["cfi"]
 					I012 = Ai*Iabc
-                    branch["zero_sequence_current"] = I012[1]
-					branch["positive_sequence_current"] = I012[2]
-					branch["negative_sequence_current"] = I012[3]
+                    fault["zero_sequence_current"] = I012[1]
+					fault["positive_sequence_current"] = I012[2]
+					fault["negative_sequence_current"] = I012[3]
 					
-                    branch["zero_sequence_current_mag"] = abs(I012[1])
-					branch["positive_sequence_current_mag"] = abs(I012[2])
-					branch["negative_sequence_current_mag"] = abs(I012[3])					
+                    fault["zero_sequence_current_mag"] = abs(I012[1])
+					fault["positive_sequence_current_mag"] = abs(I012[2])
+					fault["negative_sequence_current_mag"] = abs(I012[3])					
                 end
             end
         end
@@ -57,15 +57,15 @@ function _solution_fs!(sol::Dict{String,<:Any})
             if haskey(bus, "cfr_bus") && haskey(bus, "cfi_bus")
                 bus["fault_current"] = sqrt.(bus["cfr_bus"].^2 + bus["cfi_bus"].^2)
                 if length(bus["cfr_bus"]) == 3
-					Iabc = branch["csr_fr"] + 1im*branch["csi_fr"]
+					Iabc = bus["cfr_bus"] + 1im*bus["cfi_bus"]
 					I012 = Ai*Iabc
-                    branch["zero_sequence_current"] = I012[1]
-					branch["positive_sequence_current"] = I012[2]
-					branch["negative_sequence_current"] = I012[3]
+                    bus["zero_sequence_current"] = I012[1]
+					bus["positive_sequence_current"] = I012[2]
+					bus["negative_sequence_current"] = I012[3]
 					
-                    branch["zero_sequence_current_mag"] = abs(I012[1])
-					branch["positive_sequence_current_mag"] = abs(I012[2])
-					branch["negative_sequence_current_mag"] = abs(I012[3])					
+                    bus["zero_sequence_current_mag"] = abs(I012[1])
+					bus["positive_sequence_current_mag"] = abs(I012[2])
+					bus["negative_sequence_current_mag"] = abs(I012[3])					
                 end
             end
         end
