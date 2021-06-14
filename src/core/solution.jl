@@ -28,6 +28,29 @@ function _solution_fs!(sol::Dict{String,<:Any})
         end
     end
 
+    if haskey(sol, "switch")
+        for (_,switch) in sol["switch"]
+            if haskey(switch, "csrsw_fr") && haskey(switch, "csisw_fr")
+                switch["fault_current"] = sqrt.(switch["csrsw_fr"].^2 + switch["csisw_fr"].^2)
+                if length(switch["csrsw_fr"]) == 3
+					Iabc = switch["csrsw_fr"] + 1im*switch["csisw_fr"]
+					I012 = Ai*Iabc
+                    switch["zero_sequence_current_real"] = real(I012[1])
+					switch["positive_sequence_current_real"] = real(I012[2])
+					switch["negative_sequence_current_real"] = real(I012[3])
+
+                    switch["zero_sequence_current_imag"] = imag(I012[1])
+					switch["positive_sequence_current_imag"] = imag(I012[2])
+					switch["negative_sequence_current_imag"] = imag(I012[3])
+
+                    switch["zero_sequence_current_mag"] = abs(I012[1])
+					switch["positive_sequence_current_mag"] = abs(I012[2])
+					switch["negative_sequence_current_mag"] = abs(I012[3])
+                end
+            end
+        end
+    end
+
     if haskey(sol, "fault")
         for (_,fault) in sol["fault"]
             if haskey(fault, "cfr") && haskey(fault, "cfi")
