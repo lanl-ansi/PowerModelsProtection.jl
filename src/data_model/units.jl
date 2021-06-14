@@ -31,6 +31,8 @@ end
 "pointers for fields to get unit transformations back to si units in solutions"
 const _pmp_dimensionalize_math_extensions = Dict{String,Dict{String,Vector{String}}}(
     "branch" => Dict{String,Vector{String}}(
+        "ibase" => String["fault_current", "zero_sequence_current", "positive_sequence_current", "negative_sequence_current", "zero_sequence_current_mag", "positive_sequence_current_mag", "negative_sequence_current_mag", "cf0", "cf1", "cf2"]
+    ),
     "switch" => Dict{String,Vector{String}}(
         "ibase" => String["fault_current", "zero_sequence_current", "positive_sequence_current", "negative_sequence_current", "zero_sequence_current_mag", "positive_sequence_current_mag", "negative_sequence_current_mag", "cf0", "cf1", "cf2"]
     ),
