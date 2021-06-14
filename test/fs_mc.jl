@@ -11,7 +11,7 @@
     @testset "ut_trans_2w_yy_fault_study test fault study" begin
         data = deepcopy(ut_trans_2w_yy_fault_study)
 
-        fault_studies = build_mc_fault_studies(data)
+        fault_studies = build_mc_fault_study(data)
         sol = solve_mc_fault_study(data, fault_studies, ipopt_solver)
 
         @test sol["1"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED

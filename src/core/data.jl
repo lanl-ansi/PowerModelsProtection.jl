@@ -72,7 +72,7 @@ end
 
 
 """
-    build_fault_studies(data::Dict; default_fault_resistance::Real=0.0001)
+    build_fault_study(data::Dict; default_fault_resistance::Real=0.0001)
 
 Builds a dictionary of fault studies on a transmission (single-phase positive sequence) network
 that are intended to be used in conjunction with [`solve_fault_study`](@ref solve_fault_study).
@@ -91,7 +91,7 @@ The fault study dictionary will have the following structure:
     )
 ```
 """
-function build_fault_studies(data::Dict{String,<:Any}; default_fault_resistance::Real=0.0001)::Dict{String,Any}
+function build_fault_study(data::Dict{String,<:Any}; default_fault_resistance::Real=0.0001)::Dict{String,Any}
     fault_studies = Dict{String,Any}()
 
     if haskey(data, "bus")
@@ -124,11 +124,11 @@ end
 
 
 """
-    build_mc_fault_studies(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
+    build_mc_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
 
 Add all fault type data to model for study for multiconductor networks
 """
-function build_mc_fault_studies(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
+function build_mc_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
     # TODO better detection of neutral vs ground phases, ground is currently hardcoded as 4
 
     fault_studies = Dict{String,Any}()

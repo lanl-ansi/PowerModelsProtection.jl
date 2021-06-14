@@ -6,12 +6,23 @@ end
 
 "adds additional variable transformations for fault study solutions of distribution networks"
 function _solution_fs!(sol::Dict{String,<:Any})
+	a = exp(2im*pi/3)
+	Ai = [1 1 1; 1 a a^2; 1 a^2 a]/3	
+	
     if haskey(sol, "branch")
         for (_,branch) in sol["branch"]
             if haskey(branch, "csr_fr") && haskey(branch, "csi_fr")
                 branch["fault_current"] = sqrt.(branch["csr_fr"].^2 + branch["csi_fr"].^2)
                 if length(branch["csr_fr"]) == 3
-                    branch["zero_sequence_current"] = abs(sum(branch["csr_fr"] + 1im*branch["csi_fr"]))/3
+					Iabc = branch["csr_fr"] + 1im*branch["csi_fr"]
+					I012 = Ai*Iabc
+                    branch["zero_sequence_current"] = I012[1]
+					branch["positive_sequence_current"] = I012[2]
+					branch["negative_sequence_current"] = I012[3]
+					
+                    branch["zero_sequence_current_mag"] = abs(I012[1])
+					branch["positive_sequence_current_mag"] = abs(I012[2])
+					branch["negative_sequence_current_mag"] = abs(I012[3])
                 end
             end
         end
@@ -22,7 +33,15 @@ function _solution_fs!(sol::Dict{String,<:Any})
             if haskey(fault, "cfr") && haskey(fault, "cfi")
                 fault["fault_current"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
                 if length(fault["cfr"]) == 3
-                    branch["zero_sequence_current"] = abs(sum(branch["csr_fr"] + 1im*branch["csi_fr"]))/3
+					Iabc = branch["csr_fr"] + 1im*branch["csi_fr"]
+					I012 = Ai*Iabc
+                    branch["zero_sequence_current"] = I012[1]
+					branch["positive_sequence_current"] = I012[2]
+					branch["negative_sequence_current"] = I012[3]
+					
+                    branch["zero_sequence_current_mag"] = abs(I012[1])
+					branch["positive_sequence_current_mag"] = abs(I012[2])
+					branch["negative_sequence_current_mag"] = abs(I012[3])					
                 end
             end
         end
@@ -38,7 +57,15 @@ function _solution_fs!(sol::Dict{String,<:Any})
             if haskey(bus, "cfr_bus") && haskey(bus, "cfi_bus")
                 bus["fault_current"] = sqrt.(bus["cfr_bus"].^2 + bus["cfi_bus"].^2)
                 if length(bus["cfr_bus"]) == 3
-                    branch["zero_sequence_current"] = abs(sum(branch["csr_fr"] + 1im*branch["csi_fr"]))/3
+					Iabc = branch["csr_fr"] + 1im*branch["csi_fr"]
+					I012 = Ai*Iabc
+                    branch["zero_sequence_current"] = I012[1]
+					branch["positive_sequence_current"] = I012[2]
+					branch["negative_sequence_current"] = I012[3]
+					
+                    branch["zero_sequence_current_mag"] = abs(I012[1])
+					branch["positive_sequence_current_mag"] = abs(I012[2])
+					branch["negative_sequence_current_mag"] = abs(I012[3])					
                 end
             end
         end

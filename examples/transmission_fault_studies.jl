@@ -98,11 +98,11 @@ results_fault = solve_fault_study(data_fault, ipopt_solver)
 md"""
 ## Running without adding faults
 
-To run a fault study over all buses, we should first build the list of fault studies using the `build_fault_studies` function.
+To run a fault study over all buses, we should first build the list of fault studies using the `build_fault_study` function.
 """
 
 # ╔═╡ fa968a71-ddc9-4ce1-9ee7-8a39165811d6
-fault_studies = build_fault_studies(case5_fault)
+fault_study = build_fault_study(case5_fault)
 
 # ╔═╡ 03cee420-413c-499f-83e4-08339656b8a8
 md"""
@@ -121,7 +121,7 @@ begin
 		zero_gen_setpoints=true
 	)
 	
-	study_results_no_faults = solve_fault_study(data_no_faults, fault_studies, ipopt_solver)
+	results_fault_study = solve_fault_study(data_no_faults, fault_study, ipopt_solver)
 end
 
 # ╔═╡ Cell order:
