@@ -7,8 +7,8 @@ end
 "adds additional variable transformations for fault study solutions of distribution networks"
 function _solution_fs!(sol::Dict{String,<:Any})
 	a = exp(2im*pi/3)
-	Ai = [1 1 1; 1 a a^2; 1 a^2 a]/3	
-	
+	Ai = [1 1 1; 1 a a^2; 1 a^2 a]/3
+
     if haskey(sol, "branch")
         for (_,branch) in sol["branch"]
             if haskey(branch, "csr_fr") && haskey(branch, "csi_fr")
@@ -16,10 +16,14 @@ function _solution_fs!(sol::Dict{String,<:Any})
                 if length(branch["csr_fr"]) == 3
 					Iabc = branch["csr_fr"] + 1im*branch["csi_fr"]
 					I012 = Ai*Iabc
-                    branch["zero_sequence_current"] = I012[1]
-					branch["positive_sequence_current"] = I012[2]
-					branch["negative_sequence_current"] = I012[3]
-					
+                    branch["zero_sequence_current_real"] = real(I012[1])
+					branch["positive_sequence_current_real"] = real(I012[2])
+					branch["negative_sequence_current_real"] = real(I012[3])
+
+                    branch["zero_sequence_current_imag"] = imag(I012[1])
+					branch["positive_sequence_current_imag"] = imag(I012[2])
+					branch["negative_sequence_current_imag"] = imag(I012[3])
+
                     branch["zero_sequence_current_mag"] = abs(I012[1])
 					branch["positive_sequence_current_mag"] = abs(I012[2])
 					branch["negative_sequence_current_mag"] = abs(I012[3])
@@ -58,13 +62,17 @@ function _solution_fs!(sol::Dict{String,<:Any})
                 if length(fault["cfr"]) == 3
 					Iabc = fault["cfr"] + 1im*fault["cfi"]
 					I012 = Ai*Iabc
-                    fault["zero_sequence_current"] = I012[1]
-					fault["positive_sequence_current"] = I012[2]
-					fault["negative_sequence_current"] = I012[3]
-					
+                    fault["zero_sequence_current_real"] = real(I012[1])
+					fault["positive_sequence_current_real"] = real(I012[2])
+					fault["negative_sequence_current_real"] = real(I012[3])
+
+                    fault["zero_sequence_current_imag"] = imag(I012[1])
+					fault["positive_sequence_current_imag"] = imag(I012[2])
+					fault["negative_sequence_current_imag"] = imag(I012[3])
+
                     fault["zero_sequence_current_mag"] = abs(I012[1])
 					fault["positive_sequence_current_mag"] = abs(I012[2])
-					fault["negative_sequence_current_mag"] = abs(I012[3])					
+					fault["negative_sequence_current_mag"] = abs(I012[3])
                 end
             end
         end
@@ -82,13 +90,17 @@ function _solution_fs!(sol::Dict{String,<:Any})
                 if length(bus["cfr_bus"]) == 3
 					Iabc = bus["cfr_bus"] + 1im*bus["cfi_bus"]
 					I012 = Ai*Iabc
-                    bus["zero_sequence_current"] = I012[1]
-					bus["positive_sequence_current"] = I012[2]
-					bus["negative_sequence_current"] = I012[3]
-					
+                    bus["zero_sequence_current_real"] = real(I012[1])
+					bus["positive_sequence_current_real"] = real(I012[2])
+					bus["negative_sequence_current_real"] = real(I012[3])
+
+                    bus["zero_sequence_current_imag"] = imag(I012[1])
+					bus["positive_sequence_current_imag"] = imag(I012[2])
+					bus["negative_sequence_current_imag"] = imag(I012[3])
+
                     bus["zero_sequence_current_mag"] = abs(I012[1])
 					bus["positive_sequence_current_mag"] = abs(I012[2])
-					bus["negative_sequence_current_mag"] = abs(I012[3])					
+					bus["negative_sequence_current_mag"] = abs(I012[3])
                 end
             end
         end
