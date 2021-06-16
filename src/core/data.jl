@@ -149,13 +149,21 @@ function build_mc_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, p
                 ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
                 if !(t in bus["grounded"])
                     fault_studies[id]["lg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "lg", id, [t, ground_terminal], resistance)
+                    i += 1
+                end
+            end
+
+            i = 1
+            for t in bus["terminals"]
+                ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
+                if !(t in bus["grounded"])
                     for u in bus["terminals"]
-                        if !(u in bus["grounded"]) && t != u
+                        if !(u in bus["grounded"]) && t != u && t < u
                             fault_studies[id]["ll"]["$i"] = add_fault!(Dict{String,Any}(), "1", "ll", id, [t, u], phase_resistance)
                             fault_studies[id]["llg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "llg", id, [t, u, ground_terminal], resistance, phase_resistance)
+                            i += 1
                         end
                     end
-                    i += 1
                 end
             end
 

@@ -323,3 +323,4 @@ function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::
     report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :bus, :cfr_bus, _PMD.ids(pm, nw, :fault_buses), cr_bus)
     report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :bus, :cfi_bus, _PMD.ids(pm, nw, :fault_buses), ci_bus)
 end
+

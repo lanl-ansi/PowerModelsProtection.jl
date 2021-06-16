@@ -93,6 +93,7 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
 
     for i in _PMD.ids(pm, :fault)
         constraint_mc_bus_fault_current(pm, i)
+        expression_mc_bus_fault_sequence_current(pm, i)
     end
 
     for (i,bus) in _PMD.ref(pm, :bus)
@@ -108,6 +109,7 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
 
     for i in _PMD.ids(pm, :switch)
         _PMD.constraint_mc_switch_state(pm, i)
+        expression_mc_switch_fault_sequence_current(pm,i)
     end
 
     for i in _PMD.ids(pm, :transformer)
