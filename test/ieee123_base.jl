@@ -42,7 +42,7 @@ error = .05
     data["fault"]["3"] = Dict("type" => "lg", "bus" => "13", "phases" => [1], "gr" => 0.005)
     sol = FS.run_mc_fault_study(data, ipopt_solver)
     @testset "faults on bus 13 base" begin
-        @test sol["13"]["3p"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test sol["13"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
         println("Bus: 13 Fault: 3p ---- ", sol["13"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][1])
         @test calulate_error_percentage(sol["13"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][1], 5305.0) < error # opendss
         @test calulate_error_percentage(sol["13"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][2], 5509.0) < error # opendss
@@ -50,11 +50,11 @@ error = .05
         @test calulate_error_percentage(sol["13"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][1], 5435.3) < error # kersting
         @test calulate_error_percentage(sol["13"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][2], 5655.7) < error # kersting
         @test calulate_error_percentage(sol["13"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][3], 5306.6) < error # kersting
-        @test sol["13"]["ll"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test sol["13"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
         println("Bus: 13 Fault: ll ---- ", sol["13"]["ll"]["1"]["solution"]["fault"]["bus"]["current"][1])
         @test calulate_error_percentage(sol["13"]["ll"]["1"]["solution"]["fault"]["bus"]["current"][1], 4736.0) < error # opendss
         @test calulate_error_percentage(sol["13"]["ll"]["1"]["solution"]["fault"]["bus"]["current"][1], 4886.6) < error # kersting
-        @test sol["13"]["lg"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test sol["13"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         println("Bus: 13 Fault: lg ---- ", sol["13"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1])
         @test calulate_error_percentage(sol["13"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1], 4422.0) < error # opendss
         @test calulate_error_percentage(sol["13"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1], 4400.1) < error # kersting
@@ -66,7 +66,7 @@ error = .05
     data["fault"]["3"] = Dict("type" => "lg", "bus" => "67", "phases" => [1], "gr" => 0.005)
     sol = FS.run_mc_fault_study(data, ipopt_solver)
     @testset "faults on bus 67 base" begin
-        @test sol["67"]["3p"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test sol["67"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
         println("Bus: 67 Fault: 3p ---- ", sol["67"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][1])
         @test calulate_error_percentage(sol["67"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][1], 3251.0) < error # opendss
         @test calulate_error_percentage(sol["67"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][2], 3401.0) < error # opendss
@@ -74,11 +74,11 @@ error = .05
         @test calulate_error_percentage(sol["67"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][1], 3236.6) < error # kersting
         @test calulate_error_percentage(sol["67"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][2], 3383.5) < error # kersting
         @test calulate_error_percentage(sol["67"]["3p"]["1"]["solution"]["fault"]["bus"]["current"][3], 3299.3) < error # kersting
-        @test sol["67"]["ll"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test sol["67"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
         println("Bus: 67 Fault: ll ---- ", sol["67"]["ll"]["1"]["solution"]["fault"]["bus"]["current"][1])
         @test calulate_error_percentage(sol["67"]["ll"]["1"]["solution"]["fault"]["bus"]["current"][1], 2879.0) < error # opendss
         @test calulate_error_percentage(sol["67"]["ll"]["1"]["solution"]["fault"]["bus"]["current"][1], 2890.0) < error # kersting
-        @test sol["67"]["lg"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test sol["67"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         println("Bus: 67 Fault: lg ---- ", sol["67"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1])
         @test calulate_error_percentage(sol["67"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1], 2392.0) < error # opendss
         @test calulate_error_percentage(sol["67"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1], 2339.5) < error # kersting
@@ -88,7 +88,7 @@ error = .05
     data["fault"]["1"] = Dict("type" => "lg", "bus" => "113", "phases" => [1], "gr" => 0.005)
     sol = FS.run_mc_fault_study(data, ipopt_solver)
     @testset "faults on bus 113 base" begin
-        @test sol["113"]["lg"]["1"]["termination_status"] == MOI.LOCALLY_SOLVED
+        @test sol["113"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         println("Bus: 113 Fault: lg ---- ", sol["113"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1])
         @test calulate_error_percentage(sol["113"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1], 1390.0) < error # opendss
         @test calulate_error_percentage(sol["113"]["lg"]["1"]["solution"]["fault"]["bus"]["current"][1], 1382.6) < error # kersting

@@ -18,7 +18,7 @@ current limits
 ```julia
 using PowerModels, PowerModelsProtection, Ipopt
 net = PowerModels.parse_file("case5.raw", import_all=true)
-solver = JuMP.with_optimizer(Ipopt.Optimizer)
+solver = Ipopt.Optimizer
 
 net["fault"] = Dict()
 net["fault"]["1"] = Dict("bus"=>2, "r"=>0.0001)

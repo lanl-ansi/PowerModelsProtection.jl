@@ -1,48 +1,106 @@
-
-"expand solution to three phases to keep phase info in solution"
-function expand_phases(fault_current_r, fault_current_i, terminals)
-    real_currents = [0.0 0.0 0.0]
-    imag_currents = [0.0 0.0 0.0]
-    for phase in terminals
-        real_currents[phase] = fault_current_r[phase]
-        imag_currents[phase] = fault_current_i[phase]
-    end 
-    return real_currents, imag_currents
+"adds additional variable transformations for fault study solutions of distribution networks"
+function solution_fs!(pm::_PMD.AbstractUnbalancedIVRModel, sol::Dict{String,<:Any})
+    _PMD.apply_pmd!(_solution_fs!, sol; apply_to_subnetworks=true)
 end
 
 
-"Output the solution"
-function solution_fs!(pm::_PM.AbstractPowerModel, sol::Dict{String,Any})
-    # TODO create an output format
-    if haskey(pm.var[:nw][0], :cfr)
-        cfr = JuMP.value.(pm.var[:nw][0][:cfr])
-        cfi = JuMP.value.(pm.var[:nw][0][:cfi])
-        sol["fault_current"] = Dict("cfr" => cfr, "cfi" => cfi)
+"adds additional variable transformations for fault study solutions of distribution networks"
+function _solution_fs!(sol::Dict{String,<:Any})
+
+    if haskey(sol, "branch")
+        for (_,branch) in sol["branch"]
+            if haskey(branch, "cr_fr") && haskey(branch, "ci_fr")
+                branch["cf_fr"] = sqrt.(branch["cr_fr"].^2 + branch["ci_fr"].^2)
+            end
+            if haskey(branch, "cr_to") && haskey(branch, "ci_to")
+                branch["cf_to"] = sqrt.(branch["cr_to"].^2 + branch["ci_to"].^2)
+            end
+        end
     end
-end
 
+    if haskey(sol, "switch")
+        for (_,switch) in sol["switch"]
+            if haskey(switch, "crsw_fr") && haskey(switch, "cisw_fr")
+                switch["cf_fr"] = sqrt.(switch["crsw_fr"].^2 + switch["cisw_fr"].^2)
+            end
+            if haskey(switch, "crsw_to") && haskey(switch, "cisw_to")
+                switch["cf_to"] = sqrt.(switch["crsw_to"].^2 + switch["cisw_to"].^2)
+            end
+        end
+    end
 
-""
-function add_fault_solution!(sol::Dict{String,Any}, data::Dict{String,Any})
-    sol["fault"] = Dict{String,Any}()
-    sol["fault"]["currents"] = Dict{String,Any}()
-    bus = data["bus"][string(data["active_fault"]["bus_i"])]
-    cfr_expand, cfi_expand = expand_phases(sol["fault_current"]["cfr"], sol["fault_current"]["cfi"], bus["terminals"])
-    cfr = [data["baseMVA"] * 1000 / bus["vbase"] * cfr_expand[c] for c in 1:3]
-    cfi = [data["baseMVA"] * 1000 / bus["vbase"] * cfi_expand[c] for c in 1:3]
-    sol["fault"]["bus"] = Dict("bus_i" => data["active_fault"]["bus_i"], "current" => [sqrt(cfr[c]^2 + cfi[c]^2) for c in 1:3])
-    for (name, line) in sol["line"]
-        for (i, branch) in data["branch"]
-            if branch["name"] == name
-                csr_fr = [0.0 0.0 0.0]
-                csi_fr = [0.0 0.0 0.0]
-                sol["fault"]["currents"][name] = [0.0 0.0 0.0]
-                for (indx, c) in enumerate(branch["f_connections"])
-                    csr_fr[c] = data["baseMVA"] * 1000 / branch["vbase"] * line["csr_fr"][indx]
-                    csi_fr[c] = data["baseMVA"] * 1000 / branch["vbase"] * line["csi_fr"][indx]
-                    sol["fault"]["currents"][name][c] = abs(csr_fr[c] + csi_fr[c] * im) 
-                end
+    if haskey(sol, "fault")
+        for (_,fault) in sol["fault"]
+            if haskey(fault, "cfr") && haskey(fault, "cfi")
+                fault["cf"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
+            end
+        end
+    end
+
+    if haskey(sol, "bus")
+        for (_,bus) in sol["bus"]
+            if haskey(bus, "vr")  && haskey(bus, "vi")
+                bus["vm"] = sqrt.(bus["vr"].^2 + bus["vi"].^2)
+                bus["va"] = atan.(bus["vi"], bus["vr"])
+            end
+
+            if haskey(bus, "cfr_bus") && haskey(bus, "cfi_bus")
+                bus["cf_bus"] = sqrt.(bus["cfr_bus"].^2 + bus["cfi_bus"].^2)
             end
         end
     end
 end
+
+
+"adds additional variable transformations for fault study solutions of transmission networks"
+function solution_fs!(pm::_PM.AbstractIVRModel, sol::Dict{String,<:Any})
+    _PM.apply_pm!(_solution_pm_fs!, sol; apply_to_subnetworks=true)
+end
+
+
+"adds additional variable transformations for fault study solutions of transmission networks"
+function _solution_pm_fs!(sol::Dict{String,<:Any})
+    if haskey(sol, "branch")
+        for (_,branch) in sol["branch"]
+            if haskey(branch, "cr_fr") && haskey(branch, "ci_fr")
+                branch["cf_fr"] = sqrt.(branch["csr_fr"].^2 + branch["csi_fr"].^2)
+            end
+            if haskey(branch, "cr_to") && haskey(branch, "ci_to")
+                branch["cf_to"] = sqrt.(branch["cr_to"].^2 + branch["ci_to"].^2)
+            end
+        end
+    end
+
+    if haskey(sol, "switch")
+        for (_,switch) in sol["switch"]
+            if haskey(switch, "cr_fr") && haskey(switch, "ci_fr")
+                switch["cf_fr"] = sqrt.(switch["cr_fr"].^2 + switch["ci_fr"].^2)
+            end
+            if haskey(switch, "cr_to") && haskey(switch, "ci_to")
+                switch["cf_to"] = sqrt.(switch["cr_to"].^2 + switch["ci_to"].^2)
+            end
+        end
+    end
+
+    if haskey(sol, "fault")
+        for (_,fault) in sol["fault"]
+            if haskey(fault, "cfr") && haskey(fault, "cfi")
+                fault["cf_bus"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
+            end
+        end
+    end
+
+    if haskey(sol, "bus")
+        for (_,bus) in sol["bus"]
+            if haskey(bus, "vr")  && haskey(bus, "vi")
+                bus["vm"] = sqrt(bus["vr"]^2 + bus["vi"]^2)
+                bus["va"] = atan(bus["vi"], bus["vr"])
+            end
+
+            if haskey(bus, "cfr_bus") && haskey(bus, "cfi_bus")
+                bus["cf"] = sqrt(bus["cfr_bus"]^2 + bus["cfi_bus"]^2)
+            end
+        end
+    end
+end
+
