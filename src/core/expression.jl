@@ -1,5 +1,5 @@
-
-function get_phase_base_order(faulted_phases::Vector{Int})
+"helper function to get faulted phases base order"
+function _get_phase_base_order(faulted_phases::Vector{Int})::Vector{Int}
     if length(faulted_phases) == 1
         phase_base = faulted_phases[1]
     elseif length(faulted_phases) == 2
@@ -9,7 +9,7 @@ function get_phase_base_order(faulted_phases::Vector{Int})
     else
         phase_base = 1
     end
-    phase_base_order = [phase_base;0;0]
+    phase_base_order = Int[phase_base;0;0]
     for phase = 2:3
         phase_base += 1
         phase_base == 4 ? phase_base = 1 : nothing
@@ -19,14 +19,13 @@ function get_phase_base_order(faulted_phases::Vector{Int})
 end
 
 
+"expressions for branch fault currents in sequence representation"
 function expression_mc_branch_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
     branch = _PMD.ref(pm, nw, :branch, i)
-
     f_connections = branch["f_connections"]
     t_connections = branch["t_connections"]
-    
-    if length(f_connections) == 3 && length(t_connections) == 3
 
+    if length(f_connections) == 3 && length(t_connections) == 3
         f_bus = branch["f_bus"]
         t_bus = branch["t_bus"]
         f_idx = (i, f_bus, t_bus)
@@ -37,12 +36,12 @@ function expression_mc_branch_fault_sequence_current(pm::_PMD.AbstractUnbalanced
         cr_to =  [_PMD.var(pm, nw, :cr, t_idx)[c] for c in t_connections]
         ci_to =  [_PMD.var(pm, nw, :ci, t_idx)[c] for c in t_connections]
 
-        
+
         faulted_phases = _PMD.ref(pm, nw, :fault, 1)["connections"]
-        phase_base_order = get_phase_base_order(faulted_phases)
+        phase_base_order = _get_phase_base_order(faulted_phases)
 
         alpha = exp(1im*2/3*pi)
-        a = 1/3*[1 1 1; 1 alpha alpha^2; 1 alpha^2 alpha] 
+        a = 1/3*[1 1 1; 1 alpha alpha^2; 1 alpha^2 alpha]
         ar = real(a)
         ai = imag(a)
 
@@ -55,7 +54,7 @@ function expression_mc_branch_fault_sequence_current(pm::_PMD.AbstractUnbalanced
         cf1i_fr = JuMP.@expression(pm.model, sum(ar[2,c] * ci_fr[phase_base_order[c]] + ai[2,c] * cr_fr[phase_base_order[c]] for c in f_connections))
         cf1r_to = JuMP.@expression(pm.model, sum(ar[2,c] * cr_to[phase_base_order[c]] - ai[2,c] * ci_to[phase_base_order[c]] for c in t_connections))
         cf1i_to = JuMP.@expression(pm.model, sum(ar[2,c] * ci_to[phase_base_order[c]] + ai[2,c] * cr_to[phase_base_order[c]] for c in t_connections))
-     
+
         cf2r_fr = JuMP.@expression(pm.model, sum(ar[3,c] * cr_fr[phase_base_order[c]] - ai[3,c] * ci_fr[phase_base_order[c]] for c in f_connections))
         cf2i_fr = JuMP.@expression(pm.model, sum(ar[3,c] * ci_fr[phase_base_order[c]] + ai[3,c] * cr_fr[phase_base_order[c]] for c in f_connections))
         cf2r_to = JuMP.@expression(pm.model, sum(ar[3,c] * cr_to[phase_base_order[c]] - ai[3,c] * ci_to[phase_base_order[c]] for c in t_connections))
@@ -79,23 +78,21 @@ function expression_mc_branch_fault_sequence_current(pm::_PMD.AbstractUnbalanced
 end
 
 
+"expressions for bus fault currents in sequence representation"
 function expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
     fault = _PMD.ref(pm, nw, :fault, i)
     bus = _PMD.ref(pm, nw, :bus, fault["fault_bus"])
-
     terminals = bus["terminals"]
-    connections = fault["connections"]
-    
-    if length(terminals) == 3
 
+    if length(terminals) == 3
         cr = _PMD.var(pm, nw, :cfr, i)
         ci = _PMD.var(pm, nw, :cfi, i)
 
-        faulted_phases = _PMD.ref(pm, nw, :fault, 1)["connections"]
-        phase_base_order = get_phase_base_order(faulted_phases)
+        faulted_phases = fault["connections"]
+        phase_base_order = _get_phase_base_order(faulted_phases)
 
         alpha = exp(1im*2/3*pi)
-        a = 1/3*[1 1 1; 1 alpha alpha^2; 1 alpha^2 alpha] 
+        a = 1/3*[1 1 1; 1 alpha alpha^2; 1 alpha^2 alpha]
         ar = real(a)
         ai = imag(a)
 
@@ -105,7 +102,7 @@ function expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVR
 
             cf1r = JuMP.@expression(pm.model, sum(ar[2,c] * cr[phase_base_order[c]] - ai[2,c] * ci[phase_base_order[c]] for c in terminals))
             cf1i = JuMP.@expression(pm.model, sum(ar[2,c] * ci[phase_base_order[c]] + ai[2,c] * cr[phase_base_order[c]] for c in terminals))
-     
+
             cf2r = JuMP.@expression(pm.model, sum(ar[3,c] * cr[phase_base_order[c]] - ai[3,c] * ci[phase_base_order[c]] for c in terminals))
             cf2i = JuMP.@expression(pm.model, sum(ar[3,c] * ci[phase_base_order[c]] + ai[3,c] * cr[phase_base_order[c]] for c in terminals))
 
@@ -115,7 +112,7 @@ function expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVR
 
             cf1r = JuMP.@expression(pm.model, sum(ar[2,c] * cr[phase_base_order[c]] - ai[2,c] * ci[phase_base_order[c]] for c in 2:3))
             cf1i = JuMP.@expression(pm.model, sum(ar[2,c] * ci[phase_base_order[c]] + ai[2,c] * cr[phase_base_order[c]] for c in 2:3))
-     
+
             cf2r = JuMP.@expression(pm.model, sum(ar[3,c] * cr[phase_base_order[c]] - ai[3,c] * ci[phase_base_order[c]] for c in 2:3))
             cf2i = JuMP.@expression(pm.model, sum(ar[3,c] * ci[phase_base_order[c]] + ai[3,c] * cr[phase_base_order[c]] for c in 2:3))
 
@@ -125,7 +122,7 @@ function expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVR
 
             cf1r = JuMP.@expression(pm.model, ar[2,1] * cr[phase_base_order[1]] - ai[2,1] * ci[phase_base_order[1]])
             cf1i = JuMP.@expression(pm.model, ar[2,1] * ci[phase_base_order[1]] + ai[2,1] * cr[phase_base_order[1]])
-     
+
             cf2r = JuMP.@expression(pm.model, ar[3,1] * cr[phase_base_order[1]] - ai[3,1] * ci[phase_base_order[1]])
             cf2i = JuMP.@expression(pm.model, ar[3,1] * ci[phase_base_order[1]] + ai[3,1] * cr[phase_base_order[1]])
         end
@@ -142,15 +139,13 @@ function expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVR
 end
 
 
-
+"expressions for switch fault currents in sequence representation"
 function expression_mc_switch_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
     switch = _PMD.ref(pm, nw, :switch, i)
-
     f_connections = switch["f_connections"]
     t_connections = switch["t_connections"]
-    
-    if length(f_connections) == 3 && length(t_connections) == 3
 
+    if length(f_connections) == 3 && length(t_connections) == 3
         f_bus = switch["f_bus"]
         t_bus = switch["t_bus"]
         f_idx = (i, f_bus, t_bus)
@@ -160,12 +155,12 @@ function expression_mc_switch_fault_sequence_current(pm::_PMD.AbstractUnbalanced
         ci_fr =  [_PMD.var(pm, nw, :cisw, f_idx)[c] for c in f_connections]
         cr_to =  [_PMD.var(pm, nw, :crsw, t_idx)[c] for c in t_connections]
         ci_to =  [_PMD.var(pm, nw, :cisw, t_idx)[c] for c in t_connections]
-        
+
         faulted_phases = _PMD.ref(pm, nw, :fault, 1)["connections"]
-        phase_base_order = get_phase_base_order(faulted_phases)
+        phase_base_order = _get_phase_base_order(faulted_phases)
 
         alpha = exp(1im*2/3*pi)
-        a = 1/3*[1 1 1; 1 alpha alpha^2; 1 alpha^2 alpha] 
+        a = 1/3*[1 1 1; 1 alpha alpha^2; 1 alpha^2 alpha]
         ar = real(a)
         ai = imag(a)
 
@@ -178,7 +173,7 @@ function expression_mc_switch_fault_sequence_current(pm::_PMD.AbstractUnbalanced
         cf1i_fr = JuMP.@expression(pm.model, sum(ar[2,c] * ci_fr[phase_base_order[c]] + ai[2,c] * cr_fr[phase_base_order[c]] for c in f_connections))
         cf1r_to = JuMP.@expression(pm.model, sum(ar[2,c] * cr_to[phase_base_order[c]] - ai[2,c] * ci_to[phase_base_order[c]] for c in t_connections))
         cf1i_to = JuMP.@expression(pm.model, sum(ar[2,c] * ci_to[phase_base_order[c]] + ai[2,c] * cr_to[phase_base_order[c]] for c in t_connections))
-     
+
         cf2r_fr = JuMP.@expression(pm.model, sum(ar[3,c] * cr_fr[phase_base_order[c]] - ai[3,c] * ci_fr[phase_base_order[c]] for c in f_connections))
         cf2i_fr = JuMP.@expression(pm.model, sum(ar[3,c] * ci_fr[phase_base_order[c]] + ai[3,c] * cr_fr[phase_base_order[c]] for c in f_connections))
         cf2r_to = JuMP.@expression(pm.model, sum(ar[3,c] * cr_to[phase_base_order[c]] - ai[3,c] * ci_to[phase_base_order[c]] for c in t_connections))
