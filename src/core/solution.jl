@@ -9,16 +9,22 @@ function _solution_fs!(sol::Dict{String,<:Any})
 
     if haskey(sol, "branch")
         for (_,branch) in sol["branch"]
-            if haskey(branch, "csr_fr") && haskey(branch, "csi_fr")
-                branch["fault_current"] = sqrt.(branch["csr_fr"].^2 + branch["csi_fr"].^2)
+            if haskey(branch, "cr_fr") && haskey(branch, "ci_fr")
+                branch["cf_fr"] = sqrt.(branch["cr_fr"].^2 + branch["ci_fr"].^2)
+            end
+            if haskey(branch, "cr_to") && haskey(branch, "ci_to")
+                branch["cf_to"] = sqrt.(branch["cr_to"].^2 + branch["ci_to"].^2)
             end
         end
     end
 
     if haskey(sol, "switch")
         for (_,switch) in sol["switch"]
-            if haskey(switch, "csrsw_fr") && haskey(switch, "csisw_fr")
-                switch["fault_current"] = sqrt.(switch["csrsw_fr"].^2 + switch["csisw_fr"].^2)
+            if haskey(switch, "crsw_fr") && haskey(switch, "cisw_fr")
+                switch["cf_fr"] = sqrt.(switch["crsw_fr"].^2 + switch["cisw_fr"].^2)
+            end
+            if haskey(switch, "crsw_to") && haskey(switch, "cisw_to")
+                switch["cf_to"] = sqrt.(switch["crsw_to"].^2 + switch["cisw_to"].^2)
             end
         end
     end
@@ -26,7 +32,7 @@ function _solution_fs!(sol::Dict{String,<:Any})
     if haskey(sol, "fault")
         for (_,fault) in sol["fault"]
             if haskey(fault, "cfr") && haskey(fault, "cfi")
-                fault["fault_current"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
+                fault["cf"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
             end
         end
     end
@@ -39,7 +45,7 @@ function _solution_fs!(sol::Dict{String,<:Any})
             end
 
             if haskey(bus, "cfr_bus") && haskey(bus, "cfi_bus")
-                bus["fault_current"] = sqrt.(bus["cfr_bus"].^2 + bus["cfi_bus"].^2)
+                bus["cf_bus"] = sqrt.(bus["cfr_bus"].^2 + bus["cfi_bus"].^2)
             end
         end
     end
@@ -56,8 +62,22 @@ end
 function _solution_pm_fs!(sol::Dict{String,<:Any})
     if haskey(sol, "branch")
         for (_,branch) in sol["branch"]
-            if haskey(branch, "csr_fr") && haskey(branch, "csi_fr")
-                branch["fault_current"] = sqrt.(branch["csr_fr"].^2 + branch["csi_fr"].^2)
+            if haskey(branch, "cr_fr") && haskey(branch, "ci_fr")
+                branch["cf_fr"] = sqrt.(branch["csr_fr"].^2 + branch["csi_fr"].^2)
+            end
+            if haskey(branch, "cr_to") && haskey(branch, "ci_to")
+                branch["cf_to"] = sqrt.(branch["cr_to"].^2 + branch["ci_to"].^2)
+            end
+        end
+    end
+
+    if haskey(sol, "switch")
+        for (_,switch) in sol["switch"]
+            if haskey(switch, "cr_fr") && haskey(switch, "ci_fr")
+                switch["cf_fr"] = sqrt.(switch["cr_fr"].^2 + switch["ci_fr"].^2)
+            end
+            if haskey(switch, "cr_to") && haskey(switch, "ci_to")
+                switch["cf_to"] = sqrt.(switch["cr_to"].^2 + switch["ci_to"].^2)
             end
         end
     end
@@ -65,7 +85,7 @@ function _solution_pm_fs!(sol::Dict{String,<:Any})
     if haskey(sol, "fault")
         for (_,fault) in sol["fault"]
             if haskey(fault, "cfr") && haskey(fault, "cfi")
-                fault["fault_current"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
+                fault["cf_bus"] = sqrt.(fault["cfr"].^2 + fault["cfi"].^2)
             end
         end
     end
@@ -78,7 +98,7 @@ function _solution_pm_fs!(sol::Dict{String,<:Any})
             end
 
             if haskey(bus, "cfr_bus") && haskey(bus, "cfi_bus")
-                bus["fault_current"] = sqrt(bus["cfr_bus"]^2 + bus["cfi_bus"]^2)
+                bus["cf"] = sqrt(bus["cfr_bus"]^2 + bus["cfi_bus"]^2)
             end
         end
     end
