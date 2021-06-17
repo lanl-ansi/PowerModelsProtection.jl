@@ -32,16 +32,18 @@ end
 const _pmp_dimensionalize_math_extensions = Dict{String,Dict{String,Vector{String}}}(
     "branch" => Dict{String,Vector{String}}(
         "ibase" => String[
-            "cf_fr", "cf_to", "cf0r_fr", "cf0i_fr", "cf1r_fr", "cf1i_fr", "cf2r_fr", "cf2i_fr", "cf0r_to", "cf0i_to", "cf1r_to", "cf1i_to", "cf2r_to", "cf2i_to", "fault_current"
+            "cf_fr", "cf_to", "cf0r_fr", "cf0i_fr", "cf1r_fr", "cf1i_fr", "cf2r_fr", "cf2i_fr", "cf0r_to", "cf0i_to", "cf1r_to", "cf1i_to", "cf2r_to", "cf2i_to",
         ]
     ),
     "switch" => Dict{String,Vector{String}}(
         "ibase" => String[
-            "cf_fr", "cf_to", "cf0r_fr", "cf0i_fr", "cf1r_fr", "cf1i_fr", "cf2r_fr", "cf2i_fr", "cf0r_to", "cf0i_to", "cf1r_to", "cf1i_to", "cf2r_to", "cf2i_to"
+            "cf_fr", "cf_to", "cf0r_fr", "cf0i_fr", "cf1r_fr", "cf1i_fr", "cf2r_fr", "cf2i_fr", "cf0r_to", "cf0i_to", "cf1r_to", "cf1i_to", "cf2r_to", "cf2i_to",
         ]
     ),
     "bus" => Dict{String,Vector{String}}(
-        "ibase" => String["cfr_bus", "cfi_bus", "cf_bus", "cf0r", "cf0i", "cf0", "cf1r", "cf1i", "cf1", "cf2r", "cf2i", "cf2"]
+        "ibase" => String[
+            "cfr_bus", "cfi_bus", "cf_bus", "cf0r", "cf0i", "cf0", "cf1r", "cf1i", "cf1", "cf2r", "cf2i", "cf2"
+        ]
     ),
 )
 
@@ -55,7 +57,7 @@ function make_fault_si!(nw_sol::Dict{String,<:Any}, nw_data::Dict{String,<:Any},
             sbase = nw_sol["settings"]["sbase"]
             ibase = sbase / vbase
 
-            for prop in ["cfr", "cfi", "fault_current"]
+            for prop in ["cfr", "cfi", "cf", "cf0r", "cf0i", "cf0", "cf1r", "cf1i", "cf1", "cf2r", "cf2i", "cf2"]
                 if haskey(fault, prop)
                     fault[prop] = _PMD._apply_func_vals(fault[prop], x->x*ibase)
                 end
