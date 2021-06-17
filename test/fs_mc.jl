@@ -15,11 +15,11 @@
         sol = solve_mc_fault_study(data, fault_studies, ipopt_solver)
 
         @test sol["1"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["1"]["lg"]["1"]["solution"]["line"]["line1"]["fault_current"][1], 1381.0) < .05
+        @test calulate_error_percentage(sol["1"]["lg"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 1381.0) < .05
         @test sol["1"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["1"]["ll"]["1"]["solution"]["line"]["line1"]["fault_current"][1], 818.0) < .05
+        @test calulate_error_percentage(sol["1"]["ll"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 818.0) < .05
         @test sol["1"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["1"]["3p"]["1"]["solution"]["line"]["line1"]["fault_current"][1], 945.0) < .05
+        @test calulate_error_percentage(sol["1"]["3p"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 945.0) < .05
     end
 
     @testset "ut_trans_2w_yy_fault_study line to ground fault" begin
@@ -28,7 +28,7 @@
         add_fault!(data, "1", "lg", "3", [1,4], .00001)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["line"]["line2"]["fault_current"][1], 785.0) < .05
+        @test calulate_error_percentage(sol["solution"]["line"]["line2"]["cf_fr"][1], 785.0) < .05
     end
 
     @testset "ut_trans_2w_yy_fault_study 3-phase fault" begin
@@ -37,7 +37,7 @@
         add_fault!(data, "1", "3p", "3", [1,2,3], 0.005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["line"]["line2"]["fault_current"][1], 708.0) < .05
+        @test calulate_error_percentage(sol["solution"]["line"]["line2"]["cf_fr"][1], 708.0) < .05
     end
 
     @testset "3-bus pv fault test single faults" begin
@@ -46,22 +46,22 @@
         add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["fault_current"][1], 39.686) < .05
+        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 39.686) < .05
         add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["fault_current"][1], 38.978) < .05
+        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 38.978) < .05
 
         add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["fault_current"][1], 39.693) < .05
+        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 39.693) < .05
 
         # test the current limit bu placing large load to force off limits
         add_fault!(data, "1", "3p", "loadbus", [1,2,3], 500.0)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["fault_current"][1], 35.523) < .05
+        @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 35.523) < .05
     end
 
     @testset "c3-bus multiple pv grid_following fault test" begin
@@ -134,22 +134,22 @@
         add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 862.0) < .05
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 862.0) < .05
 
         add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 1259.0) < .05
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1259.0) < .05
 
         add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 1455.0) < .05
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1455.0) < .05
 
         add_fault!(data, "1", "lg", "loadbus2", [2, 4], 0.005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 640.0) < .05
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 640.0) < .05
     end
 
     @testset "case3_unblanced_switch test fault study" begin
@@ -158,17 +158,17 @@
         add_fault!(data, "1", "3p", "loadbus", [1,2,3], .0005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 1454.0) < .06
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1454.0) < .06
 
         add_fault!(data, "1", "ll", "loadbus", [1, 2], .0005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 1257.0) < .06
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1257.0) < .06
 
         add_fault!(data, "1", "lg", "loadbus", [1, 4], .0005)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 883.0) < .06
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 883.0) < .06
     end
 
 
@@ -181,31 +181,31 @@
         add_fault!(data, "1", "3p", "midbus", [1,2,3], 60.0)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 13.79) < .05
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 13.79) < .05
 
         add_fault!(data, "1", "ll", "midbus", [1, 2], 40.0)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 11.94) < .05
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 11.94) < .05
 
         add_fault!(data, "1", "lg", "midbus", [1, 4], 20.0)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 13.79) < .05
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 13.79) < .05
 
         add_fault!(data, "1", "3p", "midbus", [1,2,3], .1)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 69.93) < .15
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 69.93) < .15
 
         add_fault!(data, "1", "ll", "midbus", [1, 2], .1)
         sol = solve_mc_fault_study(data, ipopt_solver)
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 60.55) < .15
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 60.55) < .15
 
         add_fault!(data, "1", "lg", "midbus", [1, 4], .1)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["fault_current"][1], 103.4) < .15
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 103.4) < .15
     end
 
 end
