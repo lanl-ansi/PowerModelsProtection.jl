@@ -440,3 +440,37 @@ function constraint_mc_i_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i
         JuMP.@NLconstraint(pm.model, cmax^2 == crg[c]^2 + cig[c]^2)
     end
 end
+
+
+function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i, bus_id, vr0, vi0, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
+    vr =  _PMD.var(pm, nw, :vr, bus_id)
+    vi =  _PMD.var(pm, nw, :vi, bus_id)
+
+    vrstar =  _PMD.var(pm, nw, :vrstp, i)
+    vistar =  _PMD.var(pm, nw, :vistp, i)
+
+    crs =   _PMD.var(pm, nw, :crs, i)
+    cis =   _PMD.var(pm, nw, :cis, i)
+
+    # current-limiting indicator variable
+    z =  _PMD.var(pm, nw, :z_storage, i)
+
+    rv = _PMD.var(pm, nw, :rv, i)
+    xv = _PMD.var(pm, nw, :xv, i)
+ 
+    p =  _PMD.var(pm, nw, :p_storage, i)
+    q =  _PMD.var(pm, nw, :q_storage, i)
+
+    vm = [vr0[c]^2 + vi0[c]^2 for c in connections]
+
+    for c in connections
+        JuMP.@NLconstraint(pm.model, crs[c]^2 + cis[c]^2 <= cmax^2)
+        JuMP.@NLconstraint(pm.model, (crs[c]^2 + cis[c]^2 - cmax^2)*z[c] >= 0.0)
+
+        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 >= vm[c]-z[c])
+        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[c]+z[c])
+    end
+
+    # DC-link power
+    JuMP.@NLconstraint(pm.model, sum(vr[c]*crs[c] + vi[c]*cis[c] for c in connections) == p)
+end
