@@ -20,4 +20,5 @@ using Test
     include("fs.jl")
     include("fs_mc.jl")
     include("pf_mc.jl")
+    include("protection.jl")
 end
