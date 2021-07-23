@@ -11,9 +11,44 @@ function _map_math2eng_fault!(data_eng::Dict{String,<:Any}, data_math::Dict{Stri
 end
 
 
+"Helper function to convert tripped relays and blown fuses from MATHEMATICAL to ENGINEERING models"
+function _map_math2eng_protection!(data_eng::Dict{String,<:Any}, data_math::Dict{String,<:Any}, map::Dict{String,<:Any})
+    if split(map["to"],'.')[begin] == "relay"
+        eng_obj = _PMD._init_unmap_eng_obj!(data_eng, "relay", map)
+        math_obj = _PMD._get_math_obj(data_math, map["to"])
+        merge!(eng_obj, math_obj)
+        keep_prop = ["TDS","TS","type","phase","breaker_time","shots","trip","element","element2","state"]
+        for key in keys(eng_obj)
+            if !(key in keep_prop)
+                delete!(eng_obj,key)
+            end
+        end
+        if !isempty(eng_obj)
+            data_eng["relay"][map["from"]] = eng_obj
+        end
+    end
+
+    if split(map["to"],'.')[begin] == "fuse"
+        eng_obj = _PMD._init_unmap_eng_obj!(data_eng, "fuse", map)
+        math_obj = _PMD._get_math_obj(data_math, map["to"])
+        merge!(eng_obj, math_obj)
+        keep_prop = ["phase","min_melt_curve","max_clear_curve"]
+        for key in keys(eng_obj)
+            if !(key in keep_prop)
+                delete!(eng_obj,key)
+            end
+        end
+        if !isempty(eng_obj)
+            data_eng["fuse"][map["from"]] = eng_obj
+        end
+    end
+end
+
+
 "necessary function reference dict for solution transformations"
 const _pmp_map_math2eng_extensions = Dict{String,Function}(
-    "_map_math2eng_fault!" => _map_math2eng_fault!
+    "_map_math2eng_fault!" => _map_math2eng_fault!,
+    "_map_math2eng_protection!" => _map_math2eng_protection!
 )
 
 
