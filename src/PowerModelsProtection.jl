@@ -37,5 +37,11 @@ module PowerModelsProtection
     include("prob/fs_mc.jl")
     include("prob/pf_mc.jl")
 
+    include("core/helper_functions.jl")
+    include("core/operation.jl")
+    include("core/fuses.jl")
+    include("core/relays.jl")
+    include("core/cts.jl")
+
     include("core/export.jl")  # must be last include to properly export functions
 end
