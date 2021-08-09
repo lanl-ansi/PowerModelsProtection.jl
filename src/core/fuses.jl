@@ -3,8 +3,8 @@ Function to add fuses to circuit dictionary.
 
 Enter circuit dictionary, protected element, name, and a curve. Max clear curve is defaulted to min melt if not provided
 """
-function add_fuse(data::Dict{String,Any}, element::Union{SubString{String},String}, id::String, min_melt_curve::Union{Matrix,String};
-    max_clear_curve::Union{Matrix,String}=min_melt_curve, phase::Vector=[1,2,3], kwargs...)
+function add_fuse(data::Dict{String,Any}, element::Union{SubString{String},String}, id::String, min_melt_curve::Union{Matrix,String,SubString{String}};
+    max_clear_curve::Union{Matrix,String,SubString{String}}=min_melt_curve, phase::Vector=[1,2,3], kwargs...)
     # Create Dict for this fuse.
         # check if protection\fuses exists.
         # check if there is already a dict for this fuse

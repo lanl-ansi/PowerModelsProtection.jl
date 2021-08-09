@@ -7,7 +7,7 @@ function _relay_operation(relay_data::Dict{String,Any}, Iabc::Vector)
         if I_neg > trip_angle
             relay_data["state"] = "open"
             trip = true
-        end
+        end 
     elseif relay_data["type"] == "differential"
         Ir = relay_data["restraint"]
         for phase = 1:length(relay_data["phase"])
