@@ -133,10 +133,10 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
                 math_obj = _PMD._init_math_obj("fuse",name,eng_obj,length(data_math["fuse"])+1;pass_props=pass_props)
                 math_obj["element"] = line_name
                 math_obj["element_enum"] = map_dict["branch"]["$line_name"]
-                if typeof(math_obj["max_clear_curve"]) == String
+                if (typeof(math_obj["max_clear_curve"]) == String) || (typeof(math_obj["max_clear_curve"]) == SubString{String})
                     math_obj["max_clear_curve_enum"] = curve_map["$(math_obj["max_clear_curve"])"]
                 end
-                if typeof(math_obj["min_melt_curve"]) == String
+                if (typeof(math_obj["min_melt_curve"]) == String) || (typeof(math_obj["min_melt_curve"]) == SubString{String})
                     math_obj["min_melt_curve_enum"] = curve_map["$(math_obj["min_melt_curve"])"]
                 end
                 data_math["fuse"]["$(math_obj["index"])"] = math_obj
