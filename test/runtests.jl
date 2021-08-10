@@ -17,7 +17,7 @@ using Test
 
 @testset "PowerModelsProtection" begin
     include("common.jl")
-    # include("fs.jl")
+    include("fs.jl")
     include("fs_mc.jl")
-    # include("pf_mc.jl")
+    include("pf_mc.jl")
 end
