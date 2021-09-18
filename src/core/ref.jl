@@ -67,12 +67,12 @@ function _ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<
 end
 
 
-"Calculates the power from solar based on inputs"
+"Add solar inverters to the model"
 function ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_mc_storage!, ref, data; apply_to_subnetworks=true)
 end
 
-
+"Add battery energy storage to the model"
 function _ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     ref[:storage_gfmi] = Dict{Int,Any}()
 

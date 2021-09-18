@@ -417,7 +417,7 @@ function constraint_mc_current_balance(pm::_PMD.AbstractUnbalancedPowerModel, i:
 end
 
 
-""
+"Constraint for Kirchoff's current law on faulted buses"
 function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
     bus = _PMD.ref(pm, nw, :fault, i, "fault_bus")
     connections = _PMD.ref(pm, nw, :fault, i, "connections")
@@ -428,7 +428,7 @@ function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel, i:
 end
 
 
-""
+"Constraint for fault-current contribution battery energy storage inverters"
 function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
     storage = _PMD.ref(pm, nw, :storage, i)
     baseMVA = _PMD.ref(pm, nw, :settings, "sbase")

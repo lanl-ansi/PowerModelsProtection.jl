@@ -325,12 +325,14 @@ function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::
 end
 
 
+"variables for output terminal currents for grid-connected energy storage"
 function variable_mc_storage_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
     variable_mc_storage_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     variable_mc_storage_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
 end
 
 
+"variables for real portion of output terminal currents for grid-connected energy storage"
 function variable_mc_storage_current_real(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true; kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in _PMD.ref(pm, nw, :storage))
     crs = _PMD.var(pm, nw)[:crs] = Dict(i => JuMP.@variable(pm.model,
@@ -342,6 +344,8 @@ function variable_mc_storage_current_real(pm::_PMD.AbstractUnbalancedIVRModel, n
     end
 end
 
+
+"variables for real portion of output terminal currents for grid-connected energy storage"
 function variable_mc_storage_current_imaginary(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true; kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in _PMD.ref(pm, nw, :storage))
     cis = _PMD.var(pm, nw)[:cis] = Dict(i => JuMP.@variable(pm.model,
@@ -354,6 +358,7 @@ function variable_mc_storage_current_imaginary(pm::_PMD.AbstractUnbalancedIVRMod
 end
 
 
+"variables associated with grid-connected energy storage: internal voltage, virutal impedance, dc-link power, faulted state"
 function variable_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     connections = Dict(i => storage["connections"] for (i,storage) in _PMD.ref(pm, nw, :storage))
 
