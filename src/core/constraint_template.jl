@@ -1,5 +1,5 @@
 "Check to see if gen is inverter model"
-function is_inverter(pm, i, nw)
+function is_inverter(pm, i::Int, nw::Int=nw_id_default)
     gen = _PM.ref(pm, nw, :gen, i)
 
     if !haskey(gen, "inverter")
@@ -11,7 +11,7 @@ end
 
 
 "Checks to see if inverter is operating in pq mode"
-function is_pq_inverter(pm, i, nw)
+function is_pq_inverter(pm, i::Int, nw::Int=nw_id_default)
     gen = _PM.ref(pm, nw, :gen, i)
 
     if !haskey(gen, "inverter")
@@ -31,7 +31,7 @@ end
 
 
 "Checks to see if inverter is operating in V mode"
-function is_v_inverter(pm, i, nw)
+function is_v_inverter(pm, i::Int, nw::Int=nw_id_default)
     gen = _PM.ref(pm, nw, :gen, i)
 
     if !haskey(gen, "inverter")
