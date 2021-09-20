@@ -431,22 +431,7 @@ end
 "Constraint for fault-current contribution battery energy storage inverters"
 function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
     storage = _PMD.ref(pm, nw, :storage, i)
-    baseMVA = _PMD.ref(pm, nw, :settings, "sbase")
-    haskey(storage, "i_max") ? nothing : storage["i_max"] = 1.1*storage["dss"]["kva"] / (3 * 100 * baseMVA)
     connections = storage["connections"]
     bus_i = storage["storage_bus"]
-    bus = _PMD.ref(pm, nw, :bus, bus_i)
-    bus["bus_type"] == 5 ? ang = true : ang = false
-    vm = [.995 for c in connections]
-    va = [0 -2*pi/3 2*pi/3]
-    cmax = storage["i_max"]
-    vr = [vm[c] * cos(va[c]) for c in connections]
-    vi = [vm[c] * sin(va[c]) for c in connections]
-    pmax = storage["thermal_rating"]
-    qmin = storage["qmin"]
-    qmax = storage["qmax"]
-    smax = storage["kva"]
-    energy = storage["energy"]
-    energy_rating = storage["energy_rating"]
-    constraint_mc_storage_grid_forming_inverter(pm, nw, i, bus_i, vr, vi, pmax, qmax, qmin, cmax, smax, energy, energy_rating, ang, connections)
+    constraint_mc_storage_grid_forming_inverter(pm, nw, i, bus_i, connections)
 end
