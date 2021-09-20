@@ -342,6 +342,18 @@ function variable_mc_storage_current_real(pm::_PMD.AbstractUnbalancedIVRModel; n
         ) for i in _PMD.ids(pm, nw, :storage)
     )
     if bounded
+        for (i,storage) in ref(pm, nw, :storage)
+            if haskey(storage, "thermal_rating")
+                for (idx,c) in enumerate(connections[i])
+                    set_lower_bound(crs[i][c], -storage["thermal_rating"][idx])
+                end
+            end
+            if haskey(gen, "thermal_rating")
+                for (idx,c) in enumerate(connections[i])
+                    set_upper_bound(crs[i][c], gen["thermal_rating"][idx])
+                end
+            end
+        end        
     end
 end
 
@@ -356,7 +368,19 @@ function variable_mc_storage_current_imaginary(pm::_PMD.AbstractUnbalancedIVRMod
         ) for i in _PMD.ids(pm, nw, :storage)
     )
     if bounded
-    end
+        for (i,storage) in ref(pm, nw, :storage)
+            if haskey(storage, "qmin")
+                for (idx,c) in enumerate(connections[i])
+                    set_lower_bound(crs[i][c], storage["qmin"][idx])
+                end
+            end
+            if haskey(gen, "qmax")
+                for (idx,c) in enumerate(connections[i])
+                    set_upper_bound(crs[i][c], gen["qmax"][idx])
+                end
+            end
+        end        
+    end        
 end
 
 
