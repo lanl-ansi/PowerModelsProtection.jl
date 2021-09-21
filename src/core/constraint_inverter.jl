@@ -10,15 +10,15 @@ function constraint_unity_pf_inverter_disjunctive(pm::_PM.AbstractIVRModel, nw::
     p_int = _PM.var(pm, nw, :p_int, i)
     q_int = _PM.var(pm, nw, :q_int, i)
 
-    JuMP.@NLconstraint(pm.model, crg^2 + cig^2 >= cmax^2 * b)
-    JuMP.@NLconstraint(pm.model, crg^2 + cig^2 <= cmax^2)
-    JuMP.@NLconstraint(pm.model, p_int * (1 - b) == 0.0)
+    JuMP.@constraint(pm.model, crg^2 + cig^2 >= cmax^2 * b)
+    JuMP.@constraint(pm.model, crg^2 + cig^2 <= cmax^2)
+    JuMP.@constraint(pm.model, p_int * (1 - b) == 0.0)
     JuMP.@constraint(pm.model, q_int <= 0.00001)
 
     # Power Factor
-    JuMP.@NLconstraint(pm.model, pg == vr*crg + vi*cig + b*p_int)
-    JuMP.@NLconstraint(pm.model, 0 == vi*crg - vr*cig)
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2)
+    JuMP.@constraint(pm.model, pg == vr*crg + vi*cig + b*p_int)
+    JuMP.@constraint(pm.model, 0 == vi*crg - vr*cig)
+    JuMP.@constraint(pm.model, cmax^2 >= crg^2 + cig^2)
 end
 
 
@@ -33,9 +33,9 @@ function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus
     kg = _PM.var(pm, n, :kg, i) # generator loading, varies between 0 and 1
 
     # this is equivalent to having a real voltage drop vs in series with the inverter
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig + vs*crg)
-    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg - vr*cig - vs*cig)
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2)
+    JuMP.@constraint(pm.model, kg*pg == vr*crg + vi*cig + vs*crg)
+    JuMP.@constraint(pm.model, kg*qg == vi*crg - vr*cig - vs*cig)
+    JuMP.@constraint(pm.model, cmax^2 >= crg^2 + cig^2)
 end
 
 
@@ -50,12 +50,12 @@ function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i::Int, 
     kg = _PM.var(pm, n, :kg, i) # generator loading, varies between 0 and 1
 
     # I think this can be generalized to arbitrary power factors by multiplying k with alpha + j*beta
-    JuMP.@NLconstraint(pm.model, vr == kg*crg)
-    JuMP.@NLconstraint(pm.model, vi == kg*cig)
+    JuMP.@constraint(pm.model, vr == kg*crg)
+    JuMP.@constraint(pm.model, vi == kg*cig)
     # TODO Verify that the relaxation is reasonable - don't think that this is the case given large bounds on v and c
     # _IM.relaxation_product(pm.model, kg, crg, vr)
     # _IM.relaxation_product(pm.model, kg, cig, vi)
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2)
+    JuMP.@constraint(pm.model, cmax^2 >= crg^2 + cig^2)
 end
 
 
@@ -89,13 +89,13 @@ function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i::Int,
     # JuMP.@constraint(pm.model, vr == alpha*scrg - beta*scig)
     # JuMP.@constraint(pm.model, vi == alpha*scig + beta*scrg)
 
-    JuMP.@NLconstraint(pm.model, vr == alpha*kg*crg - beta*kg*cig)
-    JuMP.@NLconstraint(pm.model, vi == alpha*kg*cig + beta*kg*crg)
+    JuMP.@constraint(pm.model, vr == alpha*kg*crg - beta*kg*cig)
+    JuMP.@constraint(pm.model, vi == alpha*kg*cig + beta*kg*crg)
 
     # _IM.relaxation_product(pm.model, kg, crg, vi)
     # JuMP.@constraint(pm.model, crg == 0)
 
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2)
+    JuMP.@constraint(pm.model, cmax^2 >= crg^2 + cig^2)
 end
 
 
@@ -115,16 +115,16 @@ function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw::Int, i::Int, bus_i
     cig_max = _PM.var(pm, nw, :cig_pos_max, i)
     z = _PM.var(pm, nw, :z, i)
 
-    JuMP.@NLconstraint(pm.model, 0.0 == crg_max*cig - cig_max*crg)
-    JuMP.@NLconstraint(pm.model, crg_max^2 + cig_max^2 == cmax^2)
-    JuMP.@NLconstraint(pm.model, crg_max * crg >= 0.0)
-    JuMP.@NLconstraint(pm.model, cig_max * cig >= 0.0)
-    JuMP.@NLconstraint(pm.model, crg^2 + cig^2 <= cmax^2)
-    JuMP.@NLconstraint(pm.model, (crg^2 + cig^2 - cmax^2)*z >= 0.0)
-    JuMP.@NLconstraint(pm.model, p_int == vrg*crg + vig*cig)
-    JuMP.@NLconstraint(pm.model, 0.0 == vig*crg - vrg*cig)
-    JuMP.@NLconstraint(pm.model, p_int <= pg/3)
-    JuMP.@NLconstraint(pm.model, p_int >= (1-z) * pg/3)
+    JuMP.@constraint(pm.model, 0.0 == crg_max*cig - cig_max*crg)
+    JuMP.@constraint(pm.model, crg_max^2 + cig_max^2 == cmax^2)
+    JuMP.@constraint(pm.model, crg_max * crg >= 0.0)
+    JuMP.@constraint(pm.model, cig_max * cig >= 0.0)
+    JuMP.@constraint(pm.model, crg^2 + cig^2 <= cmax^2)
+    JuMP.@constraint(pm.model, (crg^2 + cig^2 - cmax^2)*z >= 0.0)
+    JuMP.@constraint(pm.model, p_int == vrg*crg + vig*cig)
+    JuMP.@constraint(pm.model, 0.0 == vig*crg - vrg*cig)
+    JuMP.@constraint(pm.model, p_int <= pg/3)
+    JuMP.@constraint(pm.model, p_int >= (1-z) * pg/3)
 end
 
 
@@ -140,10 +140,10 @@ function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i::In
 
     # TODO verify setting reactive power to zero for feasiblity
     # this is equivalent to having a resistance in series with the inverter
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig + r*crg^2 + r*cig^2)
-    # JuMP.@NLconstraint(pm.model, 0.01 >= vi*crg - vr*cig)
-    # JuMP.@NLconstraint(pm.model, -0.01 <= vi*crg - vr*cig)
-    JuMP.@NLconstraint(pm.model, cm^2 >= crg^2 + cig^2)
+    JuMP.@constraint(pm.model, kg*pg == vr*crg + vi*cig + r*crg^2 + r*cig^2)
+    # JuMP.@constraint(pm.model, 0.01 >= vi*crg - vr*cig)
+    # JuMP.@constraint(pm.model, -0.01 <= vi*crg - vr*cig)
+    JuMP.@constraint(pm.model, cm^2 >= crg^2 + cig^2)
 end
 
 
@@ -158,9 +158,9 @@ function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_
     kg = _PM.var(pm, n, :kg, i) # generator loading, varies between 0 and 1
 
     # this is equivalent to having a resistance in series with the inverter
-    JuMP.@NLconstraint(pm.model, kg*pg == vr*crg + vi*cig + vs*crg)
-    JuMP.@NLconstraint(pm.model, kg*qg == vi*crg - vr*cig - vs*cig)
-    JuMP.@NLconstraint(pm.model, cm^2 == crg^2 + cig^2)
+    JuMP.@constraint(pm.model, kg*pg == vr*crg + vi*cig + vs*crg)
+    JuMP.@constraint(pm.model, kg*qg == vi*crg - vr*cig - vs*cig)
+    JuMP.@constraint(pm.model, cm^2 == crg^2 + cig^2)
 end
 
 
@@ -177,7 +177,7 @@ function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x
     # JuMP.@constraint(pm.model, vr_to == vgr - r * crg + x * cig)
     # JuMP.@constraint(pm.model, vi_to == vgi - r * cig - x * crg)
 
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2)
+    JuMP.@constraint(pm.model, cmax^2 >= crg^2 + cig^2)
 end
 
 
@@ -202,7 +202,7 @@ function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i::I
     _IM.relaxation_product(pm.model, vig, crg, qg2)
     JuMP.@constraint(pm.model, kg*pg == pg1 - pg2)
     JuMP.@constraint(pm.model, kg*qg == qg1 + qg2)
-    JuMP.@NLconstraint(pm.model, cmax^2 >= crg^2 + cig^2)
+    JuMP.@constraint(pm.model, cmax^2 >= crg^2 + cig^2)
 end
 
 
@@ -247,16 +247,16 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
     JuMP.@constraint(pm.model, (1/3)*vr[1] + ar*vr[2] - ai*vi[2] + a2r*vr[3] - a2i*vi[3] == vrg_pos)
     JuMP.@constraint(pm.model, (1/3)*vi[1] + ar*vi[2] + ai*vr[2] + a2r*vi[3] + a2i*vr[3] == vig_pos)
 
-    JuMP.@NLconstraint(pm.model, 0.0 == crg_pos_max*cig_pos - cig_pos_max*crg_pos)
-    JuMP.@NLconstraint(pm.model, crg_pos_max^2 + cig_pos_max^2 == cmax^2)
-    JuMP.@NLconstraint(pm.model, crg_pos_max * crg_pos >= 0.0)
-    JuMP.@NLconstraint(pm.model, cig_pos_max * cig_pos >= 0.0)
-    JuMP.@NLconstraint(pm.model, crg_pos^2 + cig_pos^2 <= cmax^2)
+    JuMP.@constraint(pm.model, 0.0 == crg_pos_max*cig_pos - cig_pos_max*crg_pos)
+    JuMP.@constraint(pm.model, crg_pos_max^2 + cig_pos_max^2 == cmax^2)
+    JuMP.@constraint(pm.model, crg_pos_max * crg_pos >= 0.0)
+    JuMP.@constraint(pm.model, cig_pos_max * cig_pos >= 0.0)
+    JuMP.@constraint(pm.model, crg_pos^2 + cig_pos^2 <= cmax^2)
     JuMP.@NLconstraint(pm.model, (crg_pos^2 + cig_pos^2 - cmax^2)*z >= 0.0)
-    JuMP.@NLconstraint(pm.model, p_int == vrg_pos*crg_pos + vig_pos*cig_pos)
-    JuMP.@NLconstraint(pm.model, 0.0 == vig_pos*crg_pos - vrg_pos*cig_pos)
-    JuMP.@NLconstraint(pm.model, p_int <= pg/3)
-    JuMP.@NLconstraint(pm.model, p_int >= (1-z) * pg/3)
+    JuMP.@constraint(pm.model, p_int == vrg_pos*crg_pos + vig_pos*cig_pos)
+    JuMP.@constraint(pm.model, 0.0 == vig_pos*crg_pos - vrg_pos*cig_pos)
+    JuMP.@constraint(pm.model, p_int <= pg/3)
+    JuMP.@constraint(pm.model, p_int >= (1-z) * pg/3)
 end
 
 
@@ -280,12 +280,12 @@ function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel
     for c in 1:ncnds
         # current limits
         # z = 1 -> invert in in current limiting mode
-        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+        JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
 
         # terminal voltage mag
-        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[c] * (1+z[c]))
-        JuMP.@NLconstraint(pm.model, vr[c]^2 + vi[c]^2 >= vm[c] * (1-z[c]))
+        JuMP.@constraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[c] * (1+z[c]))
+        JuMP.@constraint(pm.model, vr[c]^2 + vi[c]^2 >= vm[c] * (1-z[c]))
 
         # terminal voltage phase
         JuMP.@constraint(pm.model, 0.0 == vr[c]*vistar[c] - vi[c]*vrstar[c])
@@ -293,8 +293,8 @@ function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel
         JuMP.@constraint(pm.model, vi[c] * vistar[c] >= 0.0)
     end
 
-    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
-    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
+    JuMP.@constraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
+    JuMP.@constraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in 1:ncnds) == q)
 
     JuMP.@constraint(pm.model, p <= pmax)
     JuMP.@constraint(pm.model, p >= -pmax)
@@ -325,12 +325,12 @@ function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalanc
 
     for c in 1:ncnds
         # current limits
-        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+        JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
 
         # setpoint voltage mag
-        JuMP.@NLconstraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[c] * (1+z[c]))
-        JuMP.@NLconstraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[c] * (1-z[c]))
+        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[c] * (1+z[c]))
+        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[c] * (1-z[c]))
 
         # setpoint voltage phase
         JuMP.@constraint(pm.model, 0.0 == vrstar[c]*vi0[c] - vistar[c]*vr0[c])
@@ -343,7 +343,7 @@ function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalanc
     end
 
     # DC-link power
-    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
+    JuMP.@constraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in 1:ncnds) == p)
 
     #TODO verify can be solved in multi-inverter scenario
     # JuMP.@constraint(pm.model, p <= pmax)
@@ -373,11 +373,11 @@ function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.Abstract
     vm = [vr0[c]^2 + vi0[c]^2 for c in terminals]
 
     for c in terminals
-        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
+        JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
 
-        JuMP.@NLconstraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[c] * (1-z[c]))
-        JuMP.@NLconstraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[c])
+        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[c] * (1-z[c]))
+        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[c])
 
         if ang
             # setpoint voltage phase
@@ -396,10 +396,10 @@ function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.Abstract
     end
 
     # DC-link power
-    JuMP.@NLconstraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in terminals) == p)
-    JuMP.@NLconstraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in terminals) == q)
+    JuMP.@constraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in terminals) == p)
+    JuMP.@constraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in terminals) == q)
 
-    JuMP.@NLconstraint(pm.model, p^2 + q^2 <= smax^2)
+    JuMP.@constraint(pm.model, p^2 + q^2 <= smax^2)
     JuMP.@constraint(pm.model, p <= pmax)
     JuMP.@constraint(pm.model, p >= -pmax)
 end
@@ -432,12 +432,12 @@ function constraint_mc_i_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i
     JuMP.@constraint(pm.model, cig[1] + a2r*cig[2] + a2i*crg[2] + ar*cig[3] + ai*crg[3] == 0)
 
     # Power Factor
-    JuMP.@NLconstraint(pm.model, kg*pg == sum(vr[c]*crg[c] - vi[c]*cig[c] for c in cnds))
-    JuMP.@NLconstraint(pm.model, kg*qg == sum(vi[c]*crg[c] + vr[c]*cig[c] for c in cnds))
+    JuMP.@constraint(pm.model, kg*pg == sum(vr[c]*crg[c] - vi[c]*cig[c] for c in cnds))
+    JuMP.@constraint(pm.model, kg*qg == sum(vi[c]*crg[c] + vr[c]*cig[c] for c in cnds))
 
     # Current limit
     for c in cnds
-        JuMP.@NLconstraint(pm.model, cmax^2 == crg[c]^2 + cig[c]^2)
+        JuMP.@constraint(pm.model, cmax^2 == crg[c]^2 + cig[c]^2)
     end
 end
 
