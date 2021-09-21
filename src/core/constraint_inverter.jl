@@ -454,5 +454,5 @@ function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalanced
     q =  _PMD.var(pm, nw, :q_storage, i)
 
     # DC-link power
-    JuMP.@NLconstraint(pm.model, sum(vr[c]*crs[c] + vi[c]*cis[c] for c in connections) == p)
+    JuMP.@constraint(pm.model, sum(vr[c]*crs[c] + vi[c]*cis[c] for c in connections) == p)
 end
