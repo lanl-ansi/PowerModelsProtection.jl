@@ -51,7 +51,11 @@ function solve_fault_study(file::String, solver; kwargs...)
 end
 
 
-"Builds a transmission fault study optimization problem"
+"""
+	build_fault_study(pm::_PM.AbstractPowerModel)
+
+Builds a transmission fault study optimization problem
+"""
 function build_fault_study(pm::_PM.AbstractPowerModel)
     _PM.variable_bus_voltage(pm, bounded = true)
     variable_bus_fault_current(pm)

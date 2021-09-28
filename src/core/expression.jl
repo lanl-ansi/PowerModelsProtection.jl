@@ -19,7 +19,11 @@ function _get_phase_base_order(faulted_phases::Vector{Int})::Vector{Int}
 end
 
 
-"expressions for branch fault currents in sequence representation"
+"""
+	expression_mc_branch_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
+
+expressions for branch fault currents in sequence representation
+"""
 function expression_mc_branch_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
     branch = _PMD.ref(pm, nw, :branch, i)
     f_connections = branch["f_connections"]
@@ -78,7 +82,11 @@ function expression_mc_branch_fault_sequence_current(pm::_PMD.AbstractUnbalanced
 end
 
 
-"expressions for bus fault currents in sequence representation"
+"""
+	expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
+
+expressions for bus fault currents in sequence representation
+"""
 function expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
     fault = _PMD.ref(pm, nw, :fault, i)
     bus = _PMD.ref(pm, nw, :bus, fault["fault_bus"])
@@ -139,7 +147,11 @@ function expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVR
 end
 
 
-"expressions for switch fault currents in sequence representation"
+"""
+	expression_mc_switch_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
+
+expressions for switch fault currents in sequence representation
+"""
 function expression_mc_switch_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default, report::Bool=true)
     switch = _PMD.ref(pm, nw, :switch, i)
     f_connections = switch["f_connections"]

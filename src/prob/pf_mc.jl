@@ -1,4 +1,8 @@
-"Run Power Flow Problem with Solar"
+"""
+	solve_mc_pf(data::Dict{String,<:Any}, solver; kwargs...)
+
+Run Power Flow Problem with Solar
+"""
 function solve_mc_pf(data::Dict{String,<:Any}, solver; kwargs...)
     solution = _PMD.solve_mc_model(
         data,
@@ -16,13 +20,21 @@ function solve_mc_pf(data::Dict{String,<:Any}, solver; kwargs...)
 end
 
 
-"Run Power Flow Problem with Solar"
+"""
+	solve_mc_pf(file::String, solver; kwargs...)
+
+Run Power Flow Problem with Solar
+"""
 function solve_mc_pf(file::String, solver; kwargs...)
     return solve_mc_pf(parse_file(file), solver; kwargs...)
 end
 
 
-"Constructor for Power Flow Problem with Solar"
+"""
+	build_mc_pf(pm::_PMD.AbstractUnbalancedPowerModel)
+
+Constructor for Power Flow Problem with Solar
+"""
 function build_mc_pf(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
     _PMD.variable_mc_branch_current(pm, bounded=false)
@@ -87,17 +99,29 @@ function build_mc_pf(pm::_PMD.AbstractUnbalancedPowerModel)
 end
 
 
-"Run Power Flow Problem with DG"
+"""
+	solve_mc_dg_pf(data::Dict{String,<:Any}, solver; kwargs...)
+
+Run Power Flow Problem with DG
+"""
 function solve_mc_dg_pf(data::Dict{String,<:Any}, solver; kwargs...)
     return _PMD.solve_mc_model(data, _PMD.ACPUPowerModel, solver, build_mc_dg_pf; kwargs...)
 end
 
-"Run Power Flow Problem with DG"
+"""
+	solve_mc_dg_pf(file::String, solver; kwargs...)
+
+Run Power Flow Problem with DG
+"""
 function solve_mc_dg_pf(file::String, solver; kwargs...)
     return solve_mc_dg_pf(parse_file(file; import_all=true), solver; kwargs...)
 end
 
-"Constructor for Power Flow Problem with DG"
+"""
+	build_mc_dg_pf(pm::_PMD.AbstractUnbalancedPowerModel)
+
+Constructor for Power Flow Problem with DG
+"""
 function build_mc_dg_pf(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_bus_voltage(pm; bounded=false)
     _PMD.variable_mc_branch_power(pm; bounded=false)
