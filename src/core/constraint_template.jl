@@ -1,4 +1,8 @@
-"Check to see if gen is inverter model"
+"""
+	is_inverter(pm, i::Int, nw::Int=nw_id_default)
+
+Check to see if gen is inverter model
+"""
 function is_inverter(pm, i::Int, nw::Int=nw_id_default)
     gen = _PM.ref(pm, nw, :gen, i)
 
@@ -10,7 +14,11 @@ function is_inverter(pm, i::Int, nw::Int=nw_id_default)
 end
 
 
-"Checks to see if inverter is operating in pq mode"
+"""
+	is_pq_inverter(pm, i::Int, nw::Int=nw_id_default)
+
+Checks to see if inverter is operating in pq mode
+"""
 function is_pq_inverter(pm, i::Int, nw::Int=nw_id_default)
     gen = _PM.ref(pm, nw, :gen, i)
 
@@ -30,7 +38,11 @@ function is_pq_inverter(pm, i::Int, nw::Int=nw_id_default)
 end
 
 
-"Checks to see if inverter is operating in V mode"
+"""
+	is_v_inverter(pm, i::Int, nw::Int=nw_id_default)
+
+Checks to see if inverter is operating in V mode
+"""
 function is_v_inverter(pm, i::Int, nw::Int=nw_id_default)
     gen = _PM.ref(pm, nw, :gen, i)
 
@@ -50,19 +62,31 @@ function is_v_inverter(pm, i::Int, nw::Int=nw_id_default)
 end
 
 
-"constraint for the fault current at the fault_bus"
+"""
+	constraint_bus_fault_current(pm::_PM.AbstractIVRModel, i::Int; nw::Int=nw_id_default)
+
+constraint for the fault current at the fault_bus
+"""
 function constraint_bus_fault_current(pm::_PM.AbstractIVRModel, i::Int; nw::Int=nw_id_default)
     constraint_bus_fault_current(pm, nw, i, _PM.ref(pm, nw, :fault, i, "fault_bus"), _PM.ref(pm, nw, :fault, i, "gf"))
 end
 
 
-"generator reactive power setpoint constraint"
+"""
+	constraint_mc_gen_power_setpoint_imag(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default, kwargs...)
+
+generator reactive power setpoint constraint
+"""
 function constraint_mc_gen_power_setpoint_imag(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default, kwargs...)
     qg_set = _PMD.ref(pm, nw, :gen, i, "qg")
     constraint_mc_gen_power_setpoint_imag(pm, nw, i, qg_set)
 end
 
-"Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence"
+"""
+	constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
+
+Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence
+"""
 function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
     for (k, gen) in _PM.ref(pm, nw, :gen)
         i = gen["index"]
@@ -101,7 +125,11 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractPowerModel; nw::Int=nw_id_d
 end
 
 
-"Constraints for fault current contribution of inverter in grid-following mode with pq set points"
+"""
+	constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
+
+Constraints for fault current contribution of inverter in grid-following mode with pq set points
+"""
 function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
     for (k, gen) in _PM.ref(pm, nw, :gen)
         i = gen["index"]
@@ -125,7 +153,11 @@ function constraint_pq_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_defaul
 end
 
 
-"Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly"
+"""
+	constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
+
+Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly
+"""
 function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
     for (k, gen) in _PM.ref(pm, nw, :gen)
         i = gen["index"]
@@ -148,7 +180,11 @@ function constraint_i_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default
 end
 
 
-"Constraints for fault current contribution of inverter in grid-forming mode"
+"""
+	constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
+
+Constraints for fault current contribution of inverter in grid-forming mode
+"""
 function constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default)
     for (k, gen) in _PM.ref(pm, nw, :gen)
         i = gen["index"]
@@ -180,7 +216,11 @@ function constraint_v_inverter(pm::_PM.AbstractPowerModel; nw::Int=nw_id_default
 end
 
 
-"Constraint to calculate the fault current at a bus and the current at other buses"
+"""
+	constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=nw_id_default)
+
+Constraint to calculate the fault current at a bus and the current at other buses
+"""
 function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=nw_id_default)
     bus_arcs = _PM.ref(pm, nw, :bus_arcs, i)
     bus_gens = _PM.ref(pm, nw, :bus_gens, i)
@@ -197,7 +237,11 @@ function constraint_current_balance(pm::_PM.AbstractPowerModel, i::Int; nw::Int=
 end
 
 
-"Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor"
+"""
+	constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=nw_id_default)
+
+Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor
+"""
 function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=nw_id_default)
     for (k, gen) in _PMD.ref(pm, nw, :gen)
         if k in _PMD.ids(pm, :solar_gfli)
@@ -280,7 +324,11 @@ function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; n
 end
 
 
-"Constraints for fault current contribution of multiconductor inverter in grid-following mode"
+"""
+	constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+
+Constraints for fault current contribution of multiconductor inverter in grid-following mode
+"""
 function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
     index = _PMD.ref(pm, nw, :solar_gfli, i)
     gen = _PMD.ref(pm, nw, :gen, i)
@@ -295,7 +343,11 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int
 end
 
 
-"Constraints for fault current contribution of multiconductor inverter in grid-forming mode"
+"""
+	constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+
+Constraints for fault current contribution of multiconductor inverter in grid-forming mode
+"""
 function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
     @debug "Adding grid-forming inverter constraint without impedance"
     index = _PMD.ref(pm, nw, :solar_gfmi, i)
@@ -323,7 +375,11 @@ function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedPowerMod
 end
 
 
-"Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
+"""
+	constraint_mc_grid_forming_inverter_impedance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+
+Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching
+"""
 function constraint_mc_grid_forming_inverter_impedance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
     index = _PMD.ref(pm, nw, :solar_gfmi, i)
     gen = _PMD.ref(pm, nw, :gen, index)
@@ -361,7 +417,11 @@ function constraint_mc_grid_forming_inverter_impedance(pm::_PMD.AbstractUnbalanc
 end
 
 
-"Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching"
+"""
+	constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+
+Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching
+"""
 function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
     index = _PMD.ref(pm, nw, :solar_gfmi, i)
     gen = _PMD.ref(pm, nw, :gen, i)
@@ -398,7 +458,11 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.Abstract
 end
 
 
-"Constraint to calculate the fault current at a bus and the current at other buses for multiconductor"
+"""
+	constraint_mc_current_balance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+
+Constraint to calculate the fault current at a bus and the current at other buses for multiconductor
+"""
 function constraint_mc_current_balance(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
     bus = _PMD.ref(pm, nw, :bus, i)
     bus_arcs = _PMD.ref(pm, nw, :bus_arcs_conns_branch, i)
@@ -417,7 +481,11 @@ function constraint_mc_current_balance(pm::_PMD.AbstractUnbalancedPowerModel, i:
 end
 
 
-"Constraint for Kirchoff's current law on faulted buses"
+"""
+	constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
+
+Constraint for Kirchoff's current law on faulted buses
+"""
 function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
     bus = _PMD.ref(pm, nw, :fault, i, "fault_bus")
     connections = _PMD.ref(pm, nw, :fault, i, "connections")
@@ -428,7 +496,11 @@ function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel, i:
 end
 
 
-"Constraint for fault-current contribution battery energy storage inverters"
+"""
+	constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
+
+Constraint for fault-current contribution battery energy storage inverters
+"""
 function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, i::Int; nw::Int=nw_id_default)
     storage = _PMD.ref(pm, nw, :storage, i)
     connections = storage["connections"]

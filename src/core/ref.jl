@@ -1,4 +1,8 @@
-"Adds the fault to the model"
+"""
+	ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+Adds the fault to the model
+"""
 function ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PM.apply_pm!(_ref_add_fault!, ref, data; apply_to_subnetworks=true)
 end
@@ -11,7 +15,11 @@ function _ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
 end
 
 
-"Adds the fault to the model for multiconductor"
+"""
+	ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+Adds the fault to the model for multiconductor
+"""
 function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_mc_fault!, ref, data; apply_to_subnetworks=true)
 end
@@ -24,7 +32,11 @@ function _ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
 end
 
 
-"Calculates the power from solar based on inputs"
+"""
+	ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+Calculates the power from solar based on inputs
+"""
 function ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_mc_solar!, ref, data; apply_to_subnetworks=true)
 end
@@ -54,7 +66,11 @@ function _ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
 end
 
 
-"identifies grid forming buses"
+"""
+	ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+identifies grid forming buses
+"""
 function ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_grid_forming_bus!, ref, data; apply_to_subnetworks=true)
 end
@@ -67,7 +83,11 @@ function _ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<
 end
 
 
-"Add solar inverters to the model"
+"""
+	ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+Add solar inverters to the model
+"""
 function ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_mc_storage!, ref, data; apply_to_subnetworks=true)
 end

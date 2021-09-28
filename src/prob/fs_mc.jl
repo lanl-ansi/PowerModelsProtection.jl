@@ -64,7 +64,11 @@ function solve_mc_fault_study(case::Dict{String,<:Any}, fault_studies::Dict{Stri
 end
 
 
-"Builds a multiconductor (distribution) fault study optimization problem"
+"""
+	build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
+
+Builds a multiconductor (distribution) fault study optimization problem
+"""
 function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     @debug "Building fault study"
     _PMD.variable_mc_bus_voltage(pm, bounded=false)

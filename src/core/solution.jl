@@ -1,4 +1,8 @@
-"adds additional variable transformations for fault study solutions of distribution networks"
+"""
+	solution_fs!(pm::_PMD.AbstractUnbalancedIVRModel, sol::Dict{String,<:Any})
+
+adds additional variable transformations for fault study solutions of distribution networks
+"""
 function solution_fs!(pm::_PMD.AbstractUnbalancedIVRModel, sol::Dict{String,<:Any})
     _PMD.apply_pmd!(_solution_fs!, sol; apply_to_subnetworks=true)
 end

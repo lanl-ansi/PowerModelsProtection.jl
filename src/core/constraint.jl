@@ -1,11 +1,19 @@
-"generator reactive power setpoint constraint"
+"""
+	constraint_mc_gen_power_setpoint_imag(pm::_PMD.AbstractUnbalancedPowerModel, n::Int, i, qg)
+
+generator reactive power setpoint constraint
+"""
 function constraint_mc_gen_power_setpoint_imag(pm::_PMD.AbstractUnbalancedPowerModel, n::Int, i, qg)
     qg_var = _PMD.var(pm, n, :qg, i)
     JuMP.@constraint(pm.model, qg_var .== qg)
 end
 
 
-"States that the bus voltage is equal to the internal voltage minus voltage drop across subtransient impedance"
+"""
+	constraint_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id, r, x, vgr, vgi)
+
+States that the bus voltage is equal to the internal voltage minus voltage drop across subtransient impedance
+"""
 function constraint_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id, r, x, vgr, vgi)
     vr_to = _PM.var(pm, n, :vr, bus_id)
     vi_to = _PM.var(pm, n, :vi, bus_id)
@@ -18,7 +26,11 @@ function constraint_gen_voltage_drop(pm::_PM.AbstractIVRModel, n::Int, i::Int, b
 end
 
 
-"Calculates the fault current at a bus"
+"""
+	constraint_bus_fault_current(pm::_PM.AbstractIVRModel, nw::Int, i::Int, fault_bus::Int, g::Real)
+
+Calculates the fault current at a bus
+"""
 function constraint_bus_fault_current(pm::_PM.AbstractIVRModel, nw::Int, i::Int, fault_bus::Int, g::Real)
     vr = _PM.var(pm, nw, :vr, fault_bus)
     vi = _PM.var(pm, nw, :vi, fault_bus)
@@ -31,7 +43,11 @@ function constraint_bus_fault_current(pm::_PM.AbstractIVRModel, nw::Int, i::Int,
 end
 
 
-"Calculates the current balance at the non-faulted buses"
+"""
+	constraint_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_arcs, bus_gens, bus_gs, bus_bs)
+
+Calculates the current balance at the non-faulted buses
+"""
 function constraint_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_arcs, bus_gens, bus_gs, bus_bs)
     vr = _PM.var(pm, n, :vr, i)
     vi = _PM.var(pm, n, :vi, i)
@@ -55,7 +71,11 @@ function constraint_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::Int, bu
 end
 
 
-"Calculates the current balance at the faulted bus"
+"""
+	constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_arcs, bus_gens, bus_gs, bus_bs)
+
+Calculates the current balance at the faulted bus
+"""
 function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_arcs, bus_gens, bus_gs, bus_bs)
     vr = _PM.var(pm, n, :vr, i)
     vi = _PM.var(pm, n, :vi, i)
@@ -84,7 +104,11 @@ function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::I
 end
 
 
-"Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence"
+"""
+	constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i::Int, bus_id::Int, r, x, vgr, vgi, terminals)
+
+Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence
+"""
 function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i::Int, bus_id::Int, r, x, vgr, vgi, terminals)
     vr_to = _PMD.var(pm, n, :vr, bus_id)
     vi_to = _PMD.var(pm, n, :vi, bus_id)
@@ -103,7 +127,11 @@ function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedIVRModel, n::
 end
 
 
-"Calculates the current at the faulted bus for multiconductor"
+"""
+	constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int, i::Int, bus::Int, connections::Vector{Int}, Gf::Matrix{<:Real}, Bf::Matrix{<:Real})
+
+Calculates the current at the faulted bus for multiconductor
+"""
 function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int, i::Int, bus::Int, connections::Vector{Int}, Gf::Matrix{<:Real}, Bf::Matrix{<:Real})
     vr = _PMD.var(pm, nw, :vr, bus)
     vi = _PMD.var(pm, nw, :vi, bus)
@@ -118,7 +146,11 @@ function constraint_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedPowerModel, 
 end
 
 
-"Calculates the current balance at the faulted bus for multiconductor"
+"""
+	constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, fault::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
+
+Calculates the current balance at the faulted bus for multiconductor
+"""
 function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, fault::Int, terminals::Vector{Int}, grounded::Vector{Bool}, bus_arcs::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_sw::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_arcs_trans::Vector{Tuple{Tuple{Int,Int,Int},Vector{Int}}}, bus_gens::Vector{Tuple{Int,Vector{Int}}}, bus_storage::Vector{Tuple{Int,Vector{Int}}}, bus_shunts::Vector{Tuple{Int,Vector{Int}}})
     vr = _PMD.var(pm, nw, :vr, i)
     vi = _PMD.var(pm, nw, :vi, i)
