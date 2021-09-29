@@ -183,6 +183,80 @@ function build_mc_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, p
 end
 
 
+function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
+
+    fault_studies = Dict{String,Any}()
+    vsource_buses = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
+
+    bus_list = [] 
+    protection_device = ["fuse", "relay"]
+    for device in protection_device 
+        for (id, device_obj) in get(data, device, Dict())
+            if haskey(data[device_obj["monitor_type"]], device_obj["monitoredobj"]) 
+                monitor_obj = data[device_obj["monitor_type"]][device_obj["monitoredobj"]]
+                if device_obj["monitor_type"] == "line"
+                    monitor_obj["f_bus"] in bus_list ? nothing : push!(bus_list, monitor_obj["f_bus"])
+                    monitor_obj["t_bus"] in bus_list ? nothing : push!(bus_list, monitor_obj["t_bus"])
+                else
+                    monitor_obj["bus"] in bus_list ? nothing : push!(bus_list, monitor_obj["bus"])
+                end
+            end
+        end
+    end
+
+    # add leaf bus code here to add to bus_list
+
+    for id in bus_list
+        bus = data["bus"][id]
+        if !(id in vsource_buses)
+            fault_studies[id] = Dict{String,Any}(
+                "lg" => Dict{String,Any}(),
+                "ll" => Dict{String,Any}(),
+                "llg" => Dict{String,Any}(),
+                "3p" => Dict{String,Any}(),
+                "3pg" => Dict{String,Any}(),
+            )
+
+            i = 1
+            for t in bus["terminals"]
+                ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
+                if !(t in bus["grounded"])
+                    fault_studies[id]["lg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "lg", id, [t, ground_terminal], resistance)
+                    i += 1
+                end
+            end
+
+            i = 1
+            for t in bus["terminals"]
+                ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
+                if !(t in bus["grounded"])
+                    for u in bus["terminals"]
+                        if !(u in bus["grounded"]) && t != u && t < u
+                            fault_studies[id]["ll"]["$i"] = add_fault!(Dict{String,Any}(), "1", "ll", id, [t, u], phase_resistance)
+                            fault_studies[id]["llg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "llg", id, [t, u, ground_terminal], resistance, phase_resistance)
+                            i += 1
+                        end
+                    end
+                end
+            end
+
+            if length(bus["terminals"]) >= 3
+                fault_studies[id]["3p"]["1"] = add_fault!(Dict{String,Any}(), "1", "3p", id, bus["terminals"][1:3], phase_resistance)
+                if length(bus["terminals"]) >= 4
+                    fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, bus["terminals"][1:4], resistance, phase_resistance)
+                else
+                    fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, [bus["terminals"][1:3]; 4], resistance, phase_resistance)
+                end
+            end
+
+        end
+    end
+
+    return fault_studies
+
+end
+
+
 "Creates a list of buses in the model to fault for study"
 function get_mc_fault_buses(data::Dict{String,Any})
     hold = []
