@@ -21,5 +21,5 @@ using Test
     include("fs_mc.jl")
     # include("pf_mc.jl")
     # include("protection_tests.jl")
-    include("sparse_fault")
+    include("sparse_fault.jl")
 end

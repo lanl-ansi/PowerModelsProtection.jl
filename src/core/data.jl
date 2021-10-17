@@ -1,4 +1,4 @@
-# using LighGraphs
+using LightGraphs
 
 "Check to see if pf should be solved"
 function check_pf!(data::Dict{String,Any}, solver)
@@ -185,115 +185,115 @@ function build_mc_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, p
 end
 
 
-# function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
-#     fault_studies = Dict{String,Any}()
-#     fault_bus_ids = Set()
-#     vsource_bus_ids = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
+function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
+    fault_studies = Dict{String,Any}()
+    fault_bus_ids = Set()
+    vsource_bus_ids = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
 
-#     bus_ids = Dict(enumerate(keys(data["bus"])))
-#     bus_nums = Dict([k => i for (i,k) in enumerate(keys(data["bus"]))])
-#     g = SimpleGraph(length(bus_nums))
+    bus_ids = Dict(enumerate(keys(data["bus"])))
+    bus_nums = Dict([k => i for (i,k) in enumerate(keys(data["bus"]))])
+    g = SimpleGraph(length(bus_nums))
 
-#     if "line" in keys(data)
-#         for (_, device_obj) in data["line"]
-#             add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
-#         end
-#     end
+    if "line" in keys(data)
+        for (_, device_obj) in data["line"]
+            add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+        end
+    end
 
-#     if "switch" in keys(data)
-#         for (_, device_obj) in data["switch"]
-#             push!(fault_busids, device_obj["f_bus"])
-#             push!(fault_busids, device_obj["t_bus"])
-#             add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
-#         end
-#     end
+    if "switch" in keys(data)
+        for (_, device_obj) in data["switch"]
+            push!(fault_busids, device_obj["f_bus"])
+            push!(fault_busids, device_obj["t_bus"])
+            add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+        end
+    end
 
-#     if "transformer" in keys(data)
-#         for (_, device_obj) in net["transformer"]
-#             push!(fault_busids, device_obj["bus"][1])
-#             push!(fault_busids, device_obj["bus"][2])
-#             add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
-#         end
-#     end    
+    if "transformer" in keys(data)
+        for (_, device_obj) in net["transformer"]
+            push!(fault_busids, device_obj["bus"][1])
+            push!(fault_busids, device_obj["bus"][2])
+            add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+        end
+    end    
 
-#     generation_devices = ["generator", "solar", "storage"]
-#     for device in generation_devices
-#         for (_, device_obj) in get(data, device, Dict())
-#             push!(fault_bus_ids, device_obj["bus"])
-#         end
-#     end
+    generation_devices = ["generator", "solar", "storage"]
+    for device in generation_devices
+        for (_, device_obj) in get(data, device, Dict())
+            push!(fault_bus_ids, device_obj["bus"])
+        end
+    end
 
-#     protection_devices = ["fuse", "relay"]
-#     for device in protection_devices
-#         for (_, device_obj) in get(data, device, Dict())
-#             if haskey(data[device_obj["monitor_type"]], device_obj["monitoredobj"]) 
-#                 monitor_obj = data[device_obj["monitor_type"]][device_obj["monitoredobj"]]
-#                 if device_obj["monitor_type"] == "line"
-#                     push!(fault_bus_ids, monitor_obj["f_bus"])
-#                     push!(fault_bus_ids, monitor_obj["t_bus"])
-#                 else
-#                     push!(fault_bus_ids, monitor_obj["bus"])
-#                 end
-#             end
-#         end
-#     end
+    protection_devices = ["fuse", "relay"]
+    for device in protection_devices
+        for (_, device_obj) in get(data, device, Dict())
+            if haskey(data[device_obj["monitor_type"]], device_obj["monitoredobj"]) 
+                monitor_obj = data[device_obj["monitor_type"]][device_obj["monitoredobj"]]
+                if device_obj["monitor_type"] == "line"
+                    push!(fault_bus_ids, monitor_obj["f_bus"])
+                    push!(fault_bus_ids, monitor_obj["t_bus"])
+                else
+                    push!(fault_bus_ids, monitor_obj["bus"])
+                end
+            end
+        end
+    end
 
-#     for (node_index, node_degree) in enumerate(degree(g))
-#         if node_degree == 1 && !(bus_ids[node_index] in vsource_bus_ids)
-#             push!(fault_bus_ids, bus_ids[i])
-#         end
-#     end
+    for (node_index, node_degree) in enumerate(degree(g))
+        if node_degree == 1 && !(bus_ids[node_index] in vsource_bus_ids)
+            push!(fault_bus_ids, bus_ids[node_index])
+        end
+    end
 
 
-#     for id in fault_bus_ids
-#         bus = data["bus"][id]
-#         if !(id in vsoure_bus_ids)
-#             fault_studies[id] = Dict{String,Any}(
-#                 "lg" => Dict{String,Any}(),
-#                 "ll" => Dict{String,Any}(),
-#                 "llg" => Dict{String,Any}(),
-#                 "3p" => Dict{String,Any}(),
-#                 "3pg" => Dict{String,Any}(),
-#             )
+    for id in fault_bus_ids
+        bus = data["bus"][id]
+        if !(id in vsource_bus_ids)
+            fault_studies[id] = Dict{String,Any}(
+                "lg" => Dict{String,Any}(),
+                "ll" => Dict{String,Any}(),
+                "llg" => Dict{String,Any}(),
+                "3p" => Dict{String,Any}(),
+                "3pg" => Dict{String,Any}(),
+            )
 
-#             i = 1
-#             for t in bus["terminals"]
-#                 ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
-#                 if !(t in bus["grounded"])
-#                     fault_studies[id]["lg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "lg", id, [t, ground_terminal], resistance)
-#                     i += 1
-#                 end
-#             end
+            i = 1
+            for t in bus["terminals"]
+                ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
+                if !(t in bus["grounded"])
+                    fault_studies[id]["lg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "lg", id, [t, ground_terminal], resistance)
+                    i += 1
+                end
+            end
 
-#             i = 1
-#             for t in bus["terminals"]
-#                 ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
-#                 if !(t in bus["grounded"])
-#                     for u in bus["terminals"]
-#                         if !(u in bus["grounded"]) && t != u && t < u
-#                             fault_studies[id]["ll"]["$i"] = add_fault!(Dict{String,Any}(), "1", "ll", id, [t, u], phase_resistance)
-#                             fault_studies[id]["llg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "llg", id, [t, u, ground_terminal], resistance, phase_resistance)
-#                             i += 1
-#                         end
-#                     end
-#                 end
-#             end
+            i = 1
+            for t in bus["terminals"]
+                ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
+                if !(t in bus["grounded"])
+                    for u in bus["terminals"]
+                        if !(u in bus["grounded"]) && t != u && t < u
+                            fault_studies[id]["ll"]["$i"] = add_fault!(Dict{String,Any}(), "1", "ll", id, [t, u], phase_resistance)
+                            fault_studies[id]["llg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "llg", id, [t, u, ground_terminal], resistance, phase_resistance)
+                            i += 1
+                        end
+                    end
+                end
+            end
 
-#             if length(bus["terminals"]) >= 3
-#                 fault_studies[id]["3p"]["1"] = add_fault!(Dict{String,Any}(), "1", "3p", id, bus["terminals"][1:3], phase_resistance)
-#                 if length(bus["terminals"]) >= 4
-#                     fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, bus["terminals"][1:4], resistance, phase_resistance)
-#                 else
-#                     fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, [bus["terminals"][1:3]; 4], resistance, phase_resistance)
-#                 end
-#             end
+            if length(bus["terminals"]) >= 3
+                fault_studies[id]["3p"]["1"] = add_fault!(Dict{String,Any}(), "1", "3p", id, bus["terminals"][1:3], phase_resistance)
+                if length(bus["terminals"]) >= 4
+                    fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, bus["terminals"][1:4], resistance, phase_resistance)
+                else
+                    fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, [bus["terminals"][1:3]; 4], resistance, phase_resistance)
+                end
+            end
 
-#         end
-#     end
+        end
+    end
 
-#     return fault_studies
+    return fault_studies
 
-# end
+end
 
 
 "Creates a list of buses in the model to fault for study"

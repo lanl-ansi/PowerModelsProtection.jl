@@ -127,29 +127,22 @@
     #     @test sol["termination_status"] == LOCALLY_SOLVED
     # end
 
-    @testset "c3-bus single phase test" begin
+    @testset "case3 single phase test" begin
         case3_balanced_single_phase["voltage_source"]["source"]["grid_forming"] = true
         data = deepcopy(case3_balanced_single_phase)
 
-        add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.005)
-        sol = solve_mc_fault_study(data, ipopt_solver)
-        @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 862.0) < .05
+        fault_study = build_mc_sparse_fault_study(data)
+        sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.005)
-        sol = solve_mc_fault_study(data, ipopt_solver)
-        @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1259.0) < .05
+        @test collect(keys(sol)) == ["loadbus2", "pv_bus"]
 
-        add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.005)
-        sol = solve_mc_fault_study(data, ipopt_solver)
-        @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1455.0) < .05
-
-        add_fault!(data, "1", "lg", "loadbus2", [2, 4], 0.005)
-        sol = solve_mc_fault_study(data, ipopt_solver)
-        @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 640.0) < .05
+        @test sol["loadbus2"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["loadbus2"]["lg"]["1"]["solution"]["line"]["ohline2"]["cr_to"][1], 515.844) < .05
+        @test calulate_error_percentage(sol["loadbus2"]["lg"]["1"]["solution"]["line"]["ohline2"]["ci_to"][1], 396.513) < .05
+        
+        @test sol["pv_bus"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["pv_bus"]["lg"]["1"]["solution"]["line"]["pv_line"]["cr_to"][1], 777.992) < .05
+        @test calulate_error_percentage(sol["pv_bus"]["lg"]["1"]["solution"]["line"]["pv_line"]["ci_to"][1], -428.974) < .05
     end
 
     # @testset "case3_unblanced_switch test fault study" begin
