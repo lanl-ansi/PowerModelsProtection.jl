@@ -1,117 +1,211 @@
-using PowerModelsProtection, Ipopt, JuMP, Printf, LightGraphs
+@testset "Unbalanced sparse fault study" begin
+    ut_trans_2w_yy_fault_study = parse_file("../test/data/dist/ut_trans_2w_yy_fault_study.dss")
+    case3_balanced_pv = parse_file("../test/data/dist/case3_balanced_pv.dss")
+    case3_balanced_pv_grid_forming = parse_file("../test/data/dist/case3_balanced_pv_grid_forming.dss")
+    case3_balanced_multi_pv_grid_following = parse_file("../test/data/dist/case3_balanced_multi_pv_grid_following.dss")
+    case3_balanced_parallel_pv_grid_following = parse_file("../test/data/dist/case3_balanced_parallel_pv_grid_following.dss")
+    case3_balanced_single_phase = parse_file("../test/data/dist/case3_balanced_single_phase.dss")
+    case3_unblanced_switch = parse_file("../test/data/dist/case3_unbalanced_switch.dss")
+    simulink_model = parse_file("../test/data/dist/simulink_model.dss")
 
-netfile = "dist/case3_dg_islanded.dss"
-netfile = "dist/case3_balanced_pv_2_gridforming.dss"
-netfile = "dist/case3_unbalanced_switch.dss"
-# netfile = "dist/ieee123/IEEE123Master_No_Regs.dss"
-net = PowerModelsProtection.parse_file(netfile)
+    # @testset "ut_trans_2w_yy_fault_study test fault study" begin
+    #     data = deepcopy(ut_trans_2w_yy_fault_study)
 
-# net["multinetwork"] = false
-# solver = JuMP.with_optimizer(Ipopt.Optimizer)
-# # Simulate the fault
+    #     fault_studies = build_mc_fault_study(data)
+    #     sol = solve_mc_fault_study(data, fault_studies, ipopt_solver)
 
-busid = Dict(enumerate(keys(net["bus"])))
-busnum = Dict([k => i for (i,k) in enumerate(keys(net["bus"]))])
-g = SimpleGraph(length(busnum))
+    #     @test sol["1"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["1"]["lg"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 1381.0) < .05
+    #     @test sol["1"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["1"]["ll"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 818.0) < .05
+    #     @test sol["1"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["1"]["3p"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 945.0) < .05
+    # end
 
-if "line" in keys(net)
-    for (_, x) in net["line"]
-        add_edge!(g, busnum[x["f_bus"]], busnum[x["t_bus"]])
+    # @testset "ut_trans_2w_yy_fault_study line to ground fault" begin
+    #     data = deepcopy(ut_trans_2w_yy_fault_study)
+
+    #     add_fault!(data, "1", "lg", "3", [1,4], .00001)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["line"]["line2"]["cf_fr"][1], 785.0) < .05
+    # end
+
+    # @testset "ut_trans_2w_yy_fault_study 3-phase fault" begin
+    #     data = deepcopy(ut_trans_2w_yy_fault_study)
+
+    #     add_fault!(data, "1", "3p", "3", [1,2,3], 0.005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["line"]["line2"]["cf_fr"][1], 708.0) < .05
+    # end
+
+    # @testset "3-bus pv fault test single faults" begin
+    #     data = deepcopy(case3_balanced_pv)
+
+    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 39.686) < .05
+    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 38.978) < .05
+
+    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 39.693) < .05
+
+    #     # test the current limit bu placing large load to force off limits
+    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 500.0)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 35.523) < .05
+    # end
+
+    # @testset "c3-bus multiple pv grid_following fault test" begin
+    #     data = deepcopy(case3_balanced_multi_pv_grid_following)
+
+    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "lg", "pv_bus", [1, 4], 0.0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    # end
+
+    # @testset "c3-bus parallel pv grid_following fault test" begin
+    #     data = deepcopy(case3_balanced_parallel_pv_grid_following)
+
+    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "lg", "pv_bus", [1, 4], 0.0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    # end
+
+    # @testset "c3-bus pv grid_forming fault test island" begin
+    #     case3_balanced_pv_grid_forming["solar"]["pv1"]["grid_forming"] = true
+    #     case3_balanced_pv_grid_forming["line"]["ohline"]["status"] = DISABLED
+
+    #     data = deepcopy(case3_balanced_pv_grid_forming)
+
+    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+
+    #     add_fault!(data, "1", "lg", "pv_bus", [1, 4], 0.005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    # end
+
+    @testset "c3-bus single phase test" begin
+        case3_balanced_single_phase["voltage_source"]["source"]["grid_forming"] = true
+        data = deepcopy(case3_balanced_single_phase)
+
+        add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.005)
+        sol = solve_mc_fault_study(data, ipopt_solver)
+        @test sol["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 862.0) < .05
+
+        add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.005)
+        sol = solve_mc_fault_study(data, ipopt_solver)
+        @test sol["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1259.0) < .05
+
+        add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.005)
+        sol = solve_mc_fault_study(data, ipopt_solver)
+        @test sol["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1455.0) < .05
+
+        add_fault!(data, "1", "lg", "loadbus2", [2, 4], 0.005)
+        sol = solve_mc_fault_study(data, ipopt_solver)
+        @test sol["termination_status"] == LOCALLY_SOLVED
+        @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 640.0) < .05
     end
+
+    # @testset "case3_unblanced_switch test fault study" begin
+    #     data = deepcopy(case3_unblanced_switch)
+
+    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], .0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1454.0) < .06
+
+    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], .0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1257.0) < .06
+
+    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], .0005)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 883.0) < .06
+    # end
+
+
+    # @testset "compare to simulink model" begin
+    #     # TODO needs helper function
+    #     simulink_model["solar"]["pv1"]["grid_forming"] = true
+    #     simulink_model["line"]["cable1"]["status"] = DISABLED
+    #     data = deepcopy(simulink_model)
+
+    #     add_fault!(data, "1", "3p", "midbus", [1,2,3], 60.0)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 13.79) < .05
+
+    #     add_fault!(data, "1", "ll", "midbus", [1, 2], 40.0)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 11.94) < .05
+
+    #     add_fault!(data, "1", "lg", "midbus", [1, 4], 20.0)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 13.79) < .05
+
+    #     add_fault!(data, "1", "3p", "midbus", [1,2,3], .1)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 69.93) < .15
+
+    #     add_fault!(data, "1", "ll", "midbus", [1, 2], .1)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 60.55) < .15
+
+    #     add_fault!(data, "1", "lg", "midbus", [1, 4], .1)
+    #     sol = solve_mc_fault_study(data, ipopt_solver)
+    #     @test sol["termination_status"] == LOCALLY_SOLVED
+    #     @test calulate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 103.4) < .15
+    # end
+
 end
-
-# vsource_busids = Set([vsource["bus"] for (_,vsource) in get(net, "voltage_source", Dict())])
-# fault_busids = Set()
-
-# for (i,d) in enumerate(degree(g))
-#     if d == 1 && !(busid[i] in vsource_busids)
-#         push!(fault_busids, busid[i])
-#     end
-# end
-
-# if "generator" in keys(net)
-#     for (_,g) in net["generator"]
-#         push!(fault_busids, g["bus"])
-#     end
-# end
-
-# if "solar" in keys(net)
-#     for (_,g) in net["solar"]
-#         push!(fault_busids, g["bus"])
-#     end
-# end
-
-# if "transformer" in keys(net)
-#     for (_, x) in net["transformer"]
-#         push!(fault_busids, busnum[x["bus"][1]])
-#         push!(fault_busids, busnum[x["bus"][2]])
-#     end
-# end
-
-# if "switch" in keys(net)
-#     for (_, x) in net["switch"]
-#         push!(fault_busids, x["f_bus"])
-#         push!(fault_busids, x["t_bus"])
-#     end
-# end
-
-
-# resistance = 0.01
-# phase_resistance = 0.01
-# fault_studies = Dict{String,Any}()
-
-# for id in fault_busids
-#     bus = net["bus"][id]
-
-#     if id in vsource_busids
-#         continue
-#     end
-
-#     fault_studies[id] = Dict{String,Any}(
-#         "lg" => Dict{String,Any}(),
-#         "ll" => Dict{String,Any}(),
-#         "llg" => Dict{String,Any}(),
-#         "3p" => Dict{String,Any}(),
-#         "3pg" => Dict{String,Any}(),
-#     )
-
-#     i = 1
-#     for t in bus["terminals"]
-#         ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
-#         if !(t in bus["grounded"])
-#             fault_studies[id]["lg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "lg", id, [t, ground_terminal], resistance)
-#             i += 1
-#         end
-#     end
-
-#     i = 1
-#     for t in bus["terminals"]
-#         ground_terminal = !isempty(bus["grounded"]) ? bus["grounded"][end] : 4
-#         if !(t in bus["grounded"])
-#             for u in bus["terminals"]
-#                 if !(u in bus["grounded"]) && t != u && t < u
-#                     fault_studies[id]["ll"]["$i"] = add_fault!(Dict{String,Any}(), "1", "ll", id, [t, u], phase_resistance)
-#                     fault_studies[id]["llg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "llg", id, [t, u, ground_terminal], resistance, phase_resistance)
-#                     i += 1
-#                 end
-#             end
-#         end
-#     end
-
-#     if length(bus["terminals"]) >= 3
-#         fault_studies[id]["3p"]["1"] = add_fault!(Dict{String,Any}(), "1", "3p", id, bus["terminals"][1:3], phase_resistance)
-#         if length(bus["terminals"]) >= 4
-#             fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, bus["terminals"][1:4], resistance, phase_resistance)
-#         else
-#             fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, [bus["terminals"][1:3]; 4], resistance, phase_resistance)
-#         end
-#     end
-# end
-
-
-# # PowerModelsProtection.add_fault!(net, "1", "lg", "loadbus", [1, 4], 0.005)
-# # results = PowerModelsProtection.solve_mc_fault_study(net, solver)
-
-# # # Print out the fault currents
-# # Iabc = results["solution"]["line"]["ohline"]["fault_current"]
-# # @printf("Fault current: %0.3f A\n", Iabc[1])
