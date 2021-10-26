@@ -2,7 +2,10 @@
 
 ## staged
 
-- none
+## v0.4.0
+
+- Updated to PowerModelsDistribution v0.12.0
+- Added support for storage in fault study formulation
 
 ## v0.3.0
 
