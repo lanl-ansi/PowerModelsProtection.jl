@@ -14,7 +14,7 @@
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        @test collect(keys(sol)) == ["1", "2", "3"]
+        @test Set(keys(sol)) == Set(["1", "2", "3"])
 
         @test sol["3"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["3"]["lg"]["1"]["solution"]["line"]["line1"]["cr_to"][1], -179.916) < 0.05
@@ -35,7 +35,7 @@
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        @test collect(keys(sol)) == ["pv_bus", "loadbus"]
+        @test Set(keys(sol)) == Set(["pv_bus", "loadbus"])
 
         @test sol["pv_bus"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["pv_bus"]["lg"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1],  873.690) < 0.05
@@ -117,7 +117,7 @@
         fault_study = build_mc_sparse_fault_study(data)
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        @test collect(keys(sol)) == ["loadbus2", "pv_bus"]
+        @test Set(keys(sol)) == Set(["loadbus2", "pv_bus"])
 
         @test sol["loadbus2"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["loadbus2"]["lg"]["1"]["solution"]["line"]["ohline2"]["cr_to"][1], 515.844) < 0.05
@@ -134,7 +134,7 @@
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        @test collect(keys(sol)) == ["primary", "switchbus", "loadbus"]
+        @test Set(keys(sol)) == Set(["primary", "switchbus", "loadbus"])
 
         @test sol["primary"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["primary"]["lg"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1847.412) < 0.05
