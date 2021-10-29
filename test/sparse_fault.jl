@@ -65,48 +65,23 @@
         @test calculate_error_percentage(sol["pv_bus"]["3p"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1483.725) < 0.05
     end
 
-    # @testset "c3-bus parallel pv grid_following fault test" begin
-    #     data = deepcopy(case3_balanced_parallel_pv_grid_following)
+    @testset "c3-bus parallel pv grid_following fault test" begin
+        data = deepcopy(case3_balanced_parallel_pv_grid_following)
 
-    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
+        fault_study = build_mc_sparse_fault_study(data)    
+        sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
+        @test collect(keys(sol)) == ["loadbus", "pv_bus"]
 
-    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
+        @test sol["pv_bus"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["lg"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 859.242) < 0.05
 
-    #     add_fault!(data, "1", "lg", "pv_bus", [1, 4], 0.0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    # end
+        @test sol["pv_bus"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["ll"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1268.365) < 0.05
 
-    # @testset "c3-bus pv grid_forming fault test island" begin
-    #     case3_balanced_pv_grid_forming["solar"]["pv1"]["grid_forming"] = true
-    #     case3_balanced_pv_grid_forming["line"]["ohline"]["status"] = DISABLED
-
-    #     data = deepcopy(case3_balanced_pv_grid_forming)
-
-    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-
-    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-
-    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-
-    #     add_fault!(data, "1", "lg", "pv_bus", [1, 4], 0.005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    # end
+        @test sol["pv_bus"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["3p"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1501.912) < 0.05
+    end
 
     @testset "case3 single phase test" begin
         case3_balanced_single_phase["voltage_source"]["source"]["grid_forming"] = true
@@ -143,42 +118,4 @@
         @test sol["primary"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["primary"]["3p"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 3178.410) < 0.05
     end
-
-
-    # @testset "compare to simulink model" begin
-    #     # TODO needs helper function
-    #     simulink_model["solar"]["pv1"]["grid_forming"] = true
-    #     simulink_model["line"]["cable1"]["status"] = DISABLED
-    #     data = deepcopy(simulink_model)
-
-    #     add_fault!(data, "1", "3p", "midbus", [1,2,3], 60.0)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 13.79) < 0.05
-
-    #     add_fault!(data, "1", "ll", "midbus", [1, 2], 40.0)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 11.94) < 0.05
-
-    #     add_fault!(data, "1", "lg", "midbus", [1, 4], 20.0)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 13.79) < 0.05
-
-    #     add_fault!(data, "1", "3p", "midbus", [1,2,3], .1)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 69.93) < .15
-
-    #     add_fault!(data, "1", "ll", "midbus", [1, 2], .1)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 60.55) < .15
-
-    #     add_fault!(data, "1", "lg", "midbus", [1, 4], .1)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 103.4) < .15
-    # end
-
 end
