@@ -27,35 +27,7 @@
         @test sol["3"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["3"]["3p"]["1"]["solution"]["line"]["line1"]["cr_to"][1], -175.321) < 0.05
         @test calculate_error_percentage(sol["3"]["3p"]["1"]["solution"]["line"]["line1"]["ci_to"][1], 170.779) < 0.05        
-
-    #     fault_studies = build_mc_fault_study(data)
-    #     sol = solve_mc_fault_study(data, fault_studies, ipopt_solver)
-
-    #     @test sol["1"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["1"]["lg"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 1381.0) < 0.05
-    #     @test sol["1"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["1"]["ll"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 818.0) < 0.05
-    #     @test sol["1"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["1"]["3p"]["1"]["solution"]["line"]["line1"]["cf_fr"][1], 945.0) < 0.05
     end
-
-    # @testset "ut_trans_2w_yy_fault_study line to ground fault" begin
-    #     data = deepcopy(ut_trans_2w_yy_fault_study)
-
-    #     add_fault!(data, "1", "lg", "3", [1,4], .00001)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["line"]["line2"]["cf_fr"][1], 785.0) < 0.05
-    # end
-
-    # @testset "ut_trans_2w_yy_fault_study 3-phase fault" begin
-    #     data = deepcopy(ut_trans_2w_yy_fault_study)
-
-    #     add_fault!(data, "1", "3p", "3", [1,2,3], 0.005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["line"]["line2"]["cf_fr"][1], 708.0) < 0.05
-    # end
 
     # @testset "3-bus pv fault test single faults" begin
     #     data = deepcopy(case3_balanced_pv)
@@ -162,24 +134,23 @@
         @test calculate_error_percentage(sol["pv_bus"]["lg"]["1"]["solution"]["line"]["pv_line"]["ci_to"][1], -428.974) < 0.05
     end
 
-    # @testset "case3_unblanced_switch test fault study" begin
-    #     data = deepcopy(case3_unblanced_switch)
+    @testset "case3_unblanced_switch test fault study" begin
+        data = deepcopy(case3_unblanced_switch)
 
-    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], .0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1454.0) < .06
+        fault_study = build_mc_sparse_fault_study(data)    
+        sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], .0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 1257.0) < .06
+        @test collect(keys(sol)) == ["primary", "switchbus", "loadbus"]
 
-    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], .0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["fault"]["1"]["cf"][1], 883.0) < .06
-    # end
+        @test sol["primary"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["primary"]["lg"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1847.412) < 0.05
+
+        @test sol["primary"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["primary"]["ll"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 2698.033) < 0.05
+
+        @test sol["primary"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["primary"]["3p"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 3178.410) < 0.05
+    end
 
 
     # @testset "compare to simulink model" begin
