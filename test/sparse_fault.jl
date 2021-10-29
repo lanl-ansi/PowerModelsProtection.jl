@@ -14,7 +14,7 @@
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        @test Set(keys(sol)) == Set(["1", "2", "3"])
+        @test collect(keys(sol)) == ["1", "2", "3"]
 
         @test sol["3"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["3"]["lg"]["1"]["solution"]["line"]["line1"]["cr_to"][1], -179.916) < 0.05
@@ -35,7 +35,7 @@
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        @test Set(keys(sol)) == Set(["pv_bus", "loadbus"])
+        @test collect(keys(sol)) == ["loadbus", "pv_bus"]
 
         @test sol["pv_bus"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["pv_bus"]["lg"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1],  873.690) < 0.05
@@ -47,25 +47,23 @@
         @test calculate_error_percentage(sol["pv_bus"]["3p"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1502.666) < 0.05
     end
 
-    # @testset "c3-bus multiple pv grid_following fault test" begin
-    #     data = deepcopy(case3_balanced_multi_pv_grid_following)
+    @testset "c3-bus multiple pv grid_following fault test" begin
+        data = deepcopy(case3_balanced_multi_pv_grid_following)
 
-    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
+        fault_study = build_mc_sparse_fault_study(data)    
+        sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
+        @test collect(keys(sol)) == ["pv2_bus", "loadbus", "pv_bus"]
 
-    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
+        @test sol["pv_bus"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["lg"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 849.392) < 0.05
 
-    #     add_fault!(data, "1", "lg", "pv_bus", [1, 4], 0.0005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    # end
+        @test sol["pv_bus"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["ll"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1252.756) < 0.05
+
+        @test sol["pv_bus"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["3p"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1483.725) < 0.05
+    end
 
     # @testset "c3-bus parallel pv grid_following fault test" begin
     #     data = deepcopy(case3_balanced_parallel_pv_grid_following)
@@ -117,7 +115,7 @@
         fault_study = build_mc_sparse_fault_study(data)
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        @test Set(keys(sol)) == Set(["loadbus2", "pv_bus"])
+        @test collect(keys(sol)) == ["loadbus2", "pv_bus"]
 
         @test sol["loadbus2"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["loadbus2"]["lg"]["1"]["solution"]["line"]["ohline2"]["cr_to"][1], 515.844) < 0.05
@@ -134,7 +132,7 @@
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-        @test Set(keys(sol)) == Set(["primary", "switchbus", "loadbus"])
+        @test collect(keys(sol)) == ["primary", "switchbus", "loadbus"]
 
         @test sol["primary"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
         @test calculate_error_percentage(sol["primary"]["lg"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1847.412) < 0.05
