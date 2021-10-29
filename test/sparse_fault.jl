@@ -29,29 +29,23 @@
         @test calculate_error_percentage(sol["3"]["3p"]["1"]["solution"]["line"]["line1"]["ci_to"][1], 170.779) < 0.05        
     end
 
-    # @testset "3-bus pv fault test single faults" begin
-    #     data = deepcopy(case3_balanced_pv)
+    @testset "3-bus pv fault test single faults" begin
+        data = deepcopy(case3_balanced_pv)
 
-    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 0.005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 39.686) < 0.05
-    #     add_fault!(data, "1", "lg", "loadbus", [1, 4], 0.005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 38.978) < 0.05
+        fault_study = build_mc_sparse_fault_study(data)    
+        sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
 
-    #     add_fault!(data, "1", "ll", "loadbus", [1, 2], 0.005)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 39.693) < 0.05
+        @test collect(keys(sol)) == ["pv_bus", "loadbus"]
 
-    #     # test the current limit bu placing large load to force off limits
-    #     add_fault!(data, "1", "3p", "loadbus", [1,2,3], 500.0)
-    #     sol = solve_mc_fault_study(data, ipopt_solver)
-    #     @test sol["termination_status"] == LOCALLY_SOLVED
-    #     @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 35.523) < 0.05
-    # end
+        @test sol["pv_bus"]["lg"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["lg"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1],  873.690) < 0.05
+
+        @test sol["pv_bus"]["ll"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["ll"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1279.155) < 0.05
+
+        @test sol["pv_bus"]["3p"]["1"]["termination_status"] == LOCALLY_SOLVED
+        @test calculate_error_percentage(sol["pv_bus"]["3p"]["1"]["solution"]["line"]["ohline"]["cf_fr"][1], 1502.666) < 0.05
+    end
 
     # @testset "c3-bus multiple pv grid_following fault test" begin
     #     data = deepcopy(case3_balanced_multi_pv_grid_following)
