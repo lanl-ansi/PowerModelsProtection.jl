@@ -13,7 +13,7 @@ end
 
 "Helper function to convert tripped relays and blown fuses from MATHEMATICAL to ENGINEERING models"
 function _map_math2eng_protection!(data_eng::Dict{String,<:Any}, data_math::Dict{String,<:Any}, map::Dict{String,<:Any})
-    if split(map["to"],'.')[begin] == "relay"
+    if split(map["to"],'.')[1] == "relay"
         eng_obj = _PMD._init_unmap_eng_obj!(data_eng, "relay", map)
         math_obj = _PMD._get_math_obj(data_math, map["to"])
         merge!(eng_obj, math_obj)
@@ -28,7 +28,7 @@ function _map_math2eng_protection!(data_eng::Dict{String,<:Any}, data_math::Dict
         end
     end
 
-    if split(map["to"],'.')[begin] == "fuse"
+    if split(map["to"],'.')[1] == "fuse"
         eng_obj = _PMD._init_unmap_eng_obj!(data_eng, "fuse", map)
         math_obj = _PMD._get_math_obj(data_math, map["to"])
         merge!(eng_obj, math_obj)
