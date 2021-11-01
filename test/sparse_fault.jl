@@ -1,12 +1,19 @@
 @testset "Unbalanced sparse fault study" begin
-    ut_trans_2w_yy_fault_study = parse_file("../test/data/dist/ut_trans_2w_yy_fault_study.dss")
-    case3_balanced_pv = parse_file("../test/data/dist/case3_balanced_pv.dss")
-    case3_balanced_pv_grid_forming = parse_file("../test/data/dist/case3_balanced_pv_grid_forming.dss")
-    case3_balanced_multi_pv_grid_following = parse_file("../test/data/dist/case3_balanced_multi_pv_grid_following.dss")
-    case3_balanced_parallel_pv_grid_following = parse_file("../test/data/dist/case3_balanced_parallel_pv_grid_following.dss")
-    case3_balanced_single_phase = parse_file("../test/data/dist/case3_balanced_single_phase.dss")
-    case3_unblanced_switch = parse_file("../test/data/dist/case3_unbalanced_switch.dss")
-    simulink_model = parse_file("../test/data/dist/simulink_model.dss")
+    cases = Dict(
+        "ut_trans_2w_yy_fault_study" => parse_file("../test/data/dist/ut_trans_2w_yy_fault_study.dss")
+        "case3_balanced_pv" => parse_file("../test/data/dist/case3_balanced_pv.dss")
+        "case3_balanced_pv_grid_forming" => parse_file("../test/data/dist/case3_balanced_pv_grid_forming.dss")
+        "case3_balanced_multi_pv_grid_following" => parse_file("../test/data/dist/case3_balanced_multi_pv_grid_following.dss")
+        "case3_balanced_parallel_pv_grid_following" => parse_file("../test/data/dist/case3_balanced_parallel_pv_grid_following.dss")
+        "case3_balanced_single_phase" => parse_file("../test/data/dist/case3_balanced_single_phase.dss")
+        "case3_unblanced_switch" => parse_file("../test/data/dist/case3_unbalanced_switch.dss")
+        "simulink_model" => parse_file("../test/data/dist/simulink_model.dss")
+    )
+
+    for (_,d) in cases
+        # to avoid having to rewrite unit tests for updated default sbase
+        d["settings"]["sbase_default"] = 1e3
+    end
 
     @testset "ut_trans_2w_yy_fault_study test fault study" begin
         data = deepcopy(ut_trans_2w_yy_fault_study)
