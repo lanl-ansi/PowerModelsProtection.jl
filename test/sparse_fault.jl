@@ -16,7 +16,7 @@
     end
 
     @testset "ut_trans_2w_yy_fault_study test fault study" begin
-        data = deepcopy(ut_trans_2w_yy_fault_study)
+        data = deepcopy(cases["ut_trans_2w_yy_fault_study"])
 
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
@@ -37,7 +37,7 @@
     end
 
     @testset "3-bus pv fault test single faults" begin
-        data = deepcopy(case3_balanced_pv)
+        data = deepcopy(cases["case3_balanced_pv"])
 
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
@@ -55,7 +55,7 @@
     end
 
     @testset "c3-bus multiple pv grid_following fault test" begin
-        data = deepcopy(case3_balanced_multi_pv_grid_following)
+        data = deepcopy(cases["case3_balanced_multi_pv_grid_following"])
 
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
@@ -73,7 +73,7 @@
     end
 
     @testset "c3-bus parallel pv grid_following fault test" begin
-        data = deepcopy(case3_balanced_parallel_pv_grid_following)
+        data = deepcopy(cases["case3_balanced_parallel_pv_grid_following"])
 
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
@@ -91,8 +91,8 @@
     end
 
     @testset "case3 single phase test" begin
-        case3_balanced_single_phase["voltage_source"]["source"]["grid_forming"] = true
-        data = deepcopy(case3_balanced_single_phase)
+        cases["case3_balanced_single_phase"]["voltage_source"]["source"]["grid_forming"] = true
+        data = deepcopy(cases["case3_balanced_single_phase"])
 
         fault_study = build_mc_sparse_fault_study(data)
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
@@ -109,7 +109,7 @@
     end
 
     @testset "case3_unblanced_switch test fault study" begin
-        data = deepcopy(case3_unblanced_switch)
+        data = deepcopy(cases["case3_unblanced_switch"])
 
         fault_study = build_mc_sparse_fault_study(data)    
         sol = solve_mc_fault_study(data, fault_study, ipopt_solver)
