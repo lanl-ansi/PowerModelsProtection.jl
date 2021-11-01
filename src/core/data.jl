@@ -1,6 +1,10 @@
 using LightGraphs
 
-"Check to see if pf should be solved"
+"""
+	check_pf!(data::Dict{String,Any}, solver)
+
+Check to see if pf should be solved
+"""
 function check_pf!(data::Dict{String,Any}, solver)
     if haskey(data, "pf")
         if data["pf"] == "true"
@@ -12,7 +16,11 @@ function check_pf!(data::Dict{String,Any}, solver)
 end
 
 
-"Adds the result from pf based on model type"
+"""
+	add_pf_data!(data::Dict{String,Any}, solver)
+
+Adds the result from pf based on model type
+"""
 function add_pf_data!(data::Dict{String,Any}, solver)
     if haskey(data, "method") && data["method"] in ["PMD", "solar-pf"]
         @debug "Adding PF results to network"
@@ -38,7 +46,11 @@ function add_pf_data!(data::Dict{String,Any}, solver)
 end
 
 
-"Adds the result from pf"
+"""
+	add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
+
+Adds the result from pf
+"""
 function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     if result["primal_status"] == FEASIBLE_POINT
         for (i, bus) in result["solution"]["bus"]
@@ -59,7 +71,11 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
 end
 
 
-"Add the result from pf returning in the engineer model format"
+"""
+	add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
+
+Add the result from pf returning in the engineer model format
+"""
 function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     if result["primal_status"] == FEASIBLE_POINT
         for (i, bus) in result["solution"]["bus"]
@@ -296,7 +312,11 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
 end
 
 
-"Creates a list of buses in the model to fault for study"
+"""
+	get_mc_fault_buses(data::Dict{String,Any})
+
+Creates a list of buses in the model to fault for study
+"""
 function get_mc_fault_buses(data::Dict{String,Any})
     hold = []
     vsource_buses = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
@@ -310,7 +330,11 @@ function get_mc_fault_buses(data::Dict{String,Any})
 end
 
 
-"Checks for a microgrid and deactivates infinite bus"
+"""
+	check_microgrid!(data::Dict{String,Any})
+
+Checks for a microgrid and deactivates infinite bus
+"""
 function check_microgrid!(data::Dict{String,Any})
     if haskey(data, "microgrid")
         if data["microgrid"]

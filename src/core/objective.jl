@@ -1,11 +1,19 @@
-"helper function to get gen buses where inverter_mode on the generator is 'v'"
+"""
+	v_gen_buses(nw_ref)
+
+helper function to get gen buses where inverter_mode on the generator is 'v'
+"""
 function v_gen_buses(nw_ref)
 	v_gen_bus_ids = Set(gen["gen_bus"] for (i, gen) in nw_ref[:gen] if gen["inverter_mode"] == "v")
     return [(i, bus) for (i, bus) in nw_ref[:bus] if i in v_gen_bus_ids]
 end
 
 
-"helper function to get gens where inverter_mode is 'pq'"
+"""
+	pq_gens(nw_ref)
+
+helper function to get gens where inverter_mode is 'pq'
+"""
 function pq_gens(nw_ref)
 	return [(i, gen) for (i, gen) in nw_ref[:gen] if gen["inverter_mode"] == "pq"]
 end

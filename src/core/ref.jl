@@ -1,4 +1,8 @@
-"Adds the fault to the model"
+"""
+	ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+Adds the fault to the model
+"""
 function ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PM.apply_pm!(_ref_add_fault!, ref, data; apply_to_subnetworks=true)
 end
@@ -11,7 +15,11 @@ function _ref_add_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
 end
 
 
-"Adds the fault to the model for multiconductor"
+"""
+	ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+Adds the fault to the model for multiconductor
+"""
 function ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_mc_fault!, ref, data; apply_to_subnetworks=true)
 end
@@ -24,7 +32,11 @@ function _ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
 end
 
 
-"Calculates the power from solar based on inputs"
+"""
+	ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+Calculates the power from solar based on inputs
+"""
 function ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_mc_solar!, ref, data; apply_to_subnetworks=true)
 end
@@ -54,7 +66,11 @@ function _ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
 end
 
 
-"identifies grid forming buses"
+"""
+	ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+identifies grid forming buses
+"""
 function ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     _PMD.apply_pmd!(_ref_add_grid_forming_bus!, ref, data; apply_to_subnetworks=true)
 end
@@ -64,4 +80,28 @@ end
 function _ref_add_grid_forming_bus!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     grid_forming_buses = Set([gen["gen_bus"] for (_,gen) in ref[:gen] if get(gen, "grid_forming", false)])
     ref[:grid_forming] = Dict{Int,Bool}(i => i in grid_forming_buses for (i,_) in ref[:bus])
+end
+
+
+"""
+	ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+
+Add solar inverters to the model
+"""
+function ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+    _PMD.apply_pmd!(_ref_add_mc_storage!, ref, data; apply_to_subnetworks=true)
+end
+
+"Add battery energy storage to the model"
+function _ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
+    ref[:storage_gfmi] = Dict{Int,Any}()
+
+    for (i, storage) in data["storage"]
+        @debug "Adding storage refs for storage $i"
+
+        ref[:storage_gfmi][parse(Int, i)] = storage["storage_bus"]
+        if !(haskey(storage, "kva"))
+            storage["kva"] = storage["dss"]["kva"] / ref[:settings]["sbase"] / 100
+        end
+    end
 end
