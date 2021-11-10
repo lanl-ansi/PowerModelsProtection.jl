@@ -24,11 +24,11 @@ function _solution_fs!(sol::Dict{String,<:Any})
 
     if haskey(sol, "switch")
         for (_,switch) in sol["switch"]
-            if haskey(switch, "crsw_fr") && haskey(switch, "cisw_fr")
-                switch["cf_fr"] = sqrt.(switch["crsw_fr"].^2 + switch["cisw_fr"].^2)
+            if haskey(switch, "cr_fr") && haskey(switch, "ci_fr")
+                switch["cf_fr"] = sqrt.(switch["cr_fr"].^2 + switch["ci_fr"].^2)
             end
-            if haskey(switch, "crsw_to") && haskey(switch, "cisw_to")
-                switch["cf_to"] = sqrt.(switch["crsw_to"].^2 + switch["cisw_to"].^2)
+            if haskey(switch, "cr_to") && haskey(switch, "ci_to")
+                switch["cf_to"] = sqrt.(switch["cr_to"].^2 + switch["ci_to"].^2)
             end
         end
     end
