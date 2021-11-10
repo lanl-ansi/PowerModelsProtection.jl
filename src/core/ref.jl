@@ -100,8 +100,5 @@ function _ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
         @debug "Adding storage refs for storage $i"
 
         ref[:storage_gfmi][parse(Int, i)] = storage["storage_bus"]
-        if !(haskey(storage, "kva"))
-            storage["kva"] = storage["dss"]["kva"] / ref[:settings]["sbase"] / 100
-        end
     end
 end
