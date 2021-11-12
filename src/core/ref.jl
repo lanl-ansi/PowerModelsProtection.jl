@@ -27,7 +27,7 @@ end
 
 "Adds the fault to the model for multiconductor"
 function _ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
-    ref[:fault] = Dict(x for x in get(ref, :fault, Dict{Int,Any}()) if x.second["status"] != 0)
+    ref[:fault] = Dict(x for x in get(ref, :fault, Dict{Int,Any}()) if x.second["status"] != 0 && x.second["fault_bus"] in keys(ref[:bus]))
     ref[:fault_buses] = Dict{Int,Int}(x.second["fault_bus"] => x.first for x in ref[:fault])
 end
 
