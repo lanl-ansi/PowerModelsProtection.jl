@@ -47,7 +47,7 @@ function _ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     ref[:solar_gfli] = Dict{Int,Any}()
     ref[:solar_gfmi] = Dict{Int,Any}()
 
-    for (i, gen) in data["gen"]
+    for (i, gen) in filter(x->x.second["gen_status"]!=0, get(data, "gen", Dict()))
         @debug "Adding solar refs for gen $i"
 
         if occursin("solar", gen["source_id"])
@@ -96,7 +96,7 @@ end
 function _ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     ref[:storage_gfmi] = Dict{Int,Any}()
 
-    for (i, storage) in data["storage"]
+    for (i, storage) in filter(x->x.second["status"]!=0, get(data, "storage", Dict()))
         @debug "Adding storage refs for storage $i"
 
         ref[:storage_gfmi][parse(Int, i)] = storage["storage_bus"]
