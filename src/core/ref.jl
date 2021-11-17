@@ -27,7 +27,7 @@ end
 
 "Adds the fault to the model for multiconductor"
 function _ref_add_mc_fault!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
-    ref[:fault] = Dict(x for x in get(ref, :fault, Dict{Int,Any}()) if x.second["status"] != 0)
+    ref[:fault] = Dict(x for x in get(ref, :fault, Dict{Int,Any}()) if x.second["status"] != 0 && x.second["fault_bus"] in keys(ref[:bus]))
     ref[:fault_buses] = Dict{Int,Int}(x.second["fault_bus"] => x.first for x in ref[:fault])
 end
 
@@ -47,7 +47,7 @@ function _ref_add_mc_solar!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     ref[:solar_gfli] = Dict{Int,Any}()
     ref[:solar_gfmi] = Dict{Int,Any}()
 
-    for (i, gen) in data["gen"]
+    for (i, gen) in filter(x->x.second["gen_status"]!=0, get(data, "gen", Dict()))
         @debug "Adding solar refs for gen $i"
 
         if occursin("solar", gen["source_id"])
@@ -96,12 +96,9 @@ end
 function _ref_add_mc_storage!(ref::Dict{Symbol,<:Any}, data::Dict{String,<:Any})
     ref[:storage_gfmi] = Dict{Int,Any}()
 
-    for (i, storage) in data["storage"]
+    for (i, storage) in filter(x->x.second["status"]!=0, get(data, "storage", Dict()))
         @debug "Adding storage refs for storage $i"
 
         ref[:storage_gfmi][parse(Int, i)] = storage["storage_bus"]
-        if !(haskey(storage, "kva"))
-            storage["kva"] = storage["dss"]["kva"] / ref[:settings]["sbase"] / 100
-        end
     end
 end
