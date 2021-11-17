@@ -1,5 +1,3 @@
-using LightGraphs
-
 """
 	check_pf!(data::Dict{String,Any}, solver)
 
@@ -201,6 +199,11 @@ function build_mc_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, p
 end
 
 
+"""
+    build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
+
+Builds sparse collection of fault studies using a network graph
+"""
 function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
     fault_studies = Dict{String,Any}()
     fault_bus_ids = Set()
@@ -208,29 +211,35 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
 
     bus_ids = Dict(enumerate(keys(data["bus"])))
     bus_nums = Dict([k => i for (i,k) in enumerate(keys(data["bus"]))])
-    g = SimpleGraph(length(bus_nums))
+    g = LightGraphs.SimpleGraph(length(bus_nums))
 
-    if "line" in keys(data)
+    if haskey(data, "line")
         for (_, device_obj) in data["line"]
-            add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+            LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
         end
     end
 
-    if "switch" in keys(data)
+    if haskey(data, "switch")
         for (_, device_obj) in data["switch"]
             push!(fault_bus_ids, device_obj["f_bus"])
             push!(fault_bus_ids, device_obj["t_bus"])
-            add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+            LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
         end
     end
 
-    if "transformer" in keys(data)
+    if haskey(data, "transformer")
         for (_, device_obj) in data["transformer"]
-            push!(fault_bus_ids, device_obj["bus"][1])
-            push!(fault_bus_ids, device_obj["bus"][2])
-            add_edge!(g, bus_nums[device_obj["bus"][1]], bus_nums[device_obj["bus"][2]])
+            if haskey(device_obj, "f_bus") && haskey(device_obj, "t_bus")
+            else
+                for (i,f_bus) in enumerate(device_obj["bus"][1:end-1])
+                    push!(fault_bus_ids, f_bus)
+                    for t_bus in device_obj["bus"][i+1:end]
+                        LightGraphs.add_edge!(g, bus_nums[f_bus], bus_nums[t_bus])
+                    end
+                end
+            end
         end
-    end    
+    end
 
     generation_devices = ["generator", "solar", "storage"]
     for device in generation_devices
@@ -242,7 +251,7 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
     protection_devices = ["fuse", "relay"]
     for device in protection_devices
         for (_, device_obj) in get(data, device, Dict())
-            if haskey(data[device_obj["monitor_type"]], device_obj["monitoredobj"]) 
+            if haskey(data[device_obj["monitor_type"]], device_obj["monitoredobj"])
                 monitor_obj = data[device_obj["monitor_type"]][device_obj["monitoredobj"]]
                 if device_obj["monitor_type"] == "line"
                     push!(fault_bus_ids, monitor_obj["f_bus"])
@@ -308,7 +317,6 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
     end
 
     return fault_studies
-
 end
 
 
