@@ -263,7 +263,7 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
         end
     end
 
-    for (node_index, node_degree) in enumerate(degree(g))
+    for (node_index, node_degree) in enumerate(LightGraphs.degree(g))
         if node_degree == 1 && !(bus_ids[node_index] in vsource_bus_ids)
             push!(fault_bus_ids, bus_ids[node_index])
         end
