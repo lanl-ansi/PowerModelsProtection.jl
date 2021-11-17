@@ -29,7 +29,7 @@ function expression_mc_branch_fault_sequence_current(pm::_PMD.AbstractUnbalanced
     f_connections = branch["f_connections"]
     t_connections = branch["t_connections"]
 
-    if length(f_connections) == 3 && length(t_connections) == 3
+    if length(f_connections) == 3 && length(t_connections) == 3 && !isempty(_PMD.ref(pm, nw, :fault))
         f_bus = branch["f_bus"]
         t_bus = branch["t_bus"]
         f_idx = (i, f_bus, t_bus)
@@ -92,7 +92,7 @@ function expression_mc_bus_fault_sequence_current(pm::_PMD.AbstractUnbalancedIVR
     bus = _PMD.ref(pm, nw, :bus, fault["fault_bus"])
     terminals = bus["terminals"]
 
-    if length(terminals) == 3
+    if length(terminals) == 3 && !isempty(_PMD.ref(pm, nw, :fault))
         cr = _PMD.var(pm, nw, :cfr, i)
         ci = _PMD.var(pm, nw, :cfi, i)
 
@@ -157,7 +157,7 @@ function expression_mc_switch_fault_sequence_current(pm::_PMD.AbstractUnbalanced
     f_connections = switch["f_connections"]
     t_connections = switch["t_connections"]
 
-    if length(f_connections) == 3 && length(t_connections) == 3
+    if length(f_connections) == 3 && length(t_connections) == 3 && !isempty(_PMD.ref(pm, nw, :fault))
         f_bus = switch["f_bus"]
         t_bus = switch["t_bus"]
         f_idx = (i, f_bus, t_bus)

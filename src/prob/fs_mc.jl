@@ -54,7 +54,7 @@ function solve_mc_fault_study(case::Dict{String,<:Any}, fault_studies::Dict{Stri
             for (fault_id, fault) in faults
                 data = deepcopy(case)
                 data["fault"] = Dict{String,Any}(fault_id => fault)
-                _result = solve_mc_fault_study(data, solver, kwargs...)
+                _result = solve_mc_fault_study(data, solver; kwargs...)
 
                 results[bus][fault_type][fault_id] = _result
             end
