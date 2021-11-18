@@ -230,11 +230,16 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
     if haskey(data, "transformer")
         for (_, device_obj) in data["transformer"]
             if haskey(device_obj, "f_bus") && haskey(device_obj, "t_bus")
+                push!(fault_bus_ids, device_obj["f_bus"])
+                push!(fault_bus_ids, device_obj["t_bus"])
+                LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
             else
-                for (i,f_bus) in enumerate(device_obj["bus"][1:end-1])
+                for f_bus in device_obj["bus"]
                     push!(fault_bus_ids, f_bus)
-                    for t_bus in device_obj["bus"][i+1:end]
-                        LightGraphs.add_edge!(g, bus_nums[f_bus], bus_nums[t_bus])
+                    for t_bus in device_obj["bus"]
+                        if f_bus != t_bus
+                            LightGraphs.add_edge!(g, bus_nums[f_bus], bus_nums[t_bus])
+                        end
                     end
                 end
             end
