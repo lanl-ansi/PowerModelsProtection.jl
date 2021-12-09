@@ -19,7 +19,7 @@ Ipopt = ">= 0.4"
 JuMP = "~0.21, ~0.22"
 Graphs = "~1.4.1"
 MathOptInterface = "~0.9, ~0.10"
-PowerModels = "~0.18.0"
+PowerModels = "~0.18.0, ~0.19"
 PowerModelsDistribution = "~0.13.0"
 julia = "^1"
 
