@@ -73,10 +73,14 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, b
         start = _PM.comp_start_value(_PM.ref(pm, nw, :gen, i), "kg_start")
     )
 
-    for (i, gen) in _PM.ref(pm, nw, :gen)
-        kmax = max(1.1 / gen["pg"], 2)
-        JuMP.set_lower_bound(kg[i], 0)
-        JuMP.set_upper_bound(kg[i], kmax)
+    if bounded
+        for (i, gen) in _PM.ref(pm, nw, :gen)
+            kmax = max(1.1 / gen["pg"], 2)
+            JuMP.set_lower_bound(kg[i], 0)
+            if kmax < Inf
+                JuMP.set_upper_bound(kg[i], kmax)
+            end
+        end
     end
 
     report && _IM.sol_component_value(pm, _PM.pm_it_sym, nw, :gen, :kg, _PM.ids(pm, nw, :gen), kg)
@@ -150,9 +154,13 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, b
         start = 0
     )
 
-    for (i, gen) in pq_gen_refs(pm, nw)
-        JuMP.set_lower_bound(p_int[i], 0.0)
-        JuMP.set_upper_bound(p_int[i], gen["pmax"])
+    if bounded
+        for (i, gen) in pq_gen_refs(pm, nw)
+            JuMP.set_lower_bound(p_int[i], 0.0)
+            if gen["pmax"] < Inf
+                JuMP.set_upper_bound(p_int[i], gen["pmax"])
+            end
+        end
     end
 
     q_int = _PM.var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
@@ -160,9 +168,15 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, b
         start = 0
     )
 
-    for (i, gen) in pq_gen_refs(pm, nw)
-        JuMP.set_lower_bound(q_int[i], gen["qmin"])
-        JuMP.set_upper_bound(q_int[i], gen["qmax"])
+    if bounded
+        for (i, gen) in pq_gen_refs(pm, nw)
+            if gen["qmin"] > -Inf
+                JuMP.set_lower_bound(q_int[i], gen["qmin"])
+            end
+            if gen["qmax"] < Inf
+                JuMP.set_upper_bound(q_int[i], gen["qmax"])
+            end
+        end
     end
 
 
@@ -179,9 +193,12 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, b
         [i in pq_gen_ids(pm, nw)], base_name = "$(nw)_z_$(i)",
         start = 0.0
     )
-    for i in pq_gen_ids(pm, nw)
-        JuMP.set_lower_bound(z[i], 0.0)
-        JuMP.set_upper_bound(z[i], 1.0)
+
+    if bounded
+        for i in pq_gen_ids(pm, nw)
+            JuMP.set_lower_bound(z[i], 0.0)
+            JuMP.set_upper_bound(z[i], 1.0)
+        end
     end
 end
 
@@ -196,32 +213,42 @@ function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw
         [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_p_int_$(i)",
         start = 0
     )
-    for i in _PMD.ids(pm, nw, :solar_gfli)
-        gen = _PMD.ref(pm, nw, :gen, i)
-        pmax = 0.0
-        if gen["solar_max"] < gen["kva"] * gen["pf"]
-            pmax = gen["solar_max"]
-        else
-            pmax = gen["kva"] * gen["pf"]
+
+    if bounded
+        for i in _PMD.ids(pm, nw, :solar_gfli)
+            gen = _PMD.ref(pm, nw, :gen, i)
+            pmax = 0.0
+            if gen["solar_max"] < gen["kva"] * gen["pf"]
+                pmax = gen["solar_max"]
+            else
+                pmax = gen["kva"] * gen["pf"]
+            end
+            JuMP.set_lower_bound(p_int[i], 0.0)
+            if pmax < Inf
+                JuMP.set_upper_bound(p_int[i], pmax / 3)
+            end
         end
-        JuMP.set_lower_bound(p_int[i], 0.0)
-        JuMP.set_upper_bound(p_int[i], pmax / 3)
     end
 
     q_int = _PMD.var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
         [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_q_int_$(i)",
         start = 0
     )
-    for i in _PMD.ids(pm, nw, :solar_gfli)
-        gen = _PMD.ref(pm, nw, :gen, i)
-        pmax = 0.0
-        if gen["solar_max"] < gen["kva"] * gen["pf"]
-            pmax = gen["solar_max"]
-        else
-            pmax = gen["kva"] * gen["pf"]
+
+    if bounded
+        for i in _PMD.ids(pm, nw, :solar_gfli)
+            gen = _PMD.ref(pm, nw, :gen, i)
+            pmax = 0.0
+            if gen["solar_max"] < gen["kva"] * gen["pf"]
+                pmax = gen["solar_max"]
+            else
+                pmax = gen["kva"] * gen["pf"]
+            end
+            JuMP.set_lower_bound(q_int[i], 0.0)
+            if pmax < Inf
+                JuMP.set_upper_bound(q_int[i], pmax / 3)
+            end
         end
-        JuMP.set_lower_bound(q_int[i], 0.0)
-        JuMP.set_upper_bound(q_int[i], pmax / 3)
     end
 
     crg_pos = _PMD.var(pm, nw)[:crg_pos] = JuMP.@variable(pm.model,
@@ -256,9 +283,11 @@ function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw
         start = 0.0
     )
 
-    for i in _PMD.ids(pm, nw, :solar_gfli)
-        JuMP.set_lower_bound(z[i], 0.0)
-        JuMP.set_upper_bound(z[i], 1.0)
+    if bounded
+        for i in _PMD.ids(pm, nw, :solar_gfli)
+            JuMP.set_lower_bound(z[i], 0.0)
+            JuMP.set_upper_bound(z[i], 1.0)
+        end
     end
 end
 
@@ -396,8 +425,8 @@ function variable_mc_storage_current_real(pm::_PMD.AbstractUnbalancedIVRModel; n
         for (i,storage) in ref(pm, nw, :storage)
             if haskey(storage, "thermal_rating")
                 for (idx,c) in enumerate(connections[i])
-                    set_lower_bound(crs[i][c], -storage["thermal_rating"][idx])
-                    set_upper_bound(crs[i][c],  storage["thermal_rating"][idx])
+                    _PMD.set_lower_bound(crs[i][c], -storage["thermal_rating"][idx])
+                    _PMD.set_upper_bound(crs[i][c],  storage["thermal_rating"][idx])
                 end
             end
         end
@@ -421,12 +450,12 @@ function variable_mc_storage_current_imaginary(pm::_PMD.AbstractUnbalancedIVRMod
         for (i,storage) in ref(pm, nw, :storage)
             if haskey(storage, "qmin")
                 for (idx,c) in enumerate(connections[i])
-                    set_lower_bound(crs[i][c], storage["qmin"][idx])
+                    _PMD.set_lower_bound(crs[i][c], storage["qmin"][idx])
                 end
             end
             if haskey(storage, "qmax")
                 for (idx,c) in enumerate(connections[i])
-                    set_upper_bound(crs[i][c], storage["qmax"][idx])
+                    _PMD.set_upper_bound(crs[i][c], storage["qmax"][idx])
                 end
             end
         end

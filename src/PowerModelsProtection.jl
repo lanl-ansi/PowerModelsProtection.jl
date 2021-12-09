@@ -1,6 +1,5 @@
 module PowerModelsProtection
     import JuMP
-    import MathOptInterface
 
     import InfrastructureModels
     import PowerModels

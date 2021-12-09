@@ -2,7 +2,11 @@
 
 ## staged
 
-- none
+- Removed old compatibility support for JuMP < v0.22
+- Removed direct MathOptInterface dependency
+- Updated to add JuMP v0.22
+- Updated to add InfrastructureModels v0.7
+- Updated to add MOI v0.10none
 
 ## v0.4.2
 
