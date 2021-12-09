@@ -14,11 +14,11 @@ PowerModelsDistribution = "d7431456-977f-11e9-2de3-97ff7677985e"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [compat]
-InfrastructureModels = "~0.6.0"
+InfrastructureModels = "~0.6.0, ~0.7"
 Ipopt = ">= 0.4"
 JuMP = "~0.21, ~0.22"
 Graphs = "~1.4.1"
-MathOptInterface = "~0.9"
+MathOptInterface = "~0.9, ~0.10"
 PowerModels = "~0.18.0"
 PowerModelsDistribution = "~0.13.0"
 julia = "^1"
