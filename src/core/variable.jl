@@ -249,6 +249,7 @@ function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw
                 JuMP.set_upper_bound(q_int[i], pmax / 3)
             end
         end
+    end
 
     crg_pos = _PMD.var(pm, nw)[:crg_pos] = JuMP.@variable(pm.model,
         [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_crg_pos_$(i)",
