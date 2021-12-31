@@ -52,7 +52,7 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
             math_obj = _PMD._init_math_obj("c_transformer",name,eng_obj,length(data_math["c_transformer"])+1;pass_props=pass_props)
             math_obj["prot_obj"] = :branch
             math_obj["element_enum"] = map_dict["branch"]["$(math_obj["element"])"]
-            data_math["c_transformer"]["$(math_obj["index"])"] = math_obj 
+            data_math["c_transformer"]["$(math_obj["index"])"] = math_obj
             push!(data_math["map"], Dict{String,Any}(
                 "from" => name,
                 "to" => "c_transformer.$(math_obj["index"])",
@@ -87,7 +87,7 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
                     math_obj["prot_obj"] = :bus
                     math_obj["element_enum"] = map_dict["bus"]["$element_name"]
                 end
-                
+
                 if haskey(math_obj,"element2")
                     math_obj["element2_enum"] = map_dict["branch"]["$(math_obj["element2"])"]
                 end
@@ -111,7 +111,7 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
         end
         for (name,eng_obj) in get(data_eng["protection"],"curves",Dict())
             math_obj = _PMD._init_math_obj("curve",name,eng_obj,length(data_math["curve"])+1;pass_props=pass_props)
-            data_math["curve"]["$(math_obj["index"])"] = math_obj 
+            data_math["curve"]["$(math_obj["index"])"] = math_obj
             push!(data_math["map"], Dict{String,Any}(
                 "from" => name,
                 "to" => "curve.$(math_obj["index"])",
@@ -151,7 +151,7 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
         end
     end
 
-    
+
 end
 
 

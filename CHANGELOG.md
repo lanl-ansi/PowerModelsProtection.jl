@@ -4,6 +4,20 @@
 
 - none
 
+## v0.4.1
+
+- Fixed bug in `solve_mc_fault_study`, where the function call was incorrect (`kwargs` after `,` instead of `;`)
+- Fixed bug in `solution_fs!` where the variables `crsw_fr`, `cisw_fr`, etc were still being used for switches
+- Fixed bug in ref where faults at disabled fault buses would still be included
+- Fixed bug in ref where storage objects that were disabled would still be included
+- Removed unnecessary reference to storage `kva` (`sm_ub` already captures this value)
+- Updated to PowerModelsDistribution v0.13.0
+
+## v0.4.0
+
+- Updated to PowerModelsDistribution v0.12.0
+- Added support for storage in fault study formulation
+
 ## v0.3.0
 
 - Added support for InfrastructureModels v0.6.0, which added support for multi-infrastructure modeling

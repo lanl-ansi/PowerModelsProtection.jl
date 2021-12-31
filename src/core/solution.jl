@@ -1,4 +1,8 @@
-"adds additional variable transformations for fault study solutions of distribution networks"
+"""
+	solution_fs!(pm::_PMD.AbstractUnbalancedIVRModel, sol::Dict{String,<:Any})
+
+adds additional variable transformations for fault study solutions of distribution networks
+"""
 function solution_fs!(pm::_PMD.AbstractUnbalancedIVRModel, sol::Dict{String,<:Any})
     _PMD.apply_pmd!(_solution_fs!, sol; apply_to_subnetworks=true)
 end
@@ -20,11 +24,11 @@ function _solution_fs!(sol::Dict{String,<:Any})
 
     if haskey(sol, "switch")
         for (_,switch) in sol["switch"]
-            if haskey(switch, "crsw_fr") && haskey(switch, "cisw_fr")
-                switch["cf_fr"] = sqrt.(switch["crsw_fr"].^2 + switch["cisw_fr"].^2)
+            if haskey(switch, "cr_fr") && haskey(switch, "ci_fr")
+                switch["cf_fr"] = sqrt.(switch["cr_fr"].^2 + switch["ci_fr"].^2)
             end
-            if haskey(switch, "crsw_to") && haskey(switch, "cisw_to")
-                switch["cf_to"] = sqrt.(switch["crsw_to"].^2 + switch["cisw_to"].^2)
+            if haskey(switch, "cr_to") && haskey(switch, "ci_to")
+                switch["cf_to"] = sqrt.(switch["cr_to"].^2 + switch["ci_to"].^2)
             end
         end
     end
@@ -103,7 +107,6 @@ function _solution_pm_fs!(sol::Dict{String,<:Any})
         end
     end
 end
-
 
 "calculates relay and fuse operation times and adds them to solution dictionary"
 function solution_protection!(pm::_PMD.AbstractUnbalancedIVRModel, sol::Dict{String,<:Any})

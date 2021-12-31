@@ -1,4 +1,8 @@
-"Copies from PowerModels and PowerModelsDistribution without power vars"
+"""
+	variable_branch_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
+
+Copies from PowerModels and PowerModelsDistribution without power vars
+"""
 function variable_branch_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
     _PM.variable_branch_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PM.variable_branch_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
@@ -8,7 +12,11 @@ function variable_branch_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default
 end
 
 
-"builds generator variables for transmission networks"
+"""
+	variable_gen(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
+
+builds generator variables for transmission networks
+"""
 function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true, kwargs...)
     _PM.variable_gen_current_real(pm, nw=nw, bounded=bounded, report=report; kwargs...)
     _PM.variable_gen_current_imaginary(pm, nw=nw, bounded=bounded, report=report; kwargs...)
@@ -54,7 +62,11 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::
 end
 
 
-"variable: `pg[j]` for `j` in `gen`"
+"""
+	variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+
+variable: `pg[j]` for `j` in `gen`
+"""
 function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
     kg = _PM.var(pm, nw)[:kg] = JuMP.@variable(pm.model,
         [i in _PM.ids(pm, nw, :gen)], base_name = "$(nw)_kg",
@@ -71,25 +83,41 @@ function variable_gen_loading(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, b
 end
 
 
-"helper function to get gen ids of 'pq' gens"
+"""
+	pq_gen_ids(pm, nw)
+
+helper function to get gen ids of 'pq' gens
+"""
 function pq_gen_ids(pm, nw)
     return [i for (i, gen) in _PM.ref(pm, nw, :gen) if gen["inverter_mode"] == "pq"]
 end
 
 
-"helper function to get gen dict of 'pq' gens"
+"""
+	pq_gen_vals(pm, nw)
+
+helper function to get gen dict of 'pq' gens
+"""
 function pq_gen_vals(pm, nw)
     return [gen for (i, gen) in _PM.ref(pm, nw, :gen) if gen["inverter_mode"] == "pq"]
 end
 
 
-"helper function to get gen ref of 'pq' gens"
+"""
+	pq_gen_refs(pm, nw)
+
+helper function to get gen ref of 'pq' gens
+"""
 function pq_gen_refs(pm, nw)
     return [(i, gen) for (i, gen) in _PM.ref(pm, nw, :gen) if gen["inverter_mode"] == "pq"]
 end
 
 
-"fault current variables for active faults"
+"""
+	variable_bus_fault_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, report::Bool=true)
+
+fault current variables for active faults
+"""
 function variable_bus_fault_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, report::Bool=true)
     cr = _PM.var(pm, nw)[:cfr] = JuMP.@variable(pm.model,
         [i in _PM.ids(pm, nw, :fault)], base_name="$(nw)_cfr",
@@ -111,7 +139,11 @@ function variable_bus_fault_current(pm::_PM.AbstractIVRModel; nw::Int=nw_id_defa
 end
 
 
-"variables for pq inverters"
+"""
+	variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
+
+variables for pq inverters
+"""
 function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     p_int = _PM.var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in pq_gen_ids(pm, nw)], base_name = "$(nw)_p_int_$(i)",
@@ -154,7 +186,11 @@ function variable_pq_inverter(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, b
 end
 
 
-"variables for multiconductor pq inverters"
+"""
+	variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
+
+variables for multiconductor pq inverters
+"""
 function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     p_int = _PMD.var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
         [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_p_int_$(i)",
@@ -227,7 +263,11 @@ function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw
 end
 
 
-"variables for multiconductor grid forming inverters"
+"""
+	variable_mc_grid_formimg_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
+
+variables for multiconductor grid forming inverters
+"""
 function variable_mc_grid_formimg_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
     terminals = Dict(gfmi => _PMD.ref(pm, nw, :bus, bus)["terminals"] for (gfmi,bus) in _PMD.ref(pm, nw, :solar_gfmi))
 
@@ -294,7 +334,11 @@ function variable_mc_grid_formimg_inverter(pm::_PMD.AbstractUnbalancedIVRModel; 
 end
 
 
-"variables for multiconductor fault currents for active faults"
+"""
+	variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, report::Bool=true)
+
+variables for multiconductor fault currents for active faults
+"""
 function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, report::Bool=true)
     cr = _PMD.var(pm, nw)[:cfr] = Dict(
         i => JuMP.@variable(
@@ -324,3 +368,121 @@ function variable_mc_bus_fault_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::
     report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :bus, :cfi_bus, _PMD.ids(pm, nw, :fault_buses), ci_bus)
 end
 
+
+"""
+	variable_mc_storage_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+
+variables for output terminal currents for grid-connected energy storage
+"""
+function variable_mc_storage_current(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+    variable_mc_storage_current_real(pm; nw=nw, bounded=bounded, report=report)
+    variable_mc_storage_current_imaginary(pm; nw=nw, bounded=bounded, report=report)
+end
+
+
+"""
+	variable_mc_storage_current_real(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+
+variables for real portion of output terminal currents for grid-connected energy storage
+"""
+function variable_mc_storage_current_real(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+    connections = Dict(i => storage["connections"] for (i,storage) in _PMD.ref(pm, nw, :storage))
+    crs = _PMD.var(pm, nw)[:crs] = Dict(i => JuMP.@variable(pm.model,
+            [c in connections[i]], base_name="$(nw)_crs_$(i)",
+            start = _PMD.comp_start_value(_PMD.ref(pm, nw, :storage, i), "crs_start", c, 0.0)
+        ) for i in _PMD.ids(pm, nw, :storage)
+    )
+    if bounded
+        for (i,storage) in ref(pm, nw, :storage)
+            if haskey(storage, "thermal_rating")
+                for (idx,c) in enumerate(connections[i])
+                    set_lower_bound(crs[i][c], -storage["thermal_rating"][idx])
+                    set_upper_bound(crs[i][c],  storage["thermal_rating"][idx])
+                end
+            end
+        end
+    end
+end
+
+
+"""
+	variable_mc_storage_current_imaginary(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+
+variables for real portion of output terminal currents for grid-connected energy storage
+"""
+function variable_mc_storage_current_imaginary(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, report::Bool=true)
+    connections = Dict(i => storage["connections"] for (i,storage) in _PMD.ref(pm, nw, :storage))
+    cis = _PMD.var(pm, nw)[:cis] = Dict(i => JuMP.@variable(pm.model,
+            [c in connections[i]], base_name="$(nw)_crs_$(i)",
+            start = _PMD.comp_start_value(_PMD.ref(pm, nw, :storage, i), "cis_start", c, 0.0)
+        ) for i in _PMD.ids(pm, nw, :storage)
+    )
+    if bounded
+        for (i,storage) in ref(pm, nw, :storage)
+            if haskey(storage, "qmin")
+                for (idx,c) in enumerate(connections[i])
+                    set_lower_bound(crs[i][c], storage["qmin"][idx])
+                end
+            end
+            if haskey(storage, "qmax")
+                for (idx,c) in enumerate(connections[i])
+                    set_upper_bound(crs[i][c], storage["qmax"][idx])
+                end
+            end
+        end
+    end
+end
+
+
+"""
+	variable_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
+
+variables associated with grid-connected energy storage: internal voltage, virutal impedance, dc-link power, faulted state
+"""
+function variable_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
+    connections = Dict(i => storage["connections"] for (i,storage) in _PMD.ref(pm, nw, :storage))
+
+    # inverter setpoints for virtual impedance formulation
+    # taking into account virtual impedance voltage drop
+    _PMD.var(pm, nw)[:vrstp] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_vrstp_$(i)",
+               start = 0.0,
+        ) for i in _PMD.ids(pm, nw, :storage)
+    )
+
+    _PMD.var(pm, nw)[:vistp] = Dict(i => JuMP.@variable(pm.model,
+    [c in connections[i]], base_name = "$(nw)_vistp_$(i)",
+               start = 0.0,
+        ) for i in _PMD.ids(pm, nw, :storage)
+    )
+
+    _PMD.var(pm, nw)[:z_storage] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_:z_storage_$(i)",
+               start = 0.0,
+               lower_bound = 0.0,
+               upper_bound = 1.0
+        ) for i in _PMD.ids(pm, nw, :storage)
+    )
+
+    p = _PMD.var(pm, nw)[:p_storage] = JuMP.@variable(pm.model,
+        [i in _PMD.ids(pm, nw, :storage)], base_name = "$(nw)_p_storage_$(i)",
+        start = 0
+    )
+
+    q = _PMD.var(pm, nw)[:q_storage] = JuMP.@variable(pm.model,
+        [i in _PMD.ids(pm, nw, :storage)], base_name = "$(nw)_q_storage_$(i)",
+        start = 0
+    )
+
+    _PMD.var(pm, nw)[:rv_storage] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_rv_storage_$(i)",
+               start = 0.0,
+        ) for i in _PMD.ids(pm, nw, :storage)
+    )
+
+    _PMD.var(pm, nw)[:xv_storage] = Dict(i => JuMP.@variable(pm.model,
+               [c in connections[i]], base_name = "$(nw)_xv_storage_$(i)",
+               start = 0.0,
+        ) for i in _PMD.ids(pm, nw, :storage)
+    )
+end

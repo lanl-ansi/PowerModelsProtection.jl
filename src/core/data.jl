@@ -1,6 +1,8 @@
-using LightGraphs
+"""
+	check_pf!(data::Dict{String,Any}, solver)
 
-"Check to see if pf should be solved"
+Check to see if pf should be solved
+"""
 function check_pf!(data::Dict{String,Any}, solver)
     if haskey(data, "pf")
         if data["pf"] == "true"
@@ -12,7 +14,11 @@ function check_pf!(data::Dict{String,Any}, solver)
 end
 
 
-"Adds the result from pf based on model type"
+"""
+	add_pf_data!(data::Dict{String,Any}, solver)
+
+Adds the result from pf based on model type
+"""
 function add_pf_data!(data::Dict{String,Any}, solver)
     if haskey(data, "method") && data["method"] in ["PMD", "solar-pf"]
         @debug "Adding PF results to network"
@@ -38,7 +44,11 @@ function add_pf_data!(data::Dict{String,Any}, solver)
 end
 
 
-"Adds the result from pf"
+"""
+	add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
+
+Adds the result from pf
+"""
 function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     if result["primal_status"] == FEASIBLE_POINT
         for (i, bus) in result["solution"]["bus"]
@@ -59,7 +69,11 @@ function add_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
 end
 
 
-"Add the result from pf returning in the engineer model format"
+"""
+	add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
+
+Add the result from pf returning in the engineer model format
+"""
 function add_mc_pf_data!(data::Dict{String,Any}, result::Dict{String,Any})
     if result["primal_status"] == FEASIBLE_POINT
         for (i, bus) in result["solution"]["bus"]
@@ -185,6 +199,11 @@ function build_mc_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, p
 end
 
 
+"""
+    build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
+
+Builds sparse collection of fault studies using a network graph
+"""
 function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=0.01, phase_resistance::Real=0.01)::Dict{String,Any}
     fault_studies = Dict{String,Any}()
     fault_bus_ids = Set()
@@ -192,29 +211,40 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
 
     bus_ids = Dict(enumerate(keys(data["bus"])))
     bus_nums = Dict([k => i for (i,k) in enumerate(keys(data["bus"]))])
-    g = SimpleGraph(length(bus_nums))
+    g = LightGraphs.SimpleGraph(length(bus_nums))
 
-    if "line" in keys(data)
+    if haskey(data, "line")
         for (_, device_obj) in data["line"]
-            add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+            LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
         end
     end
 
-    if "switch" in keys(data)
+    if haskey(data, "switch")
         for (_, device_obj) in data["switch"]
             push!(fault_bus_ids, device_obj["f_bus"])
             push!(fault_bus_ids, device_obj["t_bus"])
-            add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+            LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
         end
     end
 
-    if "transformer" in keys(data)
+    if haskey(data, "transformer")
         for (_, device_obj) in data["transformer"]
-            push!(fault_bus_ids, device_obj["bus"][1])
-            push!(fault_bus_ids, device_obj["bus"][2])
-            add_edge!(g, bus_nums[device_obj["bus"][1]], bus_nums[device_obj["bus"][2]])
+            if haskey(device_obj, "f_bus") && haskey(device_obj, "t_bus")
+                push!(fault_bus_ids, device_obj["f_bus"])
+                push!(fault_bus_ids, device_obj["t_bus"])
+                LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+            else
+                for f_bus in device_obj["bus"]
+                    push!(fault_bus_ids, f_bus)
+                    for t_bus in device_obj["bus"]
+                        if f_bus != t_bus
+                            LightGraphs.add_edge!(g, bus_nums[f_bus], bus_nums[t_bus])
+                        end
+                    end
+                end
+            end
         end
-    end    
+    end
 
     generation_devices = ["generator", "solar", "storage"]
     for device in generation_devices
@@ -226,7 +256,7 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
     protection_devices = ["fuse", "relay"]
     for device in protection_devices
         for (_, device_obj) in get(data, device, Dict())
-            if haskey(data[device_obj["monitor_type"]], device_obj["monitoredobj"]) 
+            if haskey(data[device_obj["monitor_type"]], device_obj["monitoredobj"])
                 monitor_obj = data[device_obj["monitor_type"]][device_obj["monitoredobj"]]
                 if device_obj["monitor_type"] == "line"
                     push!(fault_bus_ids, monitor_obj["f_bus"])
@@ -238,7 +268,7 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
         end
     end
 
-    for (node_index, node_degree) in enumerate(degree(g))
+    for (node_index, node_degree) in enumerate(LightGraphs.degree(g))
         if node_degree == 1 && !(bus_ids[node_index] in vsource_bus_ids)
             push!(fault_bus_ids, bus_ids[node_index])
         end
@@ -292,11 +322,14 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
     end
 
     return fault_studies
-
 end
 
 
-"Creates a list of buses in the model to fault for study"
+"""
+	get_mc_fault_buses(data::Dict{String,Any})
+
+Creates a list of buses in the model to fault for study
+"""
 function get_mc_fault_buses(data::Dict{String,Any})
     hold = []
     vsource_buses = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
@@ -310,7 +343,11 @@ function get_mc_fault_buses(data::Dict{String,Any})
 end
 
 
-"Checks for a microgrid and deactivates infinite bus"
+"""
+	check_microgrid!(data::Dict{String,Any})
+
+Checks for a microgrid and deactivates infinite bus
+"""
 function check_microgrid!(data::Dict{String,Any})
     if haskey(data, "microgrid")
         if data["microgrid"]

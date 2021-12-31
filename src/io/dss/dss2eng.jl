@@ -45,7 +45,7 @@ function _dss2eng_ct!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any}
         if haskey(dss_obj, "turns")
             turns = split(dss_obj["turns"], ',')
             n_p = parse(Int, strip(split(turns[1], '[')[end]))
-            n_s = parse(Int, strip(split(turns[2], ']')[begin]))
+            n_s = parse(Int, strip(split(turns[2], ']')[1]))
             add_ct(data_eng, dss_obj["element"], "$id", n_p, n_s)
         elseif haskey(dss_obj, "n_p") && haskey(dss_obj, "n_s")
             add_ct(data_eng, dss_obj["element"], "$id", parse(Int,dss_obj["n_p"]), parse(Int,dss_obj["n_s"]))
@@ -62,7 +62,7 @@ function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
     defaults_dict = Dict{String,Any}(
             "float_dict" => Dict{String,Any}(
                 "phasetrip" => 1.0,
-                "groundtrip" => 1.0, 
+                "groundtrip" => 1.0,
                 "tdphase" => 1.0,
                 "tdground" => 1.0,
                 "phaseinst" => 0.0,
@@ -77,28 +77,28 @@ function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
                 "monitoredterm" => 1,
                 "switchedterm" => 1,
                 "reset" => 15,
-                "shots" => 4, 
+                "shots" => 4,
                 "46isqt" => 1
             ),
             "str_dict" => Dict{String,Any}(
                 "type" => "current",
                 "phasecurve" => "none",
                 "groundcurve" => "none",
-                "overvoltcurve" => "none", 
+                "overvoltcurve" => "none",
                 "undervoltcurve" => "none",
             ),
     )
     for (id, dss_obj) in get(data_dss, "relay", Dict())
         eng_obj = Dict{String,Any}()
-        if !haskey(dss_obj, "monitoredobj") 
+        if !haskey(dss_obj, "monitoredobj")
             @warn "relay $(dss_obj["name"]) does not have a monitoredobj and will be disabled"
             eng_obj["status"] = 0
             eng_obj["monitoredobj"] = "none"
         else
-            if !haskey(dss_obj, "enabled") 
+            if !haskey(dss_obj, "enabled")
                 @warn "relay $(dss_obj["name"]) does not have enable key and will be set to enable"
                 eng_obj["status"] = 1
-            else 
+            else
                 if dss_obj["enabled"] == "yes" || dss_obj["enabled"] == "true"
                     eng_obj["status"] = 1
                 else
@@ -106,7 +106,7 @@ function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
                 end
             end
             eng_obj["monitoredobj"] = dss_obj["monitoredobj"]
-            if !haskey(dss_obj, "switchedobj") 
+            if !haskey(dss_obj, "switchedobj")
                 eng_obj["switchedobj"] = dss_obj["monitoredobj"]
             else
                 eng_obj["switchedobj"] = dss_obj["switchedobj"]
@@ -123,21 +123,21 @@ function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
             @warn "basefreq=$(dss_obj["basefreq"]) on line.$id does not match circuit basefreq=$(data_eng["settings"]["base_frequency"])"
         end
         for (default_id, default_value) in get(defaults_dict, "float_dict", Dict())
-            if !haskey(dss_obj, default_id) 
+            if !haskey(dss_obj, default_id)
                 eng_obj[default_id] = default_value
             end
         end
         for (default_id, default_value) in get(defaults_dict, "int_dict", Dict())
-            if !haskey(dss_obj, default_id) 
+            if !haskey(dss_obj, default_id)
                 eng_obj[default_id] = default_value
             end
         end
         for (default_id, default_value) in get(defaults_dict, "str_dict", Dict())
-            if !haskey(dss_obj, default_id) 
+            if !haskey(dss_obj, default_id)
                 eng_obj[default_id] = default_value
             end
         end
-        if !haskey(dss_obj, "type") 
+        if !haskey(dss_obj, "type")
             @warn "relay $id does not have a type defined setting it to current"
             eng_obj["type"] = "current"
             eng_obj["recloseintervals"] = [.5, 2.0, 2.0]
@@ -154,7 +154,7 @@ function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
         end
         _PMD._add_eng_obj!(data_eng, "relay", id, eng_obj)
     end
-end   
+end
 
 
 "Helper function for converting dss fuse to engineering fuse"
@@ -173,15 +173,15 @@ function _dss2eng_fuse!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:An
     )
     for (id, dss_obj) in get(data_dss, "fuse", Dict())
         eng_obj = Dict{String,Any}()
-        if !haskey(dss_obj, "monitoredobj") 
+        if !haskey(dss_obj, "monitoredobj")
             @warn "fuse $(dss_obj["name"]) does not have a monitoredobj and will be disabled"
             eng_obj["status"] = 0
             eng_obj["monitoredobj"] = "none"
         else
-            if !haskey(dss_obj, "enabled") 
+            if !haskey(dss_obj, "enabled")
                 @warn "fuse $(dss_obj["name"]) does not have enable key and will be set to enable"
                 eng_obj["status"] = 1
-            else 
+            else
                 if dss_obj["enabled"] == "yes" || dss_obj["enabled"] == "true"
                     eng_obj["status"] = 1
                 else
@@ -189,7 +189,7 @@ function _dss2eng_fuse!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:An
                 end
             end
             eng_obj["monitoredobj"] = dss_obj["monitoredobj"]
-            if !haskey(dss_obj, "switchedobj") 
+            if !haskey(dss_obj, "switchedobj")
                 eng_obj["switchedobj"] = dss_obj["monitoredobj"]
             else
                 eng_obj["switchedobj"] = dss_obj["switchedobj"]
@@ -198,25 +198,25 @@ function _dss2eng_fuse!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:An
         _PMD._add_eng_obj!(data_eng, "relay", id, eng_obj)
     end
 end
-  
+
 
 "Helper function for converting dss tcc_curves to engineering model"
 function _dss2eng_curve!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     for (id, dss_obj) in get(data_dss, "tcc_curve", Dict())
         eng_obj = Dict{String,Any}()
         if startswith(strip(dss_obj["c_array"]),'[')
-        c_string = split(split(split(strip(dss_obj["c_array"]),'[')[end],']')[begin],',')
+        c_string = split(split(split(strip(dss_obj["c_array"]),'[')[end],']')[1],',')
         elseif startswith(strip(dss_obj["c_array"]),'"')
-        c_string = split(split(split(strip(dss_obj["c_array"]),'"')[end],'"')[begin],',')
+        c_string = split(split(split(strip(dss_obj["c_array"]),'"')[end],'"')[1],',')
         elseif startswith(strip(dss_obj["c_array"]),''')
-        c_string = split(split(split(strip(dss_obj["c_array"]),''')[end],''')[begin],',')
+        c_string = split(split(split(strip(dss_obj["c_array"]),''')[end],''')[1],',')
         end
         if startswith(strip(dss_obj["t_array"]),'[')
-        t_string = split(split(split(strip(dss_obj["t_array"]),'[')[end],']')[begin],',')    
+        t_string = split(split(split(strip(dss_obj["t_array"]),'[')[end],']')[1],',')
         elseif startswith(strip(dss_obj["t_array"]),'"')
-        t_string = split(split(split(strip(dss_obj["t_array"]),'"')[end],'"')[begin],',')
+        t_string = split(split(split(strip(dss_obj["t_array"]),'"')[end],'"')[1],',')
         elseif startswith(strip(dss_obj["t_array"]),''')
-        t_string = split(split(split(strip(dss_obj["t_array"]),''')[end],''')[begin],',')
+        t_string = split(split(split(strip(dss_obj["t_array"]),''')[end],''')[1],',')
         end
         c_array, t_array = [],[]
         for i = 1:length(c_string)
@@ -278,5 +278,5 @@ function _dss2eng_curve!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
         end
         eng_obj["npts"] = npts
         _PMD._add_eng_obj!(data_eng, "tcc_curve", id, eng_obj)
-    end  
+    end
 end
