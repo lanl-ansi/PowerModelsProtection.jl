@@ -1,24 +1,19 @@
-name: Documentation
+name: Documenter
 on:
   push:
     branches: [master]
-    tags: '*'
+    tags: [v*]
   pull_request:
-    types: [opened, synchronize, reopened]
+
 jobs:
-  docs:
+  Documenter:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     name: Documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@latest
-        with:
-          version: '1'
-      - name: Install Dependencies
-        run: julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-      - name: Build and Deploy
+      - uses: julia-actions/julia-buildpkg@latest
+      - uses: julia-actions/julia-docdeploy@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-        run: julia --project=docs docs/make.jl
