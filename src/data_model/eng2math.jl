@@ -170,7 +170,7 @@ transform_data_model(
     make_pu_extensions::Vector{<:Function}=Function[],
     kwargs...) = _PMD.transform_data_model(
         data;
-        eng2math_extensions=[_eng2math_fault!, eng2math_extensions...],
+        eng2math_extensions=[_eng2math_fault!, _eng2math_protection!, eng2math_extensions...],
         eng2math_passthrough=_pmp_eng2math_passthrough,
         make_pu_extensions=[_rebase_pu_fault!, _rebase_pu_gen_dynamics!, make_pu_extensions...],
         kwargs...)
