@@ -211,11 +211,11 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
 
     bus_ids = Dict(enumerate(keys(data["bus"])))
     bus_nums = Dict([k => i for (i,k) in enumerate(keys(data["bus"]))])
-    g = LightGraphs.SimpleGraph(length(bus_nums))
+    g = Graphs.SimpleGraph(length(bus_nums))
 
     if haskey(data, "line")
         for (_, device_obj) in data["line"]
-            LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+            Graphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
         end
     end
 
@@ -223,7 +223,7 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
         for (_, device_obj) in data["switch"]
             push!(fault_bus_ids, device_obj["f_bus"])
             push!(fault_bus_ids, device_obj["t_bus"])
-            LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+            Graphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
         end
     end
 
@@ -232,13 +232,13 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
             if haskey(device_obj, "f_bus") && haskey(device_obj, "t_bus")
                 push!(fault_bus_ids, device_obj["f_bus"])
                 push!(fault_bus_ids, device_obj["t_bus"])
-                LightGraphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
+                Graphs.add_edge!(g, bus_nums[device_obj["f_bus"]], bus_nums[device_obj["t_bus"]])
             else
                 for f_bus in device_obj["bus"]
                     push!(fault_bus_ids, f_bus)
                     for t_bus in device_obj["bus"]
                         if f_bus != t_bus
-                            LightGraphs.add_edge!(g, bus_nums[f_bus], bus_nums[t_bus])
+                            Graphs.add_edge!(g, bus_nums[f_bus], bus_nums[t_bus])
                         end
                     end
                 end
@@ -268,7 +268,7 @@ function build_mc_sparse_fault_study(data::Dict{String,<:Any}; resistance::Real=
         end
     end
 
-    for (node_index, node_degree) in enumerate(LightGraphs.degree(g))
+    for (node_index, node_degree) in enumerate(Graphs.degree(g))
         if node_degree == 1 && !(bus_ids[node_index] in vsource_bus_ids)
             push!(fault_bus_ids, bus_ids[node_index])
         end

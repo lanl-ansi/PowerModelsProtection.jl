@@ -13,7 +13,7 @@ module PowerModelsProtection
     import InfrastructureModels: ismultinetwork, nw_id_default
     import PowerModelsDistribution: ENABLED, DISABLED
 
-    import LightGraphs
+    import Graphs
 
     include("core/variable.jl")
     include("core/constraint_template.jl")
