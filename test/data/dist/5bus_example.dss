@@ -1,0 +1,37 @@
+clear
+
+new circuit.bus_differential_validation
+~ basekv=0.4   pu=0.9959  mvasc1=1e6  mvasc3=1e6 basemva=0.5
+
+new linecode.556mcm nphases=3 basefreq=50
+~ rmatrix = ( 0.1000 | 0.0400    0.1000 |  0.0400    0.0400    0.1000)
+~ xmatrix = ( 0.0583 |  0.0233    0.0583 | 0.0233    0.0233    0.0583)
+~ cmatrix = (50.92958178940651  | -0  50.92958178940651 | -0 -0 50.92958178940651)
+
+new line.line1 bus1=sourcebus.1.2.3 bus2=primary.1.2.3 linecode=556mcm length=1
+new line.line2 bus1=primary.1.2.3 bus2=loadbus1.1.2.3 linecode=556mcm length=1
+new line.line3 bus1=primary.1.2.3 bus2=loadbus2.1.2.3 linecode=556mcm length=1
+new line.line4 bus1=primary.1.2.3 bus2=loadbus3.1.2.3 linecode=556mcm length=1
+
+new load.L1 phases=3 loadbus1.1.2.3 kw=100 kvar=10 model=1
+new load.L2 phases=3 loadbus2.1.2.3 kw=100 kvar=10 model=1
+new load.L3 phases=3 loadbus3.1.2.3 kw=100 kvar=10 model=1
+
+new relay.r1 element=line1 ts=500 tds=5 type=overcurrent
+new relay.r2 monitoredobj=line2 ts=100 tds=0.5 type=overcurrent
+new relay.r3 monitoredobj=line2 phasetrip=1000 tdphase=0.5 type=overcurrent
+new relay.r4 element=line3 ts=100 tds=0.5 type=overcurrent
+
+new tcc_curve.min_melt t_array=[200, 50, 15, 3, 0.5] c_array=[500, 1000, 1500, 2000, 2500] npts=5
+new tcc_curve.max_clear t_array=[250, 55, 18, 4, 0.75] c_array=[500, 1000, 1500, 2000, 2500] npts=5
+
+new fuse.f1 element=line2 min_melt_curve=min_melt max_clear_curve=max_clear
+new fuse.f2 element=line3 min_melt_curve=min_melt max_clear_curve=max_clear
+
+
+set voltagebases=[0.4]
+set tolerance=0.000001
+set defaultbasefreq=50
+calcvoltagebases
+
+solve
