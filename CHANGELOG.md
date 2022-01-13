@@ -4,6 +4,12 @@
 
 - none
 
+## v0.4.2
+
+- Added support for adding fuses, relays, and curves via `add_fuse`, `add_relay`, and `add_curve`, respectively
+- Added sparse faults with `build_mc_sparse_fault_study`
+- Added Graphs.jl as dependency
+
 ## v0.4.1
 
 - Fixed bug in `solve_mc_fault_study`, where the function call was incorrect (`kwargs` after `,` instead of `;`)
