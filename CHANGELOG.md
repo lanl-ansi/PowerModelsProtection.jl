@@ -2,6 +2,10 @@
 
 ## staged
 
+- none
+
+## v0.5.0
+
 - Removed old compatibility support for JuMP < v0.22
 - Removed direct MathOptInterface dependency
 - Updated to add JuMP v0.22
