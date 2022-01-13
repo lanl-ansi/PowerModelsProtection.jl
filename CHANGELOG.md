@@ -6,6 +6,7 @@
 
 ## v0.5.0
 
+- Added support for PowerModelsDistribution 0.14
 - Removed old compatibility support for JuMP < v0.22
 - Removed direct MathOptInterface dependency
 - Updated to add JuMP v0.22
