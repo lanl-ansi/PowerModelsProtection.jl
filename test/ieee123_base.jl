@@ -20,9 +20,8 @@ import JSON
 
 using Test
 using LinearAlgebra
-using MathOptInterface
 
-const MOI = JuMP.MathOptInterface
+const MOI = JuMP.MOI
 
 ipopt_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 ipopt_solver_fine = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-9, print_level=0)
