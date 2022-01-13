@@ -42,7 +42,7 @@
         @test isapprox(abs(bus["vr"] + 1im * bus["vi"]), 0.196538; atol = 1e-3)
 
         gen = result["solution"]["gen"]["1"]
-        @test isapprox(abs(gen["crg"] + 1im * gen["cig"]), 2.406009; atol = 4e-1)
+        @test isapprox(abs(gen["crg"] + 1im * gen["cig"]), 2.406009; atol = 5e-1)
         @test isapprox(angle(gen["pg"] + 1im * gen["qg"]), 3.141592; atol = 4)
     end
 end
