@@ -34,4 +34,7 @@ Set tolerance=0.000001
 set defaultbasefreq=50
 Calcvoltagebases
 
-Solve
+
+solve mode=faultstudy
+show f
+

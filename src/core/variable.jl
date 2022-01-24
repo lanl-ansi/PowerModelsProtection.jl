@@ -515,3 +515,18 @@ function variable_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIV
         ) for i in _PMD.ids(pm, nw, :storage)
     )
 end
+
+
+function variable_mc_generator_power(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int)
+    variable_mc_generator_power_real(pm, nw)
+end
+
+
+function variable_mc_generator_power_real(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int)
+    connections = Dict(i => gen["connections"] for (i,gen) in _PMD.ref(pm, nw, :gen))
+    _PMD.var(pm, nw)[:pg] = Dict(i => JuMP.@variable(pm.model,
+            [c in connections[i]], base_name="$(nw)_pg_$(i)",
+            start = 0.0
+        ) for i in _PMD.ids(pm, nw, :gen)
+    )
+end

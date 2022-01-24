@@ -507,3 +507,15 @@ function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalanced
     bus_i = storage["storage_bus"]
     constraint_mc_storage_grid_forming_inverter(pm, nw, i, bus_i, connections)
 end
+
+
+function constraint_mc_gen_power_setpoint_real(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+    constraint_mc_fault_gen_power_setpoint_real(pm, nw, i)
+end
+
+
+function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+    gen =  _PMD.ref(pm, nw, :gen, i)
+    connections = gen["connections"]
+    constraint_mc_gen_voltage_drop(pm, nw, i, gen["gen_bus"], connections)
+end

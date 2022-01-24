@@ -37,6 +37,7 @@ module PowerModelsProtection
     include("prob/fs.jl")
     include("prob/fs_mc.jl")
     include("prob/pf_mc.jl")
+    include("prob/opf_sc_mc.jl")
 
     include("core/helper_functions.jl")
     include("core/operation.jl")

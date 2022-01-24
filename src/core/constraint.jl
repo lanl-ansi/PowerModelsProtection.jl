@@ -215,3 +215,26 @@ function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel
         end
     end
 end
+
+
+function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel, n::Int, i::Int, bus::Int, connections::Vector{Int})
+    vr_pre = _PMD.var(pm, 0, :vr, bus)
+    vi_pre = _PMD.var(pm, 0, :vi, bus)
+    vr = _PMD.var(pm, n, :vr, bus)
+    vi = _PMD.var(pm, n, :vi, bus)
+
+    crg =  _PMD.var(pm, n, :crg_bus, i)
+    cig =  _PMD.var(pm, n, :cig_bus, i)
+
+    for c in connections
+        JuMP.@constraint(pm.model, vr[c] == vr_pre[c] - 0.0 * crg[c] + 0.00 * cig[c])
+        JuMP.@constraint(pm.model, vi[c] == vi_pre[c] - 0.0 * cig[c] - 0.00 * crg[c])
+    end
+end
+
+
+"because of opf objective requires variable"
+function constraint_mc_fault_gen_power_setpoint_real(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int, i::Int)
+    pg = [_PMD.var(pm, nw, :pg, i)[c] for c in _PMD.ref(pm, nw, :gen, i)["connections"]]
+    JuMP.@constraint(pm.model, pg .== 0.0)
+end
