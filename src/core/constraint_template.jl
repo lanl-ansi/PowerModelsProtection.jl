@@ -243,13 +243,21 @@ end
 Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor
 """
 function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=nw_id_default)
+    println("\n\n")
+    println(keys(_PMD.ref(pm, nw, :branch)))
+    for (k, branch) in _PMD.ref(pm, nw, :branch)
+        println("\n\n", k, "\n", branch)
+    end
+    println(kkkkk)
     for (k, gen) in _PMD.ref(pm, nw, :gen)
+        println(gen)
         if k in _PMD.ids(pm, :solar_gfli)
             @debug "Skipping gen $k in gen constraints"
             continue
         end
 
         if !("zr" in keys(gen))
+            println(kkkkk)
             @debug "Skipping gen $k in gen constraints"
             continue
         end
@@ -260,7 +268,7 @@ function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; n
         end
 
         @debug "Adding voltage drop constraint for generator $k"
-
+        println(kkkkkPPP)
         i = gen["index"]
         bus_id = gen["gen_bus"]
 
@@ -515,6 +523,7 @@ end
 
 
 function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+    println(kk)
     gen =  _PMD.ref(pm, nw, :gen, i)
     connections = gen["connections"]
     constraint_mc_gen_voltage_drop(pm, nw, i, gen["gen_bus"], connections)

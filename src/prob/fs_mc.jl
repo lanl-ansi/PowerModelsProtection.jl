@@ -7,6 +7,9 @@ Function to solve a multiconductor (distribution) fault study given a data set `
 """
 function solve_mc_fault_study(case::Dict{String,<:Any}, solver; kwargs...)
     data = deepcopy(case)
+    println(keys(data))
+    println(data["voltage_source"])
+    # println(jj)
 
     # TODO can this be moved?
     check_microgrid!(data)
@@ -140,5 +143,5 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
         @debug "Adding constraints for grid-forming inverter $i"
         constraint_mc_storage_grid_forming_inverter(pm, i)
     end
-
+    println(pm.model)
 end

@@ -34,6 +34,8 @@ function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{Str
         for (id, vsource) in data_eng["voltage_source"]
             vsource["zr"] = zeros(length(vsource["connections"]))
             vsource["zx"] = zeros(length(vsource["connections"]))
+            println(vsource)
+            # println(illl)
         end
     end
 end

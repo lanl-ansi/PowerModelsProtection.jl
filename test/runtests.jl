@@ -17,10 +17,10 @@ using Test
 
 @testset "PowerModelsProtection" begin
     include("common.jl")
-    include("fs.jl")
-    include("fs_mc.jl")
-    include("pf_mc.jl")
-    include("protection_tests.jl")
-    include("sparse_fault.jl")
+    # include("fs.jl")
+    # include("fs_mc.jl")
+    # include("pf_mc.jl")
+    # include("protection_tests.jl")
+    # include("sparse_fault.jl")
     include("opf_sc_mc.jl")
 end

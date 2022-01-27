@@ -24,16 +24,18 @@ New Line.Quad    Bus1=Primary.1.2.3  loadbus.1.2.3  linecode = 4/0QUAD  length=1
 
 !Loads - single phase
 
-New Load.L1 phases=1  loadbus.1.0   ( 0.4 3 sqrt / )   kW=9   kvar=3  model=1
-New Load.L2 phases=1  loadbus.2.0   ( 0.4 3 sqrt / )   kW=6   kvar=3  model=1
-New Load.L3 phases=1  loadbus.3.0   ( 0.4 3 sqrt / )   kW=6   kvar=3  model=1
+!New Load.L1 phases=1  loadbus.1.0   ( 0.4 3 sqrt / )   kW=9   kvar=3  model=1
+!New Load.L2 phases=1  loadbus.2.0   ( 0.4 3 sqrt / )   kW=6   kvar=3  model=1
+!New Load.L3 phases=1  loadbus.3.0   ( 0.4 3 sqrt / )   kW=6   kvar=3  model=1
 
+!New generator.gen1 bus1=loadbus.1.2.3 phases=3 Kv=.8 kW=60 pf=.95 status=fixed forceON=yes
 
 Set voltagebases=[0.4]
 Set tolerance=0.000001
 set defaultbasefreq=50
 Calcvoltagebases
 
+solve
 
 solve mode=faultstudy
 show f

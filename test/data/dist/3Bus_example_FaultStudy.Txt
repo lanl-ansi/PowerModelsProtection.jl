@@ -4,9 +4,9 @@ ALL-Node Fault Currents
 
 Bus             Node 1  X/R        Node 2  X/R        Node 3  X/R   ...  (Amps)
 
-"SOURCEBUS",1437457831,   4.0, 1437457832,   4.0, 1437457832,   4.0
-"PRIMARY",       3308,   0.6,       3310,   0.6,       3310,   0.6
-"LOADBUS",       1529,   0.6,       1531,   0.6,       1531,   0.6
+"SOURCEBUS",1437457936,   4.0, 1437457936,   4.0, 1437457936,   4.0
+"PRIMARY",       3392,   0.6,       3392,   0.6,       3392,   0.6
+"LOADBUS",       1613,   0.6,       1613,   0.6,       1613,   0.6
 
 
 ONE-Node to ground Faults
@@ -14,24 +14,24 @@ ONE-Node to ground Faults
                                       pu Node Voltages (L-N Volts if no base)
 Bus         Node  Amps         Node 1     Node 2     Node 3    ...
 
-"SOURCEBUS"    1   1437457831          0.000      0.974      1.018
-"SOURCEBUS"    2   1437457832          1.018      0.000      0.974
-"SOURCEBUS"    3   1437457832          0.974      1.018      0.000
-"PRIMARY"      1         2004          0.000      1.228      1.229
-"PRIMARY"      2         2012          1.223      0.000      1.227
-"PRIMARY"      3         2007          1.222      1.230      0.000
-"LOADBUS"      1          937          0.000      1.210      1.211
-"LOADBUS"      2          945          1.198      0.000      1.208
-"LOADBUS"      3          940          1.197      1.213      0.000
+"SOURCEBUS"    1   1437457934          0.000      0.974      1.018
+"SOURCEBUS"    2   1437457934          1.018      0.000      0.974
+"SOURCEBUS"    3   1437457934          0.974      1.018      0.000
+"PRIMARY"      1         2076          0.000      1.255      1.236
+"PRIMARY"      2         2076          1.236      0.000      1.255
+"PRIMARY"      3         2076          1.255      1.236      0.000
+"LOADBUS"      1         1009          0.000      1.272      1.226
+"LOADBUS"      2         1009          1.226      0.000      1.272
+"LOADBUS"      3         1009          1.272      1.226      0.000
 
 Adjacent Node-Node Faults
 
                                         pu Node Voltages (L-N Volts if no base)
 Bus          Node-Node      Amps        Node 1     Node 2     Node 3    ...
 
-"SOURCEBUS"   1   2     3980491         0.997      0.994      0.996
-"SOURCEBUS"   2   3     3980491         0.996      0.997      0.994
-"PRIMARY"     1   2        2862         0.492      0.491      0.988
-"PRIMARY"     2   3        2865         0.981      0.496      0.496
-"LOADBUS"     1   2        1323         0.484      0.484      0.979
-"LOADBUS"     2   3        1326         0.964      0.494      0.493
+"SOURCEBUS"   1   2     3980492         0.997      0.994      0.996
+"SOURCEBUS"   2   3     3980492         0.996      0.997      0.994
+"PRIMARY"     1   2        2936         0.502      0.502      1.004
+"PRIMARY"     2   3        2936         1.004      0.502      0.502
+"LOADBUS"     1   2        1397         0.507      0.507      1.014
+"LOADBUS"     2   3        1397         1.014      0.507      0.507
