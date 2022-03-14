@@ -1,6 +1,6 @@
 """
     add_relay(data::Dict{String,Any}, element::String, id::String, TS::Number, TDS::Number;
-    phase::Vector=[1,2,3],t_breaker::Number=0, shots::Int64=1, kwargs...)
+    phase::Vector=[1,2,3],t_breaker::Number=0, shots::Int=1, kwargs...)
 
 Function that adds an overcurrent relay with no CT to desired element on each desired phase.
 To call: add_relay(ciruit_dictionary, "circuit_element", "name", TS(Amps),TDS;
@@ -9,14 +9,14 @@ To call: add_relay(ciruit_dictionary, "circuit_element", "name", TS(Amps),TDS;
 Inputs:
     Required(5)
         (1) data(Dictionary): A dictionary that comes from parse_file() function of .dss file.
-        (2) element(String): Circuit element that relay is protecting/connected to. 
+        (2) element(String): Circuit element that relay is protecting/connected to.
         (3) id(String): Relay id for multiple relays on same zone (primary, secondary, etc)
         (4) TS(Float): Tap setting of relay. (do not include CT)
         (5) TDS(Float): Time dial setting
     Optional
         (6) phase(Vector): Optional. Phases that relay is connected/protecting. Defaults to 3 phase:[1,2,3]
         (7) t_breaker(Number): Optional. Operation time of the breaker.
-        (8) Shots(Int64): Optional. Number of operations before lockout.
+        (8) Shots(Int): Optional. Number of operations before lockout.
         (9) kwargs: Any additional that user wants. Not used for anything else.
 
 Outputs:
@@ -39,23 +39,23 @@ function add_relay(data::Dict{String,Any}, element::Union{String,SubString{Strin
         if haskey(data["protection"]["relays"]["$element"], id)
             @info "Relay $element-$id redefined."
         end
-        data["protection"]["relays"]["$element"]["$id"] = Dict{String,Any}(    
-            "phase" => Dict{String,Any}(), 
-            "TS" => TS, 
-            "TDS" => TDS, 
+        data["protection"]["relays"]["$element"]["$id"] = Dict{String,Any}(
+            "phase" => Dict{String,Any}(),
+            "TS" => TS,
+            "TDS" => TDS,
             "breaker_time" => t_breaker,
             "type" => "overcurrent",
-            "shots" => shots 
+            "shots" => shots
         )
         for i = 1:length(phase)
             n_phase = phase[i]
             if n_phase in values(data["line"]["$element"]["f_connections"])
                 data["protection"]["relays"]["$element"]["$id"]["phase"]["$n_phase"] = Dict{String,Any}(
-                    "state" => "closed", 
+                    "state" => "closed",
                     "op_times" => "Does not operate"
                 )
             else
-                @info "Phase $n_phase on $element does not exist. Phase $n_phase skipped." 
+                @info "Phase $n_phase on $element does not exist. Phase $n_phase skipped."
             end
         end
         kwargs_dict = Dict(kwargs)
@@ -69,7 +69,7 @@ end
 
 """
     add_relay(data::Dict{String,Any}, element::String, id::String, TS::Number, TDS::Number, CT::String;
-    phase::Vector=[1,2,3], t_breaker::Number=0, shots::Int64=1, kwargs...)
+    phase::Vector=[1,2,3], t_breaker::Number=0, shots::Int=1, kwargs...)
 
 Function that adds an overcurrent relay with a corresponding CT to desired element on each desired phase.
 To call: add_relay(ciruit_dictionary, "circuit_element", "name", TS(Amps),TDS, "CT";
@@ -78,7 +78,7 @@ To call: add_relay(ciruit_dictionary, "circuit_element", "name", TS(Amps),TDS, "
 Inputs:
     Required
         (1) data(Dictionary): A dictionary that comes from parse_file() function of .dss file.
-        (2) element(String): Circuit element that relay is protecting/connected to. 
+        (2) element(String): Circuit element that relay is protecting/connected to.
         (3) id(String): Relay id for multiple relays on same zone (primary, secondary, etc)
         (4) TS(Float): Tap setting of relay. Adjust for CT
         (5) TDS(Float): Time dial setting
@@ -86,7 +86,7 @@ Inputs:
     Optional
         (7) phase(Vector): Optional. Phases that relay is connected/protecting. Defaults to 3 phase:[1,2,3]
         (8) t_breaker(Number): Optional. Operation time of the breaker.
-        (9) Shots(Int64): Optional. Number of operations before lockout.
+        (9) Shots(Int): Optional. Number of operations before lockout.
         (10) kwargs: Any additional that user wants. Not used for anything else.
 
 Outputs:
@@ -106,9 +106,9 @@ function add_relay(data::Dict{String,Any}, element::Union{String,SubString{Strin
             if haskey(data["protection"]["relays"]["$element"], id)
                 @info "Relay $element-$id redefined."
             end
-            data["protection"]["relays"]["$element"]["$id"] = Dict{String,Any}(    
-                "phase" => Dict{String,Any}(), 
-                "TS" => TS, 
+            data["protection"]["relays"]["$element"]["$id"] = Dict{String,Any}(
+                "phase" => Dict{String,Any}(),
+                "TS" => TS,
                 "TDS" => TDS,
                 "breaker_time" => t_breaker,
                 "type" => "overcurrent",
@@ -119,11 +119,11 @@ function add_relay(data::Dict{String,Any}, element::Union{String,SubString{Strin
                 n_phase = phase[i]
                 if n_phase in values(data["line"]["$element"]["f_connections"])
                     data["protection"]["relays"]["$element"]["$id"]["phase"]["$n_phase"] = Dict{String,Any}(
-                        "state" => "closed", 
+                        "state" => "closed",
                         "op_times" => "Does not operate"
                     )
                 else
-                    @info "Phase $n_phase on $element does not exist. Phase $n_phase skipped."  
+                    @info "Phase $n_phase on $element does not exist. Phase $n_phase skipped."
                 end
             end
             kwargs_dict = Dict(kwargs)
@@ -150,7 +150,7 @@ Note: relays on the lines will never trip because no faults can be on a line.
 Inputs:
     Required
         (1) data(Dictionary): A dictionary that comes from parse_file() function of .dss file.
-        (2) element(String): Circuit element that relay is protecting/connected to. 
+        (2) element(String): Circuit element that relay is protecting/connected to.
         (3) id(String): Relay id for multiple relays on same zone (primary, secondary, etc)
         (4) TS(Float): Tap setting of relay. Is the minimum difference current for trip.
         (5) TDS(Float): Time dial setting
@@ -182,22 +182,22 @@ function add_relay(data::Dict{String,Any}, element::Union{String,SubString{Strin
                 @info "Relay $element-$id redefined."
             end
             Ir = _restraint(data, CTs, TS)
-            data["protection"]["relays"]["$element"]["$id"] = Dict{String,Any}(    
-                "phase" => Dict{String,Any}(), 
-                "TS" => TS, 
-                "TDS" => TDS, 
+            data["protection"]["relays"]["$element"]["$id"] = Dict{String,Any}(
+                "phase" => Dict{String,Any}(),
+                "TS" => TS,
+                "TDS" => TDS,
                 "breaker_time" => t_breaker,
                 "type" => "differential",
                 "CTs" => CTs,
                 "restraint" => Ir,
                 "shots" => 1
-                
+
             )
             for i = 1:length(phase)
                 n_phase = phase[i]
                 if n_phase in values(data["bus"]["$element"]["terminals"])
                     data["protection"]["relays"]["$element"]["$id"]["phase"]["$n_phase"] = Dict{String,Any}(
-                        "state" => "closed", 
+                        "state" => "closed",
                         "op_times" => "Does not operate"
                     )
                 else
@@ -208,7 +208,7 @@ function add_relay(data::Dict{String,Any}, element::Union{String,SubString{Strin
             new_dict = _add_dict(kwargs_dict)
             merge!(data["protection"]["relays"]["$element"]["$id"], new_dict)
         else
-            @info "Not all CTs provided exist. Relay $id could not be added." 
+            @info "Not all CTs provided exist. Relay $id could not be added."
         end
     elseif haskey(data["line"], element)
         if _check_keys(data, CTs)
@@ -219,9 +219,9 @@ function add_relay(data::Dict{String,Any}, element::Union{String,SubString{Strin
                 @info "Relay $element-$id redefined."
             end
             Ir = _restraint(data, CTs, TS)
-            data["protection"]["relays"]["$element"]["$id"] = Dict{String,Any}(    
-                "phase" => Dict{String,Any}(), 
-                "TS" => TS, 
+            data["protection"]["relays"]["$element"]["$id"] = Dict{String,Any}(
+                "phase" => Dict{String,Any}(),
+                "TS" => TS,
                 "TDS" => TDS,
                 "breaker_time" => t_breaker,
                 "type" => "differential",
@@ -233,7 +233,7 @@ function add_relay(data::Dict{String,Any}, element::Union{String,SubString{Strin
                 n_phase = phase[i]
                 if n_phase in values(data["line"]["$element"]["f_connections"])
                     data["protection"]["relays"]["$element"]["$id"]["phase"]["$n_phase"] = Dict{String,Any}(
-                        "state" => "closed", 
+                        "state" => "closed",
                         "op_times" => "Does not operate"
                     )
                 else
@@ -244,7 +244,7 @@ function add_relay(data::Dict{String,Any}, element::Union{String,SubString{Strin
             new_dict = _add_dict(kwargs_dict)
             merge!(data["protection"]["relays"]["$element"]["$id"], new_dict)
         else
-            @info "Not all CTs provided exist. Relay $id could not be added." 
+            @info "Not all CTs provided exist. Relay $id could not be added."
         end
     else
         @info "Circuit element $element does not exist. Relay $id could not be added."
@@ -257,17 +257,17 @@ end
     kwargs...)
 
 Function that adds a directional differential relay to circuit. In order to use properly circuit file must be edited so that the line
-we are concerned with is divided in two with a bus in between. Fault can then be added to that bus. Will use phase angles of current and 
+we are concerned with is divided in two with a bus in between. Fault can then be added to that bus. Will use phase angles of current and
 voltage at either side to determine if direction of power is same on both ends. Element1 is from, element2 is to.
 Inputs:
     Required
         (1) data(Dictionary): A dictionary that comes from parse_file() function of .dss file.
         (2) element1(String): First circuit element relay is protecting.
         (3) element2(String): Second circuit element relay is protecting. For relay to work properly elements should each be a protection
-                                of the same line with bus in between them where the fault will be simulated.   
+                                of the same line with bus in between them where the fault will be simulated.
         (4) id(String): Relay id.
         (5) trip_angle: Angle at which relay will trip if the difference in phase angles is greater.
-        
+
     Optional
         (6) kwargs: Any additional that user wants. Not used for anything else.
 
@@ -290,8 +290,8 @@ function add_relay(data::Dict{String,Any}, element1::Union{String,SubString{Stri
         if haskey(data["protection"]["relays"]["$element1"], id)
             @info "Relay $element-$id redefined."
         end
-        data["protection"]["relays"]["$element1"]["$id"] = Dict{String,Any}(    
-            "element2" => element2, 
+        data["protection"]["relays"]["$element1"]["$id"] = Dict{String,Any}(
+            "element2" => element2,
             "type" => "differential_dir",
             "trip" => trip_angle,
             "state" => "closed",
@@ -319,10 +319,10 @@ Inputs:
         (1) data(Dictionary): A dictionary that comes from parse_file() function of .dss file.
         (2) element1(String): First circuit element relay is protecting.
         (3) element2(String): Second circuit element relay is protecting. For relay to work properly elements should each be a protection
-                                of the same line with bus in between them where the fault will be simulated.   
+                                of the same line with bus in between them where the fault will be simulated.
         (4) id(String): Relay id.
         (5) trip_angle: Angle at which relay will trip if the difference in phase angles is greater.
-        
+
     Optional
         (6) kwargs: Any additional that user wants. Not used for anything else.
 
@@ -347,10 +347,10 @@ function add_relay(data::Dict{String,Any}, element1::Union{String,SubString{Stri
                 @info "Relay $element-$id redefined."
             end
             Ir = _restraint(data, CTs, TS)
-            data["protection"]["relays"]["$element1"]["$id"] = Dict{String,Any}(  
-                "element2" => element2,  
-                "phase" => Dict{String,Any}(), 
-                "TS" => TS, 
+            data["protection"]["relays"]["$element1"]["$id"] = Dict{String,Any}(
+                "element2" => element2,
+                "phase" => Dict{String,Any}(),
+                "TS" => TS,
                 "TDS" => TDS,
                 "breaker_time" => t_breaker,
                 "type" => "differential",
@@ -362,11 +362,11 @@ function add_relay(data::Dict{String,Any}, element1::Union{String,SubString{Stri
                 n_phase = phase[i]
                 if n_phase in values(data["line"]["$element1"]["f_connections"])
                     data["protection"]["relays"]["$element1"]["$id"]["phase"]["$n_phase"] = Dict{String,Any}(
-                        "state" => "closed", 
+                        "state" => "closed",
                         "op_times" => "Does not operate"
                     )
                 else
-                    @info "Phase $n_phase on $element does not exist. Phase $n_phase skipped."  
+                    @info "Phase $n_phase on $element does not exist. Phase $n_phase skipped."
                 end
             end
             kwargs_dict = Dict(kwargs)
