@@ -228,7 +228,7 @@ function _dss2eng_curve!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
         end
         eng_obj["t_array"] = t_array
         if haskey(dss_obj, "npts")
-            npts = parse(Int64,dss_obj["npts"])
+            npts = parse(Int,dss_obj["npts"])
             if (length(c_array) != npts) || (length(t_array) != npts)
                 if length(c_array) > npts
                     @warn "c_array is longer than the npts. Truncating array."

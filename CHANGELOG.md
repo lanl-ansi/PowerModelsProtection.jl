@@ -4,6 +4,13 @@
 
 - none
 
+## v0.5.1
+
+- Removed duplicate `add_ct` function
+- Refactored to move data functions to data_model folder
+- Updated support to JuMP v0.23
+- Updated to minimum Julia v1.6 (LTS)
+
 ## v0.5.0
 
 - Added support for PowerModelsDistribution 0.14

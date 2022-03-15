@@ -28,6 +28,11 @@ module PowerModelsProtection
     include("data_model/components.jl")
     include("data_model/eng2math.jl")
     include("data_model/math2eng.jl")
+    include("data_model/helper_functions.jl")
+    include("data_model/operation.jl")
+    include("data_model/cts.jl")
+    include("data_model/fuses.jl")
+    include("data_model/relays.jl")
 
     include("io/common.jl")
     include("io/dss/dss2eng.jl")
@@ -37,12 +42,6 @@ module PowerModelsProtection
     include("prob/fs.jl")
     include("prob/fs_mc.jl")
     include("prob/pf_mc.jl")
-
-    include("core/helper_functions.jl")
-    include("core/operation.jl")
-    include("core/fuses.jl")
-    include("core/relays.jl")
-    include("core/cts.jl")
 
     include("core/export.jl")  # must be last include to properly export functions
 end
