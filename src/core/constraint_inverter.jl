@@ -321,17 +321,17 @@ function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel
     cnds = _PMD.ref(pm, n, :bus, bus_id, "terminals")
     ncnds = length(cnds)
 
-    vm = [vrstar[c]^2 + vistar[c]^2 for c in 1:ncnds]
+    vm = [vrstar[idx]^2 + vistar[idx]^2 for (idx,c) in enumerate(cnds)]
 
-    for c in 1:ncnds
+    for (idx,c) in cnds
         # current limits
         # z = 1 -> invert in in current limiting mode
         JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
 
         # terminal voltage mag
-        JuMP.@constraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[c] * (1+z[c]))
-        JuMP.@constraint(pm.model, vr[c]^2 + vi[c]^2 >= vm[c] * (1-z[c]))
+        JuMP.@constraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[idx] * (1+z[c]))
+        JuMP.@constraint(pm.model, vr[c]^2 + vi[c]^2 >= vm[idx] * (1-z[c]))
 
         # terminal voltage phase
         JuMP.@constraint(pm.model, 0.0 == vr[c]*vistar[c] - vi[c]*vrstar[c])
@@ -371,21 +371,21 @@ function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalanc
     cnds = _PMD.ref(pm, nw, :bus, bus_id, "terminals")
     ncnds = length(cnds)
 
-    vm = [vr0[c]^2 + vi0[c]^2 for c in 1:ncnds]
+    vm = [vr0[idx]^2 + vi0[idx]^2 for (idx,c) in enumerate(cnds)]
 
-    for c in 1:ncnds
+    for (idx,c) in enumerate(cnds)
         # current limits
         JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
 
         # setpoint voltage mag
-        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[c] * (1+z[c]))
-        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[c] * (1-z[c]))
+        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[idx] * (1+z[c]))
+        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[idx] * (1-z[c]))
 
         # setpoint voltage phase
-        JuMP.@constraint(pm.model, 0.0 == vrstar[c]*vi0[c] - vistar[c]*vr0[c])
-        JuMP.@constraint(pm.model, vrstar[c] * vr0[c] >= 0.0)
-        JuMP.@constraint(pm.model, vistar[c] * vi0[c] >= 0.0)
+        JuMP.@constraint(pm.model, 0.0 == vrstar[c]*vi0[idx] - vistar[c]*vr0[idx])
+        JuMP.@constraint(pm.model, vrstar[c] * vr0[idx] >= 0.0)
+        JuMP.@constraint(pm.model, vistar[c] * vi0[idx] >= 0.0)
 
         # terminal voltage setpoint based virtual impedance
         JuMP.@constraint(pm.model, vr[c] == vrstar[c] - r[c]*crg[c] + x[c]*cig[c])
@@ -424,20 +424,20 @@ function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.Abstract
     p = _PMD.var(pm, nw, :p_solar, i)
     q = _PMD.var(pm, nw, :q_solar, i)
 
-    vm = [vr0[c]^2 + vi0[c]^2 for c in terminals]
+    vm = [vr0[idx]^2 + vi0[idx]^2 for (idx,c) in enumerate(terminals)]
 
-    for c in terminals
+    for (idx,c) in enumerate(terminals)
         JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
         JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
 
-        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[c] * (1-z[c]))
-        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[c])
+        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[idx] * (1-z[c]))
+        JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[idx])
 
         if ang
             # setpoint voltage phase
-            JuMP.@constraint(pm.model, 0.0 == vrstar[c]*vi0[c] - vistar[c]*vr0[c])
-            JuMP.@constraint(pm.model, vrstar[c] * vr0[c] >= 0.0)
-            JuMP.@constraint(pm.model, vistar[c] * vi0[c] >= 0.0)
+            JuMP.@constraint(pm.model, 0.0 == vrstar[c]*vi0[idx] - vistar[c]*vr0[idx])
+            JuMP.@constraint(pm.model, vrstar[c] * vr0[idx] >= 0.0)
+            JuMP.@constraint(pm.model, vistar[c] * vi0[idx] >= 0.0)
         end
 
         JuMP.@constraint(pm.model, rv[c] <= .10)

@@ -428,6 +428,7 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.Abstract
     bus_i = gen["gen_bus"]
     bus = _PMD.ref(pm, nw, :bus, bus_i)
     terminals = bus["terminals"]
+    connections = gen["connections"]
     _PMD.ref(pm, nw, :grid_forming, bus_i) ? ang = true : ang = false
 
     if !haskey(bus, "vm") && !haskey(bus, "va")
@@ -442,8 +443,8 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.Abstract
     va = [0 -2*pi/3 2*pi/3]
 
     cmax = gen["i_max"]
-    vr = [vm[c] * cos(va[c]) for c in terminals]
-    vi = [vm[c] * sin(va[c]) for c in terminals]
+    vr = [vm[idx] * cos(va[idx]) for (idx,c) in enumerate(terminals)]
+    vi = [vm[idx] * sin(va[idx]) for (idx,c) in enumerate(terminals)]
 
     # push into pmax on import and erase this
     if gen["solar_max"] < gen["kva"]
@@ -454,7 +455,7 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.Abstract
 
     smax = gen["kva"]
 
-    constraint_mc_grid_formimg_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, cmax, smax, ang, terminals)
+    constraint_mc_grid_formimg_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, cmax, smax, ang, connections)
 end
 
 
