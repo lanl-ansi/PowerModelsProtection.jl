@@ -255,11 +255,14 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
     a2r = -1/6
     a2i = -sqrt(3)/6
 
-    vr = _PMD.var(pm, nw, :vr, bus_id)
-    vi = _PMD.var(pm, nw, :vi, bus_id)
+    cnds = _PMD.ref(pm, nw, :gen, i)["connections"]
+    terminals = _PMD.ref(pm, nw, :bus, bus_id, "terminals")
 
-    crg =  _PMD.var(pm, nw, :crg, i)
-    cig =  _PMD.var(pm, nw, :cig, i)
+    vr = [c in terminals ? _PMD.var(pm, nw, :vr, bus_id)[c] : 0 for c in 1:3]
+    vi = [c in terminals ? _PMD.var(pm, nw, :vi, bus_id)[c] : 0 for c in 1:3]
+
+    crg =  [c in cnds ? _PMD.var(pm, nw, :crg, i)[c] : 0.0 for c in 1:3]
+    cig =  [c in cnds ? _PMD.var(pm, nw, :cig, i)[c] : 0.0 for c in 1:3]
 
     p_int = _PMD.var(pm, nw, :p_int, i)
     q_int = _PMD.var(pm, nw, :q_int, i)
@@ -271,13 +274,9 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
     cig_pos_max = _PMD.var(pm, nw, :cig_pos_max, i)
     z = _PMD.var(pm, nw, :z_gfli, i)
 
-    cnds = _PMD.ref(pm, nw, :bus, bus_id)["terminals"]
-    ncnds = length(cnds)
-
-
     # Zero-Sequence
-    JuMP.@constraint(pm.model, sum(crg[c] for c in cnds) == 0)
-    JuMP.@constraint(pm.model, sum(cig[c] for c in cnds) == 0)
+    JuMP.@constraint(pm.model, sum(crg[c] for c in 1:3) == 0)
+    JuMP.@constraint(pm.model, sum(cig[c] for c in 1:3) == 0)
 
     # Negative-Sequence
     JuMP.@constraint(pm.model, (1/3)*crg[1] + a2r*crg[2] - a2i*cig[2] + ar*crg[3] - ai*cig[3] == 0)
