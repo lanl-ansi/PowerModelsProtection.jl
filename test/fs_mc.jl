@@ -68,7 +68,7 @@
         add_fault!(data, "1", "3p", "loadbus", [1,2,3], 500.0)
         sol = solve_mc_fault_study(data, ipopt_solver)
         @test sol["termination_status"] == LOCALLY_SOLVED
-        @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 35.523) < .05
+        @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 35.6) < .05
     end
 
     @testset "c3-bus multiple pv grid_following fault test" begin

@@ -242,83 +242,27 @@ end
 
 Constraint that sets the terminal voltage basd on the internal voltage and the stator impedence for multiconductor
 """
-function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=nw_id_default)
-    for (k, gen) in _PMD.ref(pm, nw, :gen)
-        if k in _PMD.ids(pm, :solar_gfli)
-            @debug "Skipping gen $k in gen constraints"
-            continue
-        end
-
-        if !("zr" in keys(gen))
-            @debug "Skipping gen $k in gen constraints"
-            continue
-        end
-
-        if occursin("voltage_source", gen["source_id"])
-            @debug "Skipping gen $k in gen constraints"
-            continue
-        end
-
-        @debug "Adding voltage drop constraint for generator $k"
-
-        i = gen["index"]
-        bus_id = gen["gen_bus"]
-
-        r = gen["zr"]
-        x = gen["zx"]
-
-        # only 3 phase generation is supported
-        terminals = length(gen["connections"])
-        if terminals == 3
-            vm = [1, 1, 1]
-            va = [0, -2*pi/3, 2*pi/3]
-
-            if "vm" in keys(_PMD.ref(pm, :bus, bus_id))
-                vm = _PMD.ref(pm, :bus, bus_id, "vm")
+function constraint_mc_gen_voltage_drop(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+    gen =  _PMD.ref(pm, nw, :gen, i)
+    if haskey(gen, "gen_model")
+        if gen["gen_model"] == 3
+            bus_id = gen["gen_bus"]
+            bus = _PMD.ref(pm, nw, :bus, bus_id)
+            terminals = gen["connections"]
+            if haskey(bus, "vr")
+                vr = bus["vr"]
+                vi = bus["vi"]
             else
-                @warn "vm not specified for bus $bus_id, assuming 1"
+                @warn "No power flow solution found for bus $bus_id, assuming 1"
+                v = [1 1*exp(-1im*pi/3) 1*exp(1im*pi/3)]
+                vr = real.(v)
+                vi = imag.(v)
             end
+            rp = gen["rp"]
+            xdp = gen["xdp"]
+            terminals = gen["connections"]
 
-            if "va" in keys(_PMD.ref(pm, :bus, bus_id))
-                va = _PMD.ref(pm, :bus, bus_id, "va")
-            else
-                @warn "va not specified for bus $bus_id, assuming 0"
-            end
-
-            mva = 100
-            kva = 1e3*mva
-            sb = 1e6*mva
-
-            kv = 4.16
-            vb = 1000*kv
-
-            pg = gen["pg"]
-            qg = gen["qg"]
-            sg = pg + 1im*qg
-
-            vr = [vm[i] * cos(va[i]) for i in 1:3]
-            vi = [vm[i] * sin(va[i]) for i in 1:3]
-
-            v = vr + 1im*vi
-            cg = [conj(sg[i]/v[i]) for i in 1:3]
-            z = r + 1im*x
-            vg = [v[i] + (z[i]*cg[i]) for i in 1:3]
-
-            vgr = real(vg)
-            vgi = imag(vg)
-
-            @debug "Generator terminal voltage from pre-fault powerflow" abs.(v[1])
-
-            @debug "Generator pre-fault power (kVA)" kva*sg[1]
-
-            ssi = sb*sg[1]
-            vsi = vb*v[1]/sqrt(3)
-            isi = ssi/vsi
-
-            @debug "Generator pre-fault current (A)" abs(isi)
-            @debug "Calculated generator internal voltage" abs.(vg[1])
-
-            constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, r, x, vgr, vgi, terminals)
+            constraint_mc_gen_voltage_drop(pm, nw, i, bus_id, rp, xdp, vr, vi, terminals)
         end
     end
 end
@@ -332,14 +276,13 @@ Constraints for fault current contribution of multiconductor inverter in grid-fo
 function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
     index = _PMD.ref(pm, nw, :solar_gfli, i)
     gen = _PMD.ref(pm, nw, :gen, i)
-
-    cmax = gen["i_max"]
-    if gen["solar_max"] < gen["kva"] * gen["pf"]
-        pmax = gen["solar_max"]
-    else
-        pmax = gen["kva"] * gen["pf"]
-    end
-    constraint_mc_pq_inverter(pm, nw, i, index, pmax, 0.0, cmax)
+    imax = gen["i_max"]
+    pg = gen["pg"] # need to make sure pg is based on irrand pmpp
+    qg = gen["qg"]
+    qmax = gen["qmax"]
+    qmin = gen["qmin"]
+    connections = gen["connections"]
+    constraint_mc_pq_inverter(pm, nw, i, index, pg, qg, qmax, qmin, imax, connections)
 end
 
 
@@ -442,20 +385,14 @@ function constraint_mc_grid_forming_inverter_virtual_impedance(pm::_PMD.Abstract
     vm = [.995 for c in terminals]
     va = [0 -2*pi/3 2*pi/3]
 
-    cmax = gen["i_max"]
     vr = [vm[idx] * cos(va[idx]) for (idx,c) in enumerate(terminals)]
     vi = [vm[idx] * sin(va[idx]) for (idx,c) in enumerate(terminals)]
-
-    # push into pmax on import and erase this
-    if gen["solar_max"] < gen["kva"]
-        pmax = gen["solar_max"]
-    else
-        pmax = gen["kva"]
-    end
-
+    
+    pmax = gen["solar_max"]
     smax = gen["kva"]
+    imax = gen["i_max"]
 
-    constraint_mc_grid_formimg_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, cmax, smax, ang, connections)
+    constraint_mc_grid_formimg_inverter_virtual_impedance(pm, nw, i, index, vr, vi, pmax, imax, smax, ang, connections)
 end
 
 
@@ -507,4 +444,47 @@ function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalanced
     connections = storage["connections"]
     bus_i = storage["storage_bus"]
     constraint_mc_storage_grid_forming_inverter(pm, nw, i, bus_i, connections)
+end
+
+
+"""
+	constraint_mc_gen_constant_power(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=nw_id_default)
+
+Constraint that sets the gen to output constant power
+"""
+function constraint_mc_gen_constant_power(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+    gen = _PMD.ref(pm, nw, :gen, i)
+    if haskey(gen, "gen_model")
+        if gen["gen_model"] == 1
+            connections = gen["connections"]
+            bus_id = gen["gen_bus"]
+            kw = gen["pg"]
+            kvar = gen["qg"]
+            y_low = 1 ./conj.(.9^2 ./(kw .+ kvar.*1im))
+            y_high = 1 ./conj.(1.1^2 ./(kw + kvar.*1im))
+            constraint_mc_gen_constant_power(pm, nw, i, bus_id, kw, kvar, y_low, y_high, connections)
+        end
+    end
+end
+
+
+"""
+	constraint_mc_gen_pq_constant_inverter(pm::_PMD.AbstractUnbalancedPowerModel; nw::Int=nw_id_default)
+
+Constraint that sets the gen to output constant power
+"""
+function constraint_mc_gen_pq_constant_inverter(pm::_PMD.AbstractUnbalancedPowerModel, i::Int; nw::Int=nw_id_default)
+    gen = _PMD.ref(pm, nw, :gen, i)
+    if haskey(gen, "gen_model")
+        if gen["gen_model"] == 7
+            connections = gen["connections"]
+            bus_id = gen["gen_bus"]
+            kw = gen["pg"]
+            kvar = gen["qg"]
+            imax = abs.(conj.(kw + kvar*1im) ./ .9)
+            qmax = gen["qmax"]
+            qmin = gen["qmin"]
+            constraint_mc_gen_pq_constant_inverter(pm, nw, i, bus_id, kw, kvar, imax, qmax, qmin, connections)
+        end
+    end
 end

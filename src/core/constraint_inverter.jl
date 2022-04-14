@@ -249,55 +249,110 @@ end
 
 Constraints for fault current contribution of multiconductor inverter in grid-following mode
 """
-function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, pg, qg, cmax)
+function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, pg, qg, qmax, qmin, imax, connections)
     ar = -1/6
     ai = sqrt(3)/6
     a2r = -1/6
     a2i = -sqrt(3)/6
 
-    cnds = _PMD.ref(pm, nw, :gen, i)["connections"]
-    terminals = _PMD.ref(pm, nw, :bus, bus_id, "terminals")
+    vr = _PMD.var(pm, nw, :vr, bus_id)
+    vi = _PMD.var(pm, nw, :vi, bus_id)
 
-    vr = [c in terminals ? _PMD.var(pm, nw, :vr, bus_id)[c] : 0 for c in 1:3]
-    vi = [c in terminals ? _PMD.var(pm, nw, :vi, bus_id)[c] : 0 for c in 1:3]
+    crg =  _PMD.var(pm, nw, :crg, i)
+    cig =  _PMD.var(pm, nw, :cig, i)
 
-    crg =  [c in cnds ? _PMD.var(pm, nw, :crg, i)[c] : 0.0 for c in 1:3]
-    cig =  [c in cnds ? _PMD.var(pm, nw, :cig, i)[c] : 0.0 for c in 1:3]
 
-    p_int = _PMD.var(pm, nw, :p_int, i)
-    q_int = _PMD.var(pm, nw, :q_int, i)
-    crg_pos= _PMD.var(pm, nw, :crg_pos, i)
-    cig_pos = _PMD.var(pm, nw, :cig_pos, i)
-    vrg_pos= _PMD.var(pm, nw, :vrg_pos, i)
-    vig_pos = _PMD.var(pm, nw, :vig_pos, i)
-    crg_pos_max = _PMD.var(pm, nw, :crg_pos_max, i)
-    cig_pos_max = _PMD.var(pm, nw, :cig_pos_max, i)
-    z = _PMD.var(pm, nw, :z_gfli, i)
+    ncnds = length(connections)
 
-    # Zero-Sequence
-    JuMP.@constraint(pm.model, sum(crg[c] for c in 1:3) == 0)
-    JuMP.@constraint(pm.model, sum(cig[c] for c in 1:3) == 0)
+    m = 100
 
-    # Negative-Sequence
-    JuMP.@constraint(pm.model, (1/3)*crg[1] + a2r*crg[2] - a2i*cig[2] + ar*crg[3] - ai*cig[3] == 0)
-    JuMP.@constraint(pm.model, (1/3)*cig[1] + a2r*cig[2] + a2i*crg[2] + ar*cig[3] + ai*crg[3] == 0)
+    if ncnds == 3
+        crg_pos = _PMD.var(pm, nw)[:crg_pos] = JuMP.@variable(pm.model,
+               base_name = "$(nw)_crg_pos_$(i)",
+               start = 0.0,
+        ) 
+        cig_pos = _PMD.var(pm, nw)[:cig_pos] = JuMP.@variable(pm.model,
+               base_name = "$(nw)_cig_pos_$(i)",
+               start = 0.0,
+        )
 
-    # Positive-Sequence
-    JuMP.@constraint(pm.model, (1/3)*crg[1] + ar*crg[2] - ai*cig[2] + a2r*crg[3] - a2i*cig[3] == crg_pos)
-    JuMP.@constraint(pm.model, (1/3)*cig[1] + ar*cig[2] + ai*crg[2] + a2r*cig[3] + a2i*crg[3] == cig_pos)
-    JuMP.@constraint(pm.model, (1/3)*vr[1] + ar*vr[2] - ai*vi[2] + a2r*vr[3] - a2i*vi[3] == vrg_pos)
-    JuMP.@constraint(pm.model, (1/3)*vi[1] + ar*vi[2] + ai*vr[2] + a2r*vi[3] + a2i*vr[3] == vig_pos)
+        vr_pos = _PMD.var(pm, nw)[:vr_pos] = JuMP.@variable(pm.model,
+               base_name = "$(nw)_vr_pos_$(i)",
+               start = 0.0,
+        ) 
+        vi_pos = _PMD.var(pm, nw)[:vi_pos] = JuMP.@variable(pm.model,
+               base_name = "$(nw)_vi_pos_$(i)",
+               start = 0.0,
+        )
 
-    JuMP.@constraint(pm.model, 0.0 == crg_pos_max*cig_pos - cig_pos_max*crg_pos)
-    JuMP.@constraint(pm.model, crg_pos_max^2 + cig_pos_max^2 == cmax^2)
-    JuMP.@constraint(pm.model, crg_pos_max * crg_pos >= 0.0)
-    JuMP.@constraint(pm.model, cig_pos_max * cig_pos >= 0.0)
-    JuMP.@constraint(pm.model, crg_pos^2 + cig_pos^2 <= cmax^2)
-    JuMP.@NLconstraint(pm.model, (crg_pos^2 + cig_pos^2 - cmax^2)*z >= 0.0)
-    JuMP.@constraint(pm.model, p_int == vrg_pos*crg_pos + vig_pos*cig_pos)
-    JuMP.@constraint(pm.model, 0.0 == vig_pos*crg_pos - vrg_pos*cig_pos)
-    JuMP.@constraint(pm.model, p_int <= pg/3)
-    JuMP.@constraint(pm.model, p_int >= (1-z) * pg/3)
+        z = _PMD.var(pm, nw)[:z_gfli] = JuMP.@variable(pm.model,
+                base_name = "$(nw)_z_gfli_$(i)",
+                lower_bound = 0.0,
+                upper_bound = 1.0,
+                start = 0.0
+        )
+
+        pg_int = _PMD.var(pm, nw)[:pg_int] = JuMP.@variable(pm.model,
+               base_name = "$(nw)_pg_int_$(i)",
+               lower_bound = 0.0,
+               upper_bound = pg[1],
+               start = 0.0,
+        ) 
+
+        qg_int = _PMD.var(pm, nw)[:qg_int] = JuMP.@variable(pm.model,
+               base_name = "$(nw)_qg_int_$(i)",
+               start = 0.0,
+               lower_bound = qmin[1],
+               upper_bound = qmax[1],
+        ) 
+
+        # Zero-Sequence
+        JuMP.@constraint(pm.model, sum(crg[c] for c in connections) == 0.0)
+        JuMP.@constraint(pm.model, sum(cig[c] for c in connections) == 0.0)
+
+        # Negative-Sequence
+        JuMP.@constraint(pm.model, (1/3)*crg[1] + a2r*crg[2] - a2i*cig[2] + ar*crg[3] - ai*cig[3] == 0.0)
+        JuMP.@constraint(pm.model, (1/3)*cig[1] + a2r*cig[2] + a2i*crg[2] + ar*cig[3] + ai*crg[3] == 0.0)
+
+        # Positive-Sequence
+        JuMP.@constraint(pm.model, (1/3)*crg[1] + ar*crg[2] - ai*cig[2] + a2r*crg[3] - a2i*cig[3] == crg_pos)
+        JuMP.@constraint(pm.model, (1/3)*cig[1] + ar*cig[2] + ai*crg[2] + a2r*cig[3] + a2i*crg[3] == cig_pos)
+        JuMP.@constraint(pm.model, (1/3)*vr[1] + ar*vr[2] - ai*vi[2] + a2r*vr[3] - a2i*vi[3] == vr_pos)
+        JuMP.@constraint(pm.model, (1/3)*vi[1] + ar*vi[2] + ai*vr[2] + a2r*vi[3] + a2i*vr[3] == vi_pos)
+
+        JuMP.@NLconstraint(pm.model, imax[1]^2 - crg_pos^2 - cig_pos^2 >= 0.0)
+        JuMP.@NLconstraint(pm.model, (imax[1]^2 - crg_pos^2 - cig_pos^2)*z <= 0.0)
+        JuMP.@NLconstraint(pm.model, vr_pos*crg_pos + vi_pos*cig_pos == pg[1] - pg_int*z)
+        JuMP.@NLconstraint(pm.model, vi_pos*crg_pos - vr_pos*cig_pos == 0.0)
+
+    else 
+        z = _PMD.var(pm, nw)[:z_gfli] = JuMP.@variable(pm.model,
+                [c in connections], base_name = "$(nw)_z_gfli_$(i)",
+                lower_bound = 0.0,
+                upper_bound = 1.0,
+                start = 0.0
+        )
+        pg_int = _PMD.var(pm, nw)[:pg_int] = JuMP.@variable(pm.model,
+                [c in connections], base_name = "$(nw)_pg_int_$(i)",
+                lower_bound = 0.0,
+                upper_bound = pg[1],
+                start = 0.0,
+        ) 
+
+        qg_int = _PMD.var(pm, nw)[:qg_int] = JuMP.@variable(pm.model,
+                [c in connections], base_name = "$(nw)_qg_int_$(i)",
+                start = 0.0,
+                lower_bound = qmin[1],
+                upper_bound = qmax[1],
+        ) 
+
+        for c in connections
+            JuMP.@NLconstraint(pm.model, imax[1]^2 - crg[c]^2 - cig[c]^2 >= 0.0)
+            JuMP.@NLconstraint(pm.model, m*(imax[c]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
+            JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] == pg[1]-z[c]*pg_int[c])
+            JuMP.@NLconstraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] == qg[1]-z[c]*qg_int[c])
+        end
+    end
 end
 
 
@@ -374,8 +429,8 @@ function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalanc
 
     for (idx,c) in enumerate(cnds)
         # current limits
-        JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
-        JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
+        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax[c]^2)
+        JuMP.@NLconstraint(pm.model, m*(cmax[c]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
 
         # setpoint voltage mag
         JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[idx] * (1+z[c]))
@@ -404,7 +459,7 @@ end
 
 Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching
 """
-function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, vr0, vi0, pmax, cmax, smax, ang, terminals)
+function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, vr0, vi0, pmax, imax, smax, ang, connections)
     vr = _PMD.var(pm, nw, :vr, bus_id)
     vi = _PMD.var(pm, nw, :vi, bus_id)
 
@@ -423,11 +478,11 @@ function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.Abstract
     p = _PMD.var(pm, nw, :p_solar, i)
     q = _PMD.var(pm, nw, :q_solar, i)
 
-    vm = [vr0[idx]^2 + vi0[idx]^2 for (idx,c) in enumerate(terminals)]
+    vm = [vr0[idx]^2 + vi0[idx]^2 for (idx,c) in enumerate(connections)]
 
-    for (idx,c) in enumerate(terminals)
-        JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
-        JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
+    for (idx,c) in enumerate(connections)
+        JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= imax[c]^2)
+        JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - imax[c]^2)*z[c] >= 0.0)
 
         JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[idx] * (1-z[c]))
         JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[idx])
@@ -449,8 +504,8 @@ function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.Abstract
     end
 
     # DC-link power
-    JuMP.@constraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in terminals) == p)
-    JuMP.@constraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in terminals) == q)
+    JuMP.@constraint(pm.model, sum(vr[c]*crg[c] + vi[c]*cig[c] for c in connections) == p)
+    JuMP.@constraint(pm.model, sum(vi[c]*crg[c] - vr[c]*cig[c] for c in connections) == q)
 
     JuMP.@constraint(pm.model, p^2 + q^2 <= smax^2)
     JuMP.@constraint(pm.model, p <= pmax)
