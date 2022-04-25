@@ -270,7 +270,7 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
         crg_pos = _PMD.var(pm, nw)[:crg_pos] = JuMP.@variable(pm.model,
                base_name = "$(nw)_crg_pos_$(i)",
                start = 0.0,
-        ) 
+        )
         cig_pos = _PMD.var(pm, nw)[:cig_pos] = JuMP.@variable(pm.model,
                base_name = "$(nw)_cig_pos_$(i)",
                start = 0.0,
@@ -279,7 +279,7 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
         vr_pos = _PMD.var(pm, nw)[:vr_pos] = JuMP.@variable(pm.model,
                base_name = "$(nw)_vr_pos_$(i)",
                start = 0.0,
-        ) 
+        )
         vi_pos = _PMD.var(pm, nw)[:vi_pos] = JuMP.@variable(pm.model,
                base_name = "$(nw)_vi_pos_$(i)",
                start = 0.0,
@@ -297,14 +297,14 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
                lower_bound = 0.0,
                upper_bound = pg[1],
                start = 0.0,
-        ) 
+        )
 
         qg_int = _PMD.var(pm, nw)[:qg_int] = JuMP.@variable(pm.model,
                base_name = "$(nw)_qg_int_$(i)",
                start = 0.0,
                lower_bound = qmin[1],
                upper_bound = qmax[1],
-        ) 
+        )
 
         # Zero-Sequence
         JuMP.@constraint(pm.model, sum(crg[c] for c in connections) == 0.0)
@@ -325,7 +325,7 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
         JuMP.@NLconstraint(pm.model, vr_pos*crg_pos + vi_pos*cig_pos == pg[1] - pg_int*z)
         JuMP.@NLconstraint(pm.model, vi_pos*crg_pos - vr_pos*cig_pos == 0.0)
 
-    else 
+    else
         z = _PMD.var(pm, nw)[:z_gfli] = JuMP.@variable(pm.model,
                 [c in connections], base_name = "$(nw)_z_gfli_$(i)",
                 lower_bound = 0.0,
@@ -337,20 +337,20 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
                 lower_bound = 0.0,
                 upper_bound = pg[1],
                 start = 0.0,
-        ) 
+        )
 
         qg_int = _PMD.var(pm, nw)[:qg_int] = JuMP.@variable(pm.model,
                 [c in connections], base_name = "$(nw)_qg_int_$(i)",
                 start = 0.0,
                 lower_bound = qmin[1],
                 upper_bound = qmax[1],
-        ) 
+        )
 
-        for c in connections
-            JuMP.@NLconstraint(pm.model, imax[1]^2 - crg[c]^2 - cig[c]^2 >= 0.0)
-            JuMP.@NLconstraint(pm.model, m*(imax[c]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
-            JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] == pg[1]-z[c]*pg_int[c])
-            JuMP.@NLconstraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] == qg[1]-z[c]*qg_int[c])
+        for (idx,c) in enumerate(connections)
+            JuMP.@NLconstraint(pm.model, imax[idx]^2 - crg[c]^2 - cig[c]^2 >= 0.0)
+            JuMP.@NLconstraint(pm.model, m*(imax[idx]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
+            JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] == pg[idx]-z[c]*pg_int[c])
+            JuMP.@NLconstraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] == qg[idx]-z[c]*qg_int[c])
         end
     end
 end
