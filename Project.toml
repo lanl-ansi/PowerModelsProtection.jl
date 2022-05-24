@@ -15,7 +15,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 [compat]
 InfrastructureModels = "0.7.3"
 Ipopt = "0.9, 1.0.2"
-JuMP = "0.22, 0.23"
+JuMP = "0.22, 0.23, 1"
 Graphs = "1.4.1, 1.6"
 PowerModels = "0.19.1"
 PowerModelsDistribution = "~0.13.3, 0.14"

@@ -2,7 +2,7 @@
 
 ## staged
 
-- none
+- Add JuMP v1 to compat
 
 ## v0.5.1
 
