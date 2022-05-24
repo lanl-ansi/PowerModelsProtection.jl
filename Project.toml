@@ -1,7 +1,7 @@
 name = "PowerModelsProtection"
 uuid = "719c1aef-945b-435a-a240-4c2992e5e0df"
 authors = ["Art Barnes", "Jose Tabarez"]
-version = "0.5.1"
+version = "0.5.2"
 
 [deps]
 InfrastructureModels = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
@@ -15,7 +15,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 [compat]
 InfrastructureModels = "0.7.3"
 Ipopt = "0.9, 1.0.2"
-JuMP = "0.22, 0.23"
+JuMP = "0.22, 0.23, 1"
 Graphs = "1.4.1, 1.6"
 PowerModels = "0.19.1"
 PowerModelsDistribution = "~0.13.3, 0.14"

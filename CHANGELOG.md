@@ -4,6 +4,12 @@
 
 - none
 
+## v0.5.2
+
+- Add JuMP v1 to compat
+- Fixed for-loops over conductors in inverter constraints
+- Added support for 1-phase solar devices in inverter constraints
+
 ## v0.5.1
 
 - Removed duplicate `add_ct` function

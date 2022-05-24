@@ -17,12 +17,9 @@ function _rebase_pu_gen_dynamics!(nw::Dict{String,<:Any}, data_math::Dict{String
     if haskey(nw, "gen")
         for (_,gen) in nw["gen"]
             vbase = bus_vbase["$(gen["gen_bus"])"]
-            vbase_old = get(gen, "vbase", 1.0/nw["settings"]["voltage_scale_factor"])
-            vbase_scale = vbase_old/vbase
-            sbase_scale = sbase_old/sbase
+            zbase = vbase^2/sbase * voltage_scale_factor # sbase in kva?
 
-            _PMD._scale_props!(gen, ["zr", "zx"], sbase_scale)
-            _PMD._scale_props!(gen, ["i_max", "solar_max", "kva"], sbase_scale)
+            _PMD._scale_props!(gen, ["rp", "xdp", "xdpp"], zbase)
         end
     end
 end
@@ -61,6 +58,22 @@ function make_fault_si!(nw_sol::Dict{String,<:Any}, nw_data::Dict{String,<:Any},
                 if haskey(fault, prop)
                     fault[prop] = _PMD._apply_func_vals(fault[prop], x->x*ibase)
                 end
+            end
+        end
+    end
+end
+
+
+"function to rebase extra fields for solar into per unit"
+function _rebase_pu_solar!(nw::Dict{String,<:Any}, data_math::Dict{String,<:Any}, bus_vbase, line_vbase, sbase::Real, sbase_old::Real, voltage_scale_factor)
+    if haskey(nw, "gen")
+        for (_,gen) in nw["gen"]
+            if haskey(gen, "i_max")
+                vbase = bus_vbase["$(gen["gen_bus"])"]
+                ibase = sbase/vbase
+                _PMD._scale_props!(gen, ["i_max"], 1/ibase)
+                _PMD._scale_props!(gen, ["kva"], 1/sbase)
+                _PMD._scale_props!(gen, ["solar_max"], 1/sbase)
             end
         end
     end

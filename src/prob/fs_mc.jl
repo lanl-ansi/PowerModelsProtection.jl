@@ -18,7 +18,7 @@ function solve_mc_fault_study(case::Dict{String,<:Any}, solver; kwargs...)
         build_mc_fault_study;
         eng2math_extensions=[_eng2math_fault!],
         eng2math_passthrough=_pmp_eng2math_passthrough,
-        make_pu_extensions=[_rebase_pu_fault!, _rebase_pu_gen_dynamics!],
+        make_pu_extensions=[_rebase_pu_fault!, _rebase_pu_gen_dynamics!, _rebase_pu_solar!],
         map_math2eng_extensions=Dict{String,Function}("_map_math2eng_fault!"=>_map_math2eng_fault!),
         make_si_extensions=[make_fault_si!],
         dimensionalize_math_extensions=_pmp_dimensionalize_math_extensions,
@@ -91,11 +91,10 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
 
     for id in _PMD.ids(pm, :gen)
         _PMD.constraint_mc_generator_power(pm, id; bounded=false)
+        constraint_mc_gen_constant_power(pm, id)
+        constraint_mc_gen_voltage_drop(pm, id)
+        constraint_mc_gen_pq_constant_inverter(pm, id)
     end
-
-    # TODO add back in the generator voltage drop with inverters in model
-    @debug "Adding constraints for synchronous generators"
-    constraint_mc_gen_voltage_drop(pm)
 
     for i in _PMD.ids(pm, :fault)
         constraint_mc_bus_fault_current(pm, i)

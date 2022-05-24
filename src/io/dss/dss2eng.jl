@@ -3,14 +3,38 @@ function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{S
     if haskey(data_eng, "solar")
         for (id,solar) in data_eng["solar"]
             dss_obj = data_dss["pvsystem"][id]
-
             _PMD._apply_like!(dss_obj, data_dss, "pvsystem")
             defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
-
-            solar["i_max"] = (1/defaults["vminpu"]) * defaults["kva"] / 3
-            solar["solar_max"] = defaults["irradiance"] * defaults["pmpp"]
-            solar["kva"] = defaults["kva"]
-            solar["pf"] = defaults["pf"]
+            if haskey(dss_obj, "irradiance")
+                irradiance = dss_obj["irradiance"]
+            else
+                irradiance = defaults["irradiance"]
+            end
+            if haskey(dss_obj, "vminpu")
+                vminpu = dss_obj["vminpu"]
+            else
+                vminpu = defaults["vminpu"]
+            end
+            if haskey(dss_obj, "kva")
+                kva = dss_obj["kva"]
+            else
+                kva = defaults["kva"]
+            end
+            if haskey(dss_obj, "pmpp")
+                pmpp = dss_obj["pmpp"]
+            else
+                pmpp = defaults["pmpp"]
+            end
+            if haskey(dss_obj, "pf")
+                pf = dss_obj["pf"]
+            else
+                pf = defaults["pf"]
+            end
+            ncnd = length(solar["connections"]) >= 3 ? 3 : 1
+            solar["i_max"] = fill(1/vminpu * kva / (ncnd/sqrt(3)*dss_obj["kv"]), ncnd)
+            solar["solar_max"] = irradiance*pmpp
+            solar["pf"] = pf
+            solar["kva"] = kva
         end
     end
 end
@@ -18,22 +42,22 @@ end
 
 "helper function to build extra dynamics information for generator or vsource objects"
 function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
-   if haskey(data_eng, "generator")
+    if haskey(data_eng, "generator")
         for (id, generator) in data_eng["generator"]
-            dss_obj = data_dss["generator"][id]
-
-            _PMD._apply_like!(dss_obj, data_dss, "generator")
-            defaults = _PMD._apply_ordered_properties(_PMD._create_generator(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
-
-            generator["zr"] = zeros(length(generator["connections"]))
-            generator["zx"] = fill(defaults["xdp"] / defaults["kw"], length(generator["connections"]))
-        end
-    end
-
-    if haskey(data_eng, "voltage_source")
-        for (id, vsource) in data_eng["voltage_source"]
-            vsource["zr"] = zeros(length(vsource["connections"]))
-            vsource["zx"] = zeros(length(vsource["connections"]))
+            if haskey(generator["dss"], "model")
+                if generator["dss"]["model"] == 3
+                    dss_obj = data_dss["generator"][id]
+                    _PMD._apply_like!(dss_obj, data_dss, "generator")
+                    defaults = _PMD._apply_ordered_properties(_PMD._create_generator(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
+                    zbase = defaults["kv"]^2/defaults["kva"]*1000
+                    xdp = defaults["xdp"] * zbase
+                    rp = xdp/defaults["xrdp"]
+                    xdpp = defaults["xdpp"] * zbase
+                    generator["xdp"] = fill(xdp, length(generator["connections"]))
+                    generator["rp"] = fill(rp, length(generator["connections"]))
+                    generator["xdpp"] = fill(xdpp, length(generator["connections"]))
+                end
+            end
         end
     end
 end
@@ -278,5 +302,19 @@ function _dss2eng_curve!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
         end
         eng_obj["npts"] = npts
         _PMD._add_eng_obj!(data_eng, "tcc_curve", id, eng_obj)
+    end
+end
+
+
+"helper function to define generator typr from opendss models"
+function _dss2eng_gen_model!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    if haskey(data_eng, "generator")
+        for (id, generator) in data_eng["generator"]
+            if haskey(generator["dss"], "model")
+                generator["gen_model"] = generator["dss"]["model"]
+            else
+                generator["gen_model"] = 1
+            end
+        end
     end
 end

@@ -209,86 +209,17 @@ end
 variables for multiconductor pq inverters
 """
 function variable_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, bounded::Bool=true, kwargs...)
-    p_int = _PMD.var(pm, nw)[:p_int] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_p_int_$(i)",
-        start = 0
-    )
-
-    if bounded
-        for i in _PMD.ids(pm, nw, :solar_gfli)
-            gen = _PMD.ref(pm, nw, :gen, i)
-            pmax = 0.0
-            if gen["solar_max"] < gen["kva"] * gen["pf"]
-                pmax = gen["solar_max"]
-            else
-                pmax = gen["kva"] * gen["pf"]
-            end
-            JuMP.set_lower_bound(p_int[i], 0.0)
-            if pmax < Inf
-                JuMP.set_upper_bound(p_int[i], pmax / 3)
-            end
-        end
-    end
-
-    q_int = _PMD.var(pm, nw)[:q_int] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_q_int_$(i)",
-        start = 0
-    )
-
-    if bounded
-        for i in _PMD.ids(pm, nw, :solar_gfli)
-            gen = _PMD.ref(pm, nw, :gen, i)
-            pmax = 0.0
-            if gen["solar_max"] < gen["kva"] * gen["pf"]
-                pmax = gen["solar_max"]
-            else
-                pmax = gen["kva"] * gen["pf"]
-            end
-            JuMP.set_lower_bound(q_int[i], 0.0)
-            if pmax < Inf
-                JuMP.set_upper_bound(q_int[i], pmax / 3)
-            end
-        end
-    end
-
-    crg_pos = _PMD.var(pm, nw)[:crg_pos] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_crg_pos_$(i)",
-        start = 0.0
-    )
-    cig_pos = _PMD.var(pm, nw)[:cig_pos] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm,nw, :solar_gfli)], base_name = "$(nw)_cig_pos_$(i)",
-        start = 0.0
-    )
-
-    vrg_pos = _PMD.var(pm, nw)[:vrg_pos] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_vrg_pos_$(i)",
-        start = 0.0
-    )
-    vig_pos = _PMD.var(pm, nw)[:vig_pos] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_vig_pos_$(i)",
-        start = 0.0
-    )
-
-    crg_pos_max = _PMD.var(pm, nw)[:crg_pos_max] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_crg_pos_max_$(i)",
-        start = 0.0
-    )
-    cig_pos_max = _PMD.var(pm, nw)[:cig_pos_max] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_cig_pos_max_$(i)",
-        start = 0.0
-    )
-
-    z = _PMD.var(pm, nw)[:z_gfli] = JuMP.@variable(pm.model,
-        [i in _PMD.ids(pm, nw, :solar_gfli)], base_name = "$(nw)_z_gfli_$(i)",
-        start = 0.0
-    )
-
-    if bounded
-        for i in _PMD.ids(pm, nw, :solar_gfli)
-            JuMP.set_lower_bound(z[i], 0.0)
-            JuMP.set_upper_bound(z[i], 1.0)
-        end
-    end
+    # terminals = Dict(gfmi => _PMD.ref(pm, nw, :bus, bus)["terminals"] for (gfmi,bus) in _PMD.ref(pm, nw, :solar_gfli))
+    # _PMD.var(pm, nw)[:p_int] = Dict(i => JuMP.@variable(pm.model,
+    #            [c in terminals[i]], base_name = "$(nw)_p_int_$(i)",
+    #            start = 0.0,
+    #     ) for i in _PMD.ids(pm, nw, :solar_gfli)
+    # )
+    # _PMD.var(pm, nw)[:q_int] = Dict(i => JuMP.@variable(pm.model,
+    #            [c in terminals[i]], base_name = "$(nw)_q_int_$(i)",
+    #            start = 0.0,
+    #     ) for i in _PMD.ids(pm, nw, :solar_gfli)
+    # )
 end
 
 
