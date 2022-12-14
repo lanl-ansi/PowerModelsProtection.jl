@@ -8,10 +8,10 @@ In the future this will also include optimal protection coordation formulations 
 
 ## Modeling Assumptions
 
-* Generators are modeled as voltage sources behind an impedance. For synchronous generation, this is the subtransient reactance $X_d''$. For inverters, this is currently a virtual resistance. A more accurate model for inverters will take into account their
-current limits
-* Loads are neglected
-* Faults are modeled as an admittance matrix
+- Generators are modeled as voltage sources behind an impedance. For synchronous generation, this is the subtransient reactance $X_d''$. For inverters, this is currently a virtual resistance. A more accurate model for inverters will take into account their
+  current limits
+- Loads are neglected
+- Faults are modeled as an admittance matrix
 
 ## Usage Example (Balanced Case)
 
@@ -26,11 +26,6 @@ net["fault"]["1"] = Dict("bus"=>2, "r"=>0.0001)
 results = PowerModelsProtection.run_fault_study(net, solver )
 print(results)
 ```
-
-## TODO
-
-_TODO section has moved to issues_
-
 
 ## LLG Fault Model
 
@@ -57,10 +52,12 @@ This sounds ugly, but the constraints don't appear
 to be too bad.
 
 Given
+
 1. `a = ar + ai = exp(j*2*pi/3) = -1/2 + j*sqrt(3/2`
 2. `a^2 = a2r + j*a2i = exp(j*4*pi/3) = -1/2 - j*sqrt(3/2`
 
 Positive-sequence current constraints:
+
 1. `car = c1r`
 2. `cai = c1i`
 3. `cbr = a2r*c1r + a2i*c1i`
@@ -69,6 +66,7 @@ Positive-sequence current constraints:
 6. `cci = ar*c1i + ai*c1i`
 
 Constant power factor constraints:
+
 1. `k*p = var*car + vbr*cbr + vcr*ccr - vai*cai - vbi*cbi - vci*cci`
 2. `k*q = var*cai + vbr*cbi + vcr*cci + vai*car + vbi*cbr + vci*ccr`
 

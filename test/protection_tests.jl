@@ -14,10 +14,10 @@
     # solution_processors = [solution_fs!,solution_protection!]
 
     # @testset "Parsing .dss protection objects" begin
-        data_eng = parse_file(test_case1) 
+        data_eng = parse_file(test_case1)
         data_math = PMD.transform_data_model(data_eng)
         fault_studies = build_mc_sparse_fault_study(data_eng)
-        println(keys(fault_studies))
+        @debug "$(keys(fault_studies))"
 
         # sol = solve_mc_fault_study(data, fault_studies, ipopt_solver)
 
@@ -26,8 +26,8 @@
 #             @test haskey(data_dss, "fuse")
 #             @test haskey(data_dss, "tcc_curve")
 #             @test haskey(data_dss, "monitor")
-#         end  
-        
+#         end
+
 #         @testset "parser can't convert protection devices to eng model" begin
 #             data = deepcopy(data_dss)
 #             eng_data = _PMD.parse_opendss(data)

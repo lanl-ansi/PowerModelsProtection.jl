@@ -31,8 +31,8 @@ function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{S
                 pf = defaults["pf"]
             end
             ncnd = length(solar["connections"]) >= 3 ? 3 : 1
-            solar["i_max"] = fill(1/vminpu * kva / (ncnd/sqrt(3)*dss_obj["kv"]), ncnd)
-            solar["solar_max"] = irradiance*pmpp
+            solar["imax"] = fill(1/vminpu * kva / (ncnd/sqrt(3)*dss_obj["kv"]), ncnd)
+            solar["vminpu"] = "vminpu"
             solar["pf"] = pf
             solar["kva"] = kva
         end
@@ -74,7 +74,7 @@ function _dss2eng_ct!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any}
         elseif haskey(dss_obj, "n_p") && haskey(dss_obj, "n_s")
             add_ct(data_eng, dss_obj["element"], "$id", parse(Int,dss_obj["n_p"]), parse(Int,dss_obj["n_s"]))
         else
-            @warn "Could not find turns ratio. CT $id not added."
+            @debug "Could not find turns ratio. CT $id not added."
         end
     end
 end
@@ -115,12 +115,12 @@ function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
     for (id, dss_obj) in get(data_dss, "relay", Dict())
         eng_obj = Dict{String,Any}()
         if !haskey(dss_obj, "monitoredobj")
-            @warn "relay $(dss_obj["name"]) does not have a monitoredobj and will be disabled"
+            @debug "relay $(dss_obj["name"]) does not have a monitoredobj and will be disabled"
             eng_obj["status"] = 0
             eng_obj["monitoredobj"] = "none"
         else
             if !haskey(dss_obj, "enabled")
-                @warn "relay $(dss_obj["name"]) does not have enable key and will be set to enable"
+                @debug "relay $(dss_obj["name"]) does not have enable key and will be set to enable"
                 eng_obj["status"] = 1
             else
                 if dss_obj["enabled"] == "yes" || dss_obj["enabled"] == "true"
@@ -144,7 +144,7 @@ function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
             end
         end
         if haskey(dss_obj, "basefreq") && dss_obj["basefreq"] != data_eng["settings"]["base_frequency"]
-            @warn "basefreq=$(dss_obj["basefreq"]) on line.$id does not match circuit basefreq=$(data_eng["settings"]["base_frequency"])"
+            @debug "basefreq=$(dss_obj["basefreq"]) on line.$id does not match circuit basefreq=$(data_eng["settings"]["base_frequency"])"
         end
         for (default_id, default_value) in get(defaults_dict, "float_dict", Dict())
             if !haskey(dss_obj, default_id)
@@ -162,7 +162,7 @@ function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
             end
         end
         if !haskey(dss_obj, "type")
-            @warn "relay $id does not have a type defined setting it to current"
+            @debug "relay $id does not have a type defined setting it to current"
             eng_obj["type"] = "current"
             eng_obj["recloseintervals"] = [.5, 2.0, 2.0]
         else
@@ -198,12 +198,12 @@ function _dss2eng_fuse!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:An
     for (id, dss_obj) in get(data_dss, "fuse", Dict())
         eng_obj = Dict{String,Any}()
         if !haskey(dss_obj, "monitoredobj")
-            @warn "fuse $(dss_obj["name"]) does not have a monitoredobj and will be disabled"
+            @debug "fuse $(dss_obj["name"]) does not have a monitoredobj and will be disabled"
             eng_obj["status"] = 0
             eng_obj["monitoredobj"] = "none"
         else
             if !haskey(dss_obj, "enabled")
-                @warn "fuse $(dss_obj["name"]) does not have enable key and will be set to enable"
+                @debug "fuse $(dss_obj["name"]) does not have enable key and will be set to enable"
                 eng_obj["status"] = 1
             else
                 if dss_obj["enabled"] == "yes" || dss_obj["enabled"] == "true"
@@ -219,7 +219,7 @@ function _dss2eng_fuse!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:An
                 eng_obj["switchedobj"] = dss_obj["switchedobj"]
             end
         end
-        _PMD._add_eng_obj!(data_eng, "relay", id, eng_obj)
+        _PMD._add_eng_obj!(data_eng, "fuse", id, eng_obj)
     end
 end
 
@@ -255,24 +255,24 @@ function _dss2eng_curve!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
             npts = parse(Int,dss_obj["npts"])
             if (length(c_array) != npts) || (length(t_array) != npts)
                 if length(c_array) > npts
-                    @warn "c_array is longer than the npts. Truncating array."
+                    @debug "c_array is longer than the npts. Truncating array."
                     cut_points = length(c_array) - npts
                     c_array = c_array[cut_points+1:length(c_array)]
                 end
                 if length(t_array) > npts
-                    @warn "t_array is longer than the npts. Truncating array."
+                    @debug "t_array is longer than the npts. Truncating array."
                     cut_points = length(t_array) - npts
                     t_array = t_array[cut_points+1:length(t_array)]
                 end
                 if length(t_array) < npts
-                    @warn "t_array is shorter than npts. Adding time values."
+                    @debug "t_array is shorter than npts. Adding time values."
                     t_len = length(t_array)
                     for i=0:npts - t_len - 1
                         push!(t_array, t_array[t_len+i]/2)
                     end
                 end
                 if length(c_array) < npts
-                    @warn "c_array is shorter than npts. Adding current values."
+                    @debug "c_array is shorter than npts. Adding current values."
                     c_len = length(c_array)
                     (a,b) = _bisection(c_array[c_len],t_array[c_len],c_array[c_len-1],t_array[c_len-1])
                     for i=1:npts - c_len
@@ -285,14 +285,14 @@ function _dss2eng_curve!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
                 c_len = length(c_array)
                 t_len = length(t_array)
                 if c_len < t_len
-                    @warn "c_array is shorter than t_array. Adding current values."
+                    @debug "c_array is shorter than t_array. Adding current values."
                     c_len = length(c_array)
                     (a,b) = _bisection(c_array[c_len],t_array[c_len],c_array[c_len-1],t_array[c_len-1])
                     for i=1:npts - c_len
                         push!(c_array, round((a/t_array[c_len+i]+1)^(1/b)))
                     end
                 else
-                    @warn "t_array is shorter than c_array. Adding time values."
+                    @debug "t_array is shorter than c_array. Adding time values."
                     for i=0:c_len - t_len - 1
                         push!(t_array, t_array[t_len+i]/2)
                     end
@@ -306,7 +306,7 @@ function _dss2eng_curve!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:A
 end
 
 
-"helper function to define generator typr from opendss models"
+"helper function to define generator type from opendss models"
 function _dss2eng_gen_model!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     if haskey(data_eng, "generator")
         for (id, generator) in data_eng["generator"]

@@ -108,6 +108,7 @@ function _solution_pm_fs!(sol::Dict{String,<:Any})
     end
 end
 
+
 "calculates relay and fuse operation times and adds them to solution dictionary"
 function solution_protection!(pm::_PMD.AbstractUnbalancedIVRModel, sol::Dict{String,<:Any})
     _PMD.apply_pmd!(_solution_protection!, pm.ref, sol; apply_to_subnetworks=true)

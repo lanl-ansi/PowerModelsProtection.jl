@@ -105,13 +105,13 @@ function _get_current(data::Dict{String,Any}, results::Dict{String,Any}, element
         Vp1 = results["solution"]["bus"]["$bus1"]["vr"] + im * results["solution"]["bus"]["$bus1"]["vi"]
         Vp2 = results["solution"]["bus"]["$bus2"]["vr"] + im * results["solution"]["bus"]["$bus2"]["vi"]
         Ip1 = results["solution"]["line"]["$element1"]["csr_fr"] + im * results["solution"]["line"]["$element1"]["csi_fr"]
-        Ip2 = results["solution"]["line"]["$element2"]["csr_fr"] + im * results["solution"]["line"]["$element2"]["csi_fr"] 
-        Vs1 = broadcast(angle, _p_to_s(Vp1)) .* 180 ./ pi  
-        Vs2 = broadcast(angle, _p_to_s(Vp2)) .* 180 ./ pi 
-        Is1 = broadcast(angle, _p_to_s(Ip1)) .* 180 ./ pi 
-        Is2 = broadcast(angle, _p_to_s(Ip2)) .* 180 ./ pi  
+        Ip2 = results["solution"]["line"]["$element2"]["csr_fr"] + im * results["solution"]["line"]["$element2"]["csi_fr"]
+        Vs1 = broadcast(angle, _p_to_s(Vp1)) .* 180 ./ pi
+        Vs2 = broadcast(angle, _p_to_s(Vp2)) .* 180 ./ pi
+        Is1 = broadcast(angle, _p_to_s(Ip1)) .* 180 ./ pi
+        Is2 = broadcast(angle, _p_to_s(Ip2)) .* 180 ./ pi
         I_diff = (Is1 - Vs1) - (Is2 - Vs2)
-        return broadcast(abs, I_diff) 
+        return broadcast(abs, I_diff)
     end
 end
 
@@ -200,13 +200,13 @@ function _get_current_math(data::Dict{Symbol,<:Any}, results::Dict{String,Any}, 
         Vp1 = results["bus"]["$bus1"]["vr"] + im * results["bus"]["$bus1"]["vi"]
         Vp2 = results["bus"]["$bus2"]["vr"] + im * results["bus"]["$bus2"]["vi"]
         Ip1 = results["branch"]["$element1"]["csr_fr"] + im * results["branch"]["$element1"]["csi_fr"]
-        Ip2 = results["branch"]["$element2"]["csr_fr"] + im * results["branch"]["$element2"]["csi_fr"] 
-        Vs1 = broadcast(angle, _p_to_s(Vp1)) .* 180 ./ pi  
-        Vs2 = broadcast(angle, _p_to_s(Vp2)) .* 180 ./ pi 
-        Is1 = broadcast(angle, _p_to_s(Ip1)) .* 180 ./ pi 
-        Is2 = broadcast(angle, _p_to_s(Ip2)) .* 180 ./ pi  
+        Ip2 = results["branch"]["$element2"]["csr_fr"] + im * results["branch"]["$element2"]["csi_fr"]
+        Vs1 = broadcast(angle, _p_to_s(Vp1)) .* 180 ./ pi
+        Vs2 = broadcast(angle, _p_to_s(Vp2)) .* 180 ./ pi
+        Is1 = broadcast(angle, _p_to_s(Ip1)) .* 180 ./ pi
+        Is2 = broadcast(angle, _p_to_s(Ip2)) .* 180 ./ pi
         I_diff = (Is1 - Vs1) - (Is2 - Vs2)
-        return broadcast(abs, I_diff) 
+        return broadcast(abs, I_diff)
     end
 end
 
@@ -241,7 +241,7 @@ function _differential_time(relay_data::Dict{String,Any}, I::Number)
 end
 
 
-"Function to apply haskey function to all elements in a vector. Used for checking if all cts are in the 
+"Function to apply haskey function to all elements in a vector. Used for checking if all cts are in the
 circuit when adding a differential relay. Returns a Bool"
 function _check_keys(data::Dict{String,Any}, id::Union{Vector{String},Vector{SubString{String}}})
     function _haskey_ct(id::Union{String,SubString{String}})
@@ -308,7 +308,7 @@ function _bisection(I1,t1,I2,t2)
             else
                 window = 0
             end
-        else 
+        else
             window = 0
         end
         b = x_guess

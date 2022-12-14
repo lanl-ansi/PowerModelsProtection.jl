@@ -150,17 +150,42 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
             end
         end
     end
+end
 
 
+"""
+"""
+function _eng2math_storage!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
+    for (indx, obj) in get(data_math,"storage",Dict())
+        if !haskey(obj, "dss")
+            continue
+        end
+
+        obj["inverter"] = string(get(data_eng["storage"][obj["dss"]["name"]], "inverter", "GRID_FOLLOWING"))
+        ncnd = length(obj["connections"])
+        if !haskey(obj, "pmax")
+            obj["pmax"] =  fill(abs(obj["ps"])/ncnd, ncnd)
+            obj["pmin"] =  fill(-abs(obj["ps"])/ncnd, ncnd)
+            obj["qmax"] =  fill(obj["ps"]/ncnd, ncnd)
+            obj["qmin"] =  fill(-obj["ps"]/ncnd, ncnd)
+        end
+    end
+end
+
+
+"""
+"""
+function _eng2math_solar!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
 end
 
 
 "field/values to passthrough from the ENGINEERING to MATHEMATICAL data models"
 const _pmp_eng2math_passthrough = Dict{String,Vector{String}}(
-        "generator" => String["zr", "zx", "grid_forming"],
-        "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming"],
-        "voltage_source" => String["zr", "zx", "grid_forming"],
-    )
+    "generator" => String["zr", "zx", "grid_forming", "gen_model"],
+    "solar" => String["imax", "vminpu", "kva", "pf", "grid_forming", "gen_model"],
+    "voltage_source" => String["zr", "zx", "grid_forming", "gen_model"],
+    "storage" => String["pmax", "pmin", "imax", "inverter", "gen_model"],
+)
 
 
 "custom version of `transform_data_model` from PowerModelsDistribution for easy model transformation"

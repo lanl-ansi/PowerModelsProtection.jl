@@ -64,12 +64,12 @@ md"""
 # ╔═╡ 300cbe9e-738d-4dda-9efc-a5c0f1fef320
 begin
 	data_fault = deepcopy(case5_fault)
-	
+
 	prepare_transmission_data!(
-		data_fault; 
-		flat_start=true, 
-		neglect_line_charging=true, 
-		neglect_transformer=true, 
+		data_fault;
+		flat_start=true,
+		neglect_line_charging=true,
+		neglect_transformer=true,
 		zero_gen_setpoints=true
 	)
 end
@@ -78,7 +78,7 @@ end
 md"""
 ## Adding a fault
 
-To add a fault, use the helper function `add_fault!(data, fault_id, bus_id, fault_resistance)` 
+To add a fault, use the helper function `add_fault!(data, fault_id, bus_id, fault_resistance)`
 """
 
 # ╔═╡ 0dfb6ee7-9b10-4754-b870-14bf3fc2654d
@@ -112,7 +112,7 @@ We can then run all of these fault studies in series using the `solve_fault_stud
 # ╔═╡ d91d6fdb-1aa9-434e-8be1-ff622128110a
 begin
 	data_no_faults = deepcopy(case5_fault)
-	
+
 	prepare_transmission_data!(
 		data_no_faults;
 		flat_start=true,
@@ -120,7 +120,7 @@ begin
 		neglect_transformer=true,
 		zero_gen_setpoints=true
 	)
-	
+
 	results_fault_study = solve_fault_study(data_no_faults, fault_study, ipopt_solver)
 end
 

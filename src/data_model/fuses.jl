@@ -1,5 +1,5 @@
 """
-Function to add fuses to circuit dictionary. 
+Function to add fuses to circuit dictionary.
 
 Enter circuit dictionary, protected element, name, and a curve. Max clear curve is defaulted to min melt if not provided
 """
@@ -57,7 +57,7 @@ function add_fuse(data::Dict{String,Any}, element::Union{SubString{String},Strin
         for i = 1:length(phase)
             if phase[i] in conn
                 data["protection"]["fuses"]["$element"]["$id"]["phase"]["$(phase[i])"] = Dict{String,Any}(
-                    "state" => "closed", 
+                    "state" => "closed",
                     "op_times" => "Does not operate"
                 )
             else
@@ -72,7 +72,7 @@ function add_fuse(data::Dict{String,Any}, element::Union{SubString{String},Strin
     end
 end
 
-    
+
 "Function to add curves to circuit dictionary. Enter current values from smallest to largest, with time is the corresponding order."
 function add_curve(data::Dict{String,Any}, name::String, time_vals::Vector, current_vals::Vector)
     if length(current_vals) == length(time_vals)

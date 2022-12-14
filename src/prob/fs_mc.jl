@@ -11,14 +11,40 @@ function solve_mc_fault_study(case::Dict{String,<:Any}, solver; kwargs...)
     # TODO can this be moved?
     check_microgrid!(data)
 
+    islands = _PMD.identify_islands(data)
+    solar_deactivate = []
+    storage_deactivate = []
+    for island in islands
+        for (key,fault) in get(data, "fault", Dict())
+            if !(data["fault"][key]["bus"] in island)
+                for (i,solar) in data["solar"]
+                    if solar["bus"] in island
+                        push!(solar_deactivate, i)
+                    end
+                end
+                for (i,storage) in get(data, "storage", Dict())
+                    if storage["bus"] in island
+                        push!(storage_deactivate, i)
+                    end
+                end
+            end
+        end
+    end
+    for name in solar_deactivate
+        delete!(data["solar"], name)
+    end
+    for name in storage_deactivate
+        delete!(data["storage"], name)
+    end
+
     solution = _PMD.solve_mc_model(
         data,
         _PMD.IVRUPowerModel,
         solver,
         build_mc_fault_study;
-        eng2math_extensions=[_eng2math_fault!],
+        eng2math_extensions=[_eng2math_fault!, _eng2math_storage!, _eng2math_solar!],
         eng2math_passthrough=_pmp_eng2math_passthrough,
-        make_pu_extensions=[_rebase_pu_fault!, _rebase_pu_gen_dynamics!, _rebase_pu_solar!],
+        make_pu_extensions=[_rebase_pu_fault!, _rebase_pu_gen_dynamics!, _rebase_pu_solar!, _rebase_pu_storage!],
         map_math2eng_extensions=Dict{String,Function}("_map_math2eng_fault!"=>_map_math2eng_fault!),
         make_si_extensions=[make_fault_si!],
         dimensionalize_math_extensions=_pmp_dimensionalize_math_extensions,
@@ -76,24 +102,18 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_branch_current(pm, bounded=false)
     _PMD.variable_mc_transformer_current(pm, bounded=false)
     _PMD.variable_mc_generator_current(pm, bounded=false)
+
     variable_mc_storage_current(pm; bounded=false)
-
     variable_mc_bus_fault_current(pm)
-    variable_mc_pq_inverter(pm)
-    variable_mc_grid_formimg_inverter(pm)
-    variable_mc_storage_grid_forming_inverter(pm)
-
-    for (i,bus) in _PMD.ref(pm, :ref_buses)
-        @assert bus["bus_type"] == 3
-        _PMD.constraint_mc_theta_ref(pm, i)
-        _PMD.constraint_mc_voltage_magnitude_only(pm, i)
-    end
+    variable_mc_solar_power(pm)
 
     for id in _PMD.ids(pm, :gen)
         _PMD.constraint_mc_generator_power(pm, id; bounded=false)
-        constraint_mc_gen_constant_power(pm, id)
-        constraint_mc_gen_voltage_drop(pm, id)
-        constraint_mc_gen_pq_constant_inverter(pm, id)
+        constraint_mc_fs_generator_constant_power(pm, id)
+        # constraint_mc_generator_voltage_drop(pm, id)
+        constraint_mc_fs_generator_pq_constant_inverter(pm, id)
+        constraint_mc_fs_generator_grid_forming_inverter(pm, id)
+        constraint_mc_fs_generator_grid_following_inverter(pm, id)
     end
 
     for i in _PMD.ids(pm, :fault)
@@ -121,23 +141,11 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
         _PMD.constraint_mc_transformer_power(pm, i)
     end
 
-    @debug "Adding constraints for grid-following inverters"
-    for i in _PMD.ids(pm, :solar_gfli)
-        @debug "Adding constraints for grid-following inverter $i"
-        constraint_mc_pq_inverter(pm, i)
-    end
-
-    @debug "Adding constraints for grid-forming inverters"
-    for i in _PMD.ids(pm, :solar_gfmi)
-        @debug "Adding constraints for grid-forming inverter $i"
-        # constraint_mc_grid_forming_inverter(pm, i)
-        constraint_mc_grid_forming_inverter_virtual_impedance(pm, i)
-    end
-
-    @debug "Adding constraints for grid-forming storage inverters"
+    @debug "Adding constraints for storage inverters"
     for i in _PMD.ids(pm, :storage)
-        @debug "Adding constraints for grid-forming inverter $i"
-        constraint_mc_storage_grid_forming_inverter(pm, i)
+        @debug "Adding constraints for inverter $i"
+        constraint_mc_fs_storage_grid_forming_inverter(pm, i)
     end
 
+    objective_mc_max_inverter_power(pm)
 end

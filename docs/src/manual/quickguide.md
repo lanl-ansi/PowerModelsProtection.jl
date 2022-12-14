@@ -16,9 +16,7 @@ result = solve_fault_study(case5_fault, ipopt_solver)
 
 To add a fault, use the `add_fault!` command
 
-
 ### Transmission
-
 
 ```julia
 case5 = parse_file("case5_fault.m")
@@ -36,19 +34,17 @@ add_fault!(data, "testfault", "lg", "loadbus", [1,4], 0.001)
 
 To perform a short-circuit solve, use the `solve_fault_study` or `solve_mc_fault_study` command
 
-
-
 ### Transmission
 
 ```julia
 result = solve_fault_study(case5, ipopt_solver)
-````
+```
 
 ### Distribution
 
 ```julia
 result = solve_mc_fault_study(case3_balanced_pv, ipopt_solver)
-````
+```
 
 ## Examples
 

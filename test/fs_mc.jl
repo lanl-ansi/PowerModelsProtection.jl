@@ -144,7 +144,7 @@
         # add_fault!(data, "1", "lg", "pv_bus", [1, 4], 0.005)
         # sol = solve_mc_fault_study(data, ipopt_solver)
         # @test sol["termination_status"] == LOCALLY_SOLVED
-        # println(sol["solution"]["line"]["pv_line"]["cf_fr"][1])
+        # @debug "$(sol["solution"]["line"]["pv_line"]["cf_fr"][1])"
         # @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cf_fr"][1], 904.091) < .05
     end
 

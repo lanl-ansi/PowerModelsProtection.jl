@@ -12,7 +12,7 @@ function solve_mc_pf(data::Dict{String,<:Any}, solver; kwargs...)
         eng2math_passthrough=_pmp_eng2math_passthrough,
         make_pu_extensions=[_rebase_pu_gen_dynamics!],
         dimensionalize_math_extensions=_pmp_dimensionalize_math_extensions,
-        ref_extensions=[ref_add_mc_solar!, ref_add_grid_forming_bus!],
+        ref_extensions=[ref_add_mc_solar!, ref_add_grid_forming_bus!, ref_add_mc_storage!],
         kwargs...
     )
 
@@ -37,20 +37,22 @@ Constructor for Power Flow Problem with Solar
 """
 function build_mc_pf(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_bus_voltage(pm, bounded=false)
+    _PMD.variable_mc_switch_current(pm, bounded=false)
     _PMD.variable_mc_branch_current(pm, bounded=false)
     _PMD.variable_mc_transformer_current(pm, bounded=false)
     _PMD.variable_mc_generator_current(pm, bounded=false)
     _PMD.variable_mc_load_current(pm, bounded = false)
+    variable_mc_storage_current(pm; bounded=false)
 
     variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
+    variable_mc_storage_grid_forming_inverter(pm)
 
     for (i, bus) in _PMD.ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3
         _PMD.constraint_mc_theta_ref(pm, i)
         _PMD.constraint_mc_voltage_magnitude_only(pm, i)
     end
-
     for id in _PMD.ids(pm, :gen)
         _PMD.constraint_mc_generator_power(pm, id)
     end
@@ -89,13 +91,22 @@ function build_mc_pf(pm::_PMD.AbstractUnbalancedPowerModel)
     end
 
     for i in _PMD.ids(pm, :solar_gfli)
-        constraint_mc_pq_inverter(pm, i)
+        # constraint_mc_pq_inverter(pm, i)
     end
 
     for i in _PMD.ids(pm, :solar_gfmi)
-        constraint_mc_grid_forming_inverter_impedance(pm, i)
+        @debug "$(_PMD.ref(pm, 0, :solar_gfmi, i))"
+
+        # constraint_mc_pf_grid_forming_inverter_impedance(pm, i)
         # constraint_mc_grid_forming_inverter(pm, i)
     end
+    @debug "$("GEN_____________________________")"
+    for i in _PMD.ids(pm, :gen)
+        @debug "$(_PMD.ref(pm, 0, :gen, i))"
+        # constraint_mc_pf_grid_forming_inverter_impedance(pm, i)
+        # constraint_mc_grid_forming_inverter(pm, i)
+    end
+    @debug "stop"
 end
 
 

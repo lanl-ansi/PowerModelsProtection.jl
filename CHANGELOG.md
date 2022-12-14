@@ -2,7 +2,7 @@
 
 ## staged
 
-- none
+- fault studies with power objective
 
 ## v0.5.2
 

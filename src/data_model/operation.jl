@@ -7,7 +7,7 @@ function _relay_operation(relay_data::Dict{String,Any}, Iabc::Vector)
         if I_neg > trip_angle
             relay_data["state"] = "open"
             trip = true
-        end 
+        end
     elseif relay_data["type"] == "differential"
         Ir = relay_data["restraint"]
         for phase = 1:length(relay_data["phase"])
@@ -78,7 +78,7 @@ function _relay_operation(relay_data::Dict{String,Any}, Iabc::Vector)
                 else
                     relay_data["phase"]["$phase"]["state"] = "closed"
                 end
-            end    
+            end
         end
     end
     return trip
@@ -152,14 +152,14 @@ function protection_operation(data::Dict{String,Any}, results::Dict{String,Any})
                         blown_fuses["fuse"]["$id"] = fuse
                     end
                 end
-            end        
+            end
         end
         if !isempty(tripped_relays["relay"])
             merge!(results["solution"],tripped_relays)
-        end      
+        end
         if !isempty(blown_fuses["fuse"])
             merge!(results["solution"],blown_fuses)
-        end 
+        end
     else
         @info "No protection equipment in circuit."
     end

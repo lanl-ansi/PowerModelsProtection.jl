@@ -3,7 +3,7 @@
 
 Constraints for fault current contribution of inverter in grid-following mode with pseudo-binary for current-limiting
 """
-function constraint_unity_pf_inverter_disjunctive(pm::_PM.AbstractIVRModel, nw::Int, i::Int, bus_id::Int, pg, qg, cmax)
+function constraint_unity_pf_inverter_disjunctive(pm::_PM.AbstractIVRModel, nw::Int, i::Int, bus_id::Int, pg::Real, qg::Real, cmax::Real)
     vr = _PM.var(pm, nw, :vr, bus_id)
     vi = _PM.var(pm, nw, :vi, bus_id)
 
@@ -32,7 +32,7 @@ end
 
 Constraints for fault current contribution of inverter in grid-following mode with a real voltage drop to handle low-zero terminal voltages
 """
-function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, vs, pg, qg, cmax)
+function constraint_pf_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, vs::Real, pg::Real, qg::Real, cmax::Real)
     vr = _PM.var(pm, n, :vr, bus_id)
     vi = _PM.var(pm, n, :vi, bus_id)
 
@@ -54,7 +54,7 @@ end
 
 Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor
 """
-function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, pg, qg, cmax)
+function constraint_unity_pf_inverter(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, pg::Real, qg::Real, cmax::Real)
     vr = _PM.var(pm, n, :vr, bus_id)
     vi = _PM.var(pm, n, :vi, bus_id)
 
@@ -78,7 +78,7 @@ end
 
 Constraints for fault current contribution of inverter in grid-following mode operating at arbitrary power factor. Requires objective term
 """
-function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, pg, qg, cmax)
+function constraint_pq_inverter_region(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, pg::Real, qg::Real, cmax::Real)
     vr = _PM.var(pm, n, :vr, bus_id)
     vi = _PM.var(pm, n, :vi, bus_id)
 
@@ -122,7 +122,7 @@ end
 
 Constraints for fault current contribution of inverter in grid-following mode with pq set points
 """
-function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw::Int, i::Int, bus_id::Int, pg, qg, cmax)
+function constraint_pq_inverter(pm::_PM.AbstractIVRModel, nw::Int, i::Int, bus_id::Int, pg::Real, qg::Real, cmax::Real)
     @debug "Adding pq inverter constraint for gen $i at bus $bus_id"
 
     vr = _PM.var(pm, nw, :vr, bus_id)
@@ -155,7 +155,7 @@ end
 
 Constraints for fault current contribution of inverter in grid-following mode operating at unity power factor with a series resistance to handle low-zero terminal voltages
 """
-function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, r, pg, qg, cm)
+function constraint_unity_pf_inverter_rs(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, r::Real, pg::Real, qg::Real, cm::Real)
     vr = _PM.var(pm, n, :vr, bus_id)
     vi = _PM.var(pm, n, :vi, bus_id)
 
@@ -178,7 +178,7 @@ end
 
 Constraints for fault current contribution of inverter in grid-following mode assuming that the inverter current regulating loop operates slowly
 """
-function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, vs, pg, qg, cm)
+function constraint_i_inverter_vs(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, vs::Real, pg::Real, qg::Real, cm::Real)
     vr = _PM.var(pm, n, :vr, bus_id)
     vi = _PM.var(pm, n, :vi, bus_id)
 
@@ -199,7 +199,7 @@ end
 
 Constraints for fault current contribution of inverter in grid-forming mode
 """
-function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i, bus_id, r, x, vgr, vgi, cmax)
+function constraint_v_inverter(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, r::Real, x::Real, vgr::Real, vgi::Real, cmax::Real)
     # vr_to = var(pm, n, :vr, bus_id)
     # vi_to = var(pm, n, :vi, bus_id)
 
@@ -222,7 +222,7 @@ end
 
 McCormick relaxation of constraints for fault current contribution of inverter in grid-following mode
 """
-function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, pg, qg, cmax)
+function constraint_pq_inverter_mccormick(pm::_PM.AbstractIVRModel, n::Int, i::Int, bus_id::Int, pg::Real, qg::Real, cmax::Real)
     vrg = _PM.var(pm, n, :vr, bus_id)
     vig = _PM.var(pm, n, :vi, bus_id)
 
@@ -245,11 +245,42 @@ end
 
 
 """
+"""
+function constraint_mc_opf_generator_pq_constant_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, connections::Vector{Int})
+    pg =  _PM.var(pm, nw, :pg)
+    qg =  _PM.var(pm, nw, :qg)
+
+    for c in connections
+        JuMP.@NLconstraint(pm.model, .90*pg[c] >= qg[c])
+        JuMP.@NLconstraint(pm.model, -.90*pg[c] <= qg[c])
+    end
+end
+
+
+"""
+"""
+function constraint_opf_mc_storage_grid_forming_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, pmin::Vector{<:Real}, pmax::Vector{<:Real}, qmin::Vector{<:Real}, qmax::Vector{<:Real}, connections::Vector{Int})
+    vr = _PMD.var(pm, nw, :vr, bus_id)
+    vi = _PMD.var(pm, nw, :vi, bus_id)
+    crs = _PMD.var(pm, nw, :crs, i)
+    cis = _PMD.var(pm, nw, :cis, i)
+
+
+    for (idx, c) in enumerate(connections)
+        JuMP.@constraint(pm.model, pmin[idx] <= vr[c]*crs[c]  + vi[c]*cis[c])
+        JuMP.@constraint(pm.model, pmax[idx] >= vr[c]*crs[c]  + vi[c]*cis[c])
+        JuMP.@constraint(pm.model, qmin[idx] <= vi[c]*crs[c]  - vr[c]*cis[c])
+        JuMP.@constraint(pm.model, qmax[idx] >= vi[c]*crs[c]  - vr[c]*cis[c])
+    end
+end
+
+
+"""
 	constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, pg, qg, cmax)
 
 Constraints for fault current contribution of multiconductor inverter in grid-following mode
 """
-function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, pg, qg, qmax, qmin, imax, connections)
+function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, pg::Vector{<:Real}, qg::Vector{<:Real}, qmax::Vector{<:Real}, qmin::Vector{<:Real}, imax::Vector{<:Real}, connections::Vector{Int})
     ar = -1/6
     ai = sqrt(3)/6
     a2r = -1/6
@@ -322,8 +353,8 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
 
         JuMP.@NLconstraint(pm.model, imax[1]^2 - crg_pos^2 - cig_pos^2 >= 0.0)
         JuMP.@NLconstraint(pm.model, (imax[1]^2 - crg_pos^2 - cig_pos^2)*z <= 0.0)
-        JuMP.@NLconstraint(pm.model, vr_pos*crg_pos + vi_pos*cig_pos == pg[1] - pg_int*z)
-        JuMP.@NLconstraint(pm.model, vi_pos*crg_pos - vr_pos*cig_pos == 0.0)
+        JuMP.@NLconstraint(pm.model, vr_pos*crg_pos + vi_pos*cig_pos == pg[1] * (1-z))
+        # JuMP.@NLconstraint(pm.model, vi_pos*crg_pos - vr_pos*cig_pos == 0.0)
 
     else
         z = _PMD.var(pm, nw)[:z_gfli] = JuMP.@variable(pm.model,
@@ -348,9 +379,8 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
 
         for (idx,c) in enumerate(connections)
             JuMP.@NLconstraint(pm.model, imax[idx]^2 - crg[c]^2 - cig[c]^2 >= 0.0)
-            JuMP.@NLconstraint(pm.model, m*(imax[idx]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
-            JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] == pg[idx]-z[c]*pg_int[c])
-            JuMP.@NLconstraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] == qg[idx]-z[c]*qg_int[c])
+            JuMP.@NLconstraint(pm.model, (imax[idx]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
+            JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] == pg[idx]*(1-z[c]))
         end
     end
 end
@@ -361,7 +391,7 @@ end
 
 Constraints for fault current contribution of multiconductor inverter in grid-forming mode
 """
-function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, vrstar, vistar, pmax, cmax)
+function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, vrstar::Vector{<:Real}, vistar::Vector{<:Real}, pmax::Real, cmax::Real)
     vr = _PMD.var(pm, nw, :vr, bus_id)
     vi = _PMD.var(pm, nw, :vi, bus_id)
 
@@ -407,7 +437,7 @@ end
 
 Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching
 """
-function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, vr0, vi0, r, x, pmax, cmax)
+function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, vr0::Vector{<:Real}, vi0::Vector{<:Real}, r::Vector{<:Real}, x::Vector{<:Real}, pmax, cmax::Vector{<:Real})
     vr = _PMD.var(pm, nw, :vr, bus_id)
     vi = _PMD.var(pm, nw, :vi, bus_id)
 
@@ -459,7 +489,7 @@ end
 
 Constraints for fault current contribution of multiconductor inverter in grid-forming mode with power matching
 """
-function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, vr0, vi0, pmax, imax, smax, ang, connections)
+function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, vr0::Vector{<:Real}, vi0::Vector{<:Real}, pmax::Real, imax::Vector{<:Real}, smax::Real, ang::Bool, connections::Vector{Int})
     vr = _PMD.var(pm, nw, :vr, bus_id)
     vi = _PMD.var(pm, nw, :vi, bus_id)
 
@@ -518,7 +548,7 @@ end
 
 Constraints for fault current inverter with current set point
 """
-function constraint_mc_i_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i::Int, bus_id::Int, pg, qg, cmax)
+function constraint_mc_i_inverter(pm::_PMD.AbstractUnbalancedIVRModel, n::Int, i::Int, bus_id::Int, pg::Real, qg::Real, cmax::Real)
     ar = -1/2
     ai = sqrt(3)/2
     a2r = -1/2
@@ -559,7 +589,7 @@ end
 
 Constrants for grid-forming inverter with storage
 """
-function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i, bus_id::Int, connections)
+function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i, bus_id::Int, connections::Vector{Int})
     # need to add in energy constraints
     vr =  _PMD.var(pm, nw, :vr, bus_id)
     vi =  _PMD.var(pm, nw, :vi, bus_id)
@@ -572,4 +602,65 @@ function constraint_mc_storage_grid_forming_inverter(pm::_PMD.AbstractUnbalanced
 
     # DC-link power
     JuMP.@constraint(pm.model, sum(vr[c]*crs[c] + vi[c]*cis[c] for c in connections) == p)
+end
+
+
+"""
+"""
+function constraint_mc_fs_storage_grid_forming_inverter_virtual_impedance(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, connections::Vector{Int}, zmax::Vector{<:Real}, imax::Vector{<:Real})
+    vr =  _PMD.var(pm, nw, :vr, bus_id)
+    vi =  _PMD.var(pm, nw, :vi, bus_id)
+
+    crs =   _PMD.var(pm, nw, :crs, i)
+    cis =   _PMD.var(pm, nw, :cis, i)
+
+    r = JuMP.@variable(pm.model,
+            [c in connections], base_name = "$(nw)_storage_r_$(i)",
+            lower_bound = 0.0,
+        )
+
+    x = JuMP.@variable(pm.model,
+            [c in connections], base_name = "$(nw)_storage_x_$(i)",
+            lower_bound = 0.0,
+        )
+
+    z = JuMP.@variable(pm.model,
+            [c in connections], base_name = "$(nw)_storage_z_$(i)",
+            upper_bound = 1.0,
+            lower_bound = 0.0,
+        )
+
+    v = 1 .* exp.(1im .* [0 -120 120].*pi/180)
+
+    vsr = real(v)
+    vsi = imag(v)
+
+    for (idx,c) in enumerate(connections)
+        JuMP.@NLconstraint(pm.model, crs[c]^2 + cis[c]^2 <= imax[c]^2)
+        JuMP.@NLconstraint(pm.model, 10*(imax[c]^2 - crs[c]^2 - cis[c]^2)*z[c] <= 0.0)
+        JuMP.@NLconstraint(pm.model, vsr[c] == -crs[c]*r[c] + cis[c]*x[c] + vr[c])
+        JuMP.@NLconstraint(pm.model, vsi[c] == -cis[c]*r[c] - crs[c]*x[c] + vi[c])
+        JuMP.@NLconstraint(pm.model, r[c]^2 + x[c]^2 <= z[c]*zmax[c]^2)
+    end
+end
+
+
+"""
+"""
+function constraint_mc_fs_generator_grid_following_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int, i::Int, bus_id::Int, pg::Vector{<:Real}, imax::Vector{<:Real}, connections::Vector{Int})
+
+    vr = _PMD.var(pm, nw, :vr, bus_id)
+    vi = _PMD.var(pm, nw, :vi, bus_id)
+
+    crg =  _PMD.var(pm, nw, :crg, i)
+    cig =  _PMD.var(pm, nw, :cig, i)
+
+    pg_cal = _PMD.var(pm, nw, :pg_gfli, i)
+
+    for (idx,c) in enumerate(connections)
+        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= imax[idx]^2)
+        JuMP.@NLconstraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] == 0.0)
+        JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] == pg_cal[c])
+        JuMP.@NLconstraint(pm.model, pg[idx] >= pg_cal[c])
+    end
 end

@@ -68,13 +68,28 @@ end
 function _rebase_pu_solar!(nw::Dict{String,<:Any}, data_math::Dict{String,<:Any}, bus_vbase, line_vbase, sbase::Real, sbase_old::Real, voltage_scale_factor)
     if haskey(nw, "gen")
         for (_,gen) in nw["gen"]
-            if haskey(gen, "i_max")
+            if haskey(gen, "imax")
                 vbase = bus_vbase["$(gen["gen_bus"])"]
                 ibase = sbase/vbase
-                _PMD._scale_props!(gen, ["i_max"], 1/ibase)
+                _PMD._scale_props!(gen, ["imax"], 1/ibase)
                 _PMD._scale_props!(gen, ["kva"], 1/sbase)
                 _PMD._scale_props!(gen, ["solar_max"], 1/sbase)
             end
+        end
+    end
+end
+
+
+"""
+"""
+function _rebase_pu_storage!(nw::Dict{String,<:Any}, data_math::Dict{String,<:Any}, bus_vbase, line_vbase, sbase::Real, sbase_old::Real, voltage_scale_factor)
+    if haskey(nw, "storage")
+        for (_,storage) in nw["storage"]
+            vbase = bus_vbase["$(storage["storage_bus"])"]
+            ibase = sbase/vbase
+            _PMD._scale_props!(storage, ["imax"], 1/ibase)
+            _PMD._scale_props!(storage, ["pmax"], 1/sbase)
+            _PMD._scale_props!(storage, ["pmin"], 1/sbase)
         end
     end
 end

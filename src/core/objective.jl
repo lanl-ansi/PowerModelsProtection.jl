@@ -67,3 +67,15 @@ function objective_min_inverter_error(pm::_PM.AbstractIVRModel)
         for (n, nw_ref) in _PM.nws(pm))
     )
 end
+
+
+"""
+"""
+function objective_mc_max_inverter_power(pm::_PMD.AbstractUnbalancedIVRModel)
+    return JuMP.@objective(pm.model, Max,
+        sum(
+            sum(
+                sum(_PMD.var(pm, n, :pg_gfli, i)[c] for c in _PMD.ref(pm, n, :gen, i)["connections"]) for i in _PMD.ref(pm, n, :solar_gfli))
+        for (n, nw_ref) in _PMD.nws(pm))
+    )
+end

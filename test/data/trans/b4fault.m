@@ -50,7 +50,7 @@ mpc.gensub = {
 	4	0.0	0.1
 };
 
-%% solve power flow 
+%% solve power flow
 mpc.pf = 'false';
 
 

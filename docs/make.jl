@@ -7,16 +7,16 @@ import Gumbo
 const _FAST = findfirst(isequal("--fast"), ARGS) !== nothing
 
 makedocs(
-    modules = [PowerModelsProtection],
-    format = Documenter.HTML(
-        analytics = "",
-        mathengine = Documenter.MathJax(),
-        prettyurls = false,
+    modules=[PowerModelsProtection],
+    format=Documenter.HTML(
+        analytics="",
+        mathengine=Documenter.MathJax(),
+        prettyurls=false,
         collapselevel=1,
     ),
-    sitename = "PowerModelsProtection",
-    authors = "Arthur Barnes, Jose Tabarez, and contributors.",
-    pages = [
+    sitename="PowerModelsProtection",
+    authors="Arthur Barnes, Jose Tabarez, and contributors.",
+    pages=[
         "Introduction" => "index.md",
         "Manual" => [
             "Getting Started" => "manual/quickguide.md",
@@ -80,5 +80,5 @@ end
 
 
 deploydocs(
-    repo = "github.com/lanl-ansi/PowerModelsProtection.jl.git",
+    repo="github.com/lanl-ansi/PowerModelsProtection.jl.git",
 )
