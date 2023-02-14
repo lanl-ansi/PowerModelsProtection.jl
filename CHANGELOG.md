@@ -2,6 +2,8 @@
 
 ## staged
 
+- Add bounds to pg_gfli variable
+- Fix parse of "vminpu" in dss2eng for solar objects
 - fault studies with power objective
 
 ## v0.5.2

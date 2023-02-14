@@ -282,14 +282,18 @@ end
 """
 """
 function variable_mc_solar_power(pm::_PMD.AbstractUnbalancedIVRModel; nw::Int=nw_id_default, report::Bool=true)
-    _PMD.var(pm, nw)[:pg_gfli] = Dict(
+    pg_gfli = _PMD.var(pm, nw)[:pg_gfli] = Dict(
         i => JuMP.@variable(
             pm.model,
             [t in _PMD.ref(pm, nw, :gen, i, "connections")],
             base_name = "$(nw)_pg_gfli",
-            start = 0
+            start = 0,
+            lower_bound = _PMD.ref(pm, nw, :gen, i, "pmin")[findfirst(isequal(t), _PMD.ref(pm, nw, :gen, i, "connections"))],
+            upper_bound = _PMD.ref(pm, nw, :gen, i, "pmax")[findfirst(isequal(t), _PMD.ref(pm, nw, :gen, i, "connections"))],
         ) for i in _PMD.ref(pm, nw, :solar_gfli)
     )
+
+    report && _IM.sol_component_value(pm, _PMD.pmd_it_sym, nw, :gen, :pg_gfli, _PMD.ref(pm, nw, :solar_gfli), pg_gfli)
 end
 
 

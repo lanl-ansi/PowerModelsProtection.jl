@@ -373,7 +373,8 @@ function constraint_mc_fs_generator_grid_following_inverter(pm::_PMD.AbstractUnb
         connections = gen["connections"]
         bus_id = gen["gen_bus"]
         pg = gen["pg"]
-        imax = gen["pg"] ./ .90
+        # imax = gen["pg"] ./ 0.90
+        imax = gen["imax"]
         constraint_mc_fs_generator_grid_following_inverter(pm, nw, i, bus_id, pg, imax, connections)
     end
 end

@@ -27,6 +27,9 @@ end
 
 "pointers for fields to get unit transformations back to si units in solutions"
 const _pmp_dimensionalize_math_extensions = Dict{String,Dict{String,Vector{String}}}(
+    "gen" => Dict{String,Vector{String}}(
+        "sbase" => String["pg_gfli"]
+    ),
     "branch" => Dict{String,Vector{String}}(
         "ibase" => String[
             "cf_fr", "cf_to", "cf0r_fr", "cf0i_fr", "cf1r_fr", "cf1i_fr", "cf2r_fr", "cf2i_fr", "cf0r_to", "cf0i_to", "cf1r_to", "cf1i_to", "cf2r_to", "cf2i_to",
