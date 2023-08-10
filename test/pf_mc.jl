@@ -1,4 +1,4 @@
-@testset "test pf" begin
+@testset "opt based test pf" begin
     ut_trans_2w_yy = parse_file("../test/data/dist/ut_trans_2w_yy.dss")
     case3_unbalanced = parse_file("../test/data/dist/case3_unbalanced.dss")
     case3_balanced_pv = parse_file("../test/data/dist/case3_balanced_pv.dss")
@@ -35,3 +35,4 @@
         @test calculate_error_percentage(sol["solution"]["line"]["quad"]["cr_fr"][1], 90.855) < .05
     end
 end
+

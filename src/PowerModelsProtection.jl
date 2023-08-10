@@ -13,7 +13,11 @@ module PowerModelsProtection
     import PowerModelsDistribution: ENABLED, DISABLED
 
     import Graphs
+    import SparseArrays
+    const _SP = SparseArrays
+    import JSON
 
+    include("core/admittance_matrix.jl")
     include("core/variable.jl")
     include("core/constraint_template.jl")
     include("core/constraint.jl")
@@ -22,10 +26,12 @@ module PowerModelsProtection
     include("core/expression.jl")
     include("core/ref.jl")
     include("core/objective.jl")
+    include("core/types.jl")
     include("core/solution.jl")
 
     include("data_model/units.jl")
     include("data_model/components.jl")
+    include("data_model/eng2math_pmd.jl")
     include("data_model/eng2math.jl")
     include("data_model/math2eng.jl")
     include("data_model/helper_functions.jl")
@@ -39,6 +45,7 @@ module PowerModelsProtection
     include("io/matpower.jl")
     include("io/opendss.jl")
 
+    include("prob/common.jl")
     include("prob/fs.jl")
     include("prob/fs_mc.jl")
     include("prob/pf_mc.jl")
