@@ -4,6 +4,10 @@
 
 - none
 
+## v0.5.3
+
+- Add compatibility for PowerModelsDistribution v0.15
+
 ## v0.5.2
 
 - Add JuMP v1 to compat
