@@ -52,7 +52,8 @@ function _map_eng2math_nw!(data_math::Dict{String,<:Any}, data_eng::Dict{String,
     end
 
     _PMD.find_conductor_ids!(data_math)
-    _PMD._map_conductor_ids!(data_math)
+    
+    _map_conductor_ids!(data_math)
 
     _PMD._map_settings_vbases_default!(data_math)
 end
@@ -121,15 +122,16 @@ function _map_eng2math_transformer!(data_math::Dict{String,<:Any}, data_eng::Dic
             # rs is specified with respect to each winding
             r_s = eng_obj["rw"] .* zbase
 
-            g_sh =  (eng_obj["noloadloss"]*snom[1])/vnom[1]^2
-            b_sh = -(eng_obj["cmag"]*snom[1])/vnom[1]^2
+            # want percentage for matrix
+            g_sh =  eng_obj["noloadloss"]
+            b_sh = -eng_obj["cmag"]
 
             # data is measured externally, but we now refer it to the internal side
             ratios = vnom/data_eng["settings"]["voltage_scale_factor"]
             x_sc = x_sc./ratios[1]^2
             r_s = r_s./ratios.^2
-            g_sh = g_sh*ratios[1]^2
-            b_sh = b_sh*ratios[1]^2
+            # g_sh = g_sh*ratios[1]^2
+            # b_sh = b_sh*ratios[1]^2
 
             # convert x_sc from list of upper triangle elements to an explicit dict
             y_sh = g_sh + im*b_sh
@@ -137,19 +139,33 @@ function _map_eng2math_transformer!(data_math::Dict{String,<:Any}, data_eng::Dic
 
             dims = length(eng_obj["tm_set"][1])
             tm_nom = eng_obj["vm_nom"]
-            for i = 1:nrw
-                tm_nom[i] = eng_obj["configuration"][i]==_PMD.DELTA ? eng_obj["vm_nom"][i] : eng_obj["vm_nom"][i]  
-                # tm_nom[i] = eng_obj["configuration"][i]==_PMD.DELTA ? eng_obj["vm_nom"][i]*sqrt(3) : eng_obj["vm_nom"][i] 
+            # for i = 1:nrw
+                #     tm_nom[i] = eng_obj["configuration"][i]==_PMD.DELTA ? eng_obj["vm_nom"][i] : eng_obj["vm_nom"][i]  
+                #     # tm_nom[i] = eng_obj["configuration"][i]==_PMD.DELTA ? eng_obj["vm_nom"][i]*sqrt(3) : eng_obj["vm_nom"][i] 
+            # end
+            t_connections = sort!(eng_obj["connections"][2])
+            t_bus = data_math["bus_lookup"][eng_obj["bus"][2]]
+            # 3-w transformers will have vectors: t_bus and t_connections, center_tap will have vectors: t_connections 
+            # TODO make sure that the connections always coordinate with bus
+            if length(eng_obj["connections"]) > 2
+                t_connections = [sort!(eng_obj["connections"][2])]
+                t_bus = [data_math["bus_lookup"][eng_obj["bus"][2]]]
+                for row in eng_obj["connections"][2+1:end]
+                    push!(t_connections, sort!(row))
+                end
+                for bus in eng_obj["bus"][2+1:end]
+                    push!(t_bus, data_math["bus_lookup"][bus])
+                end
             end
-
-            transformer_2wa_obj = Dict{String,Any}(
+            
+            transformer_obj = Dict{String,Any}(
                     "name"          => name,
                     "source_id"     => eng_obj["source_id"],
                     "f_bus"         => data_math["bus_lookup"][eng_obj["bus"][1]],
-                    "t_bus"         => data_math["bus_lookup"][eng_obj["bus"][2]],
+                    "t_bus"         => t_bus,
                     "tm_nom"        => tm_nom,
                     "f_connections" => sort!(eng_obj["connections"][1]),
-                    "t_connections" => sort!(eng_obj["connections"][2]),
+                    "t_connections" => t_connections,
                     "configuration" => eng_obj["configuration"],
                     "polarity"      => eng_obj["polarity"],
                     "tm_set"        => eng_obj["tm_set"],
@@ -170,22 +186,22 @@ function _map_eng2math_transformer!(data_math::Dict{String,<:Any}, data_eng::Dic
 
             for prop in [["tm_lb", "tm_ub", "tm_step"]; pass_props]
                 if haskey(eng_obj, prop)
-                    transformer_2wa_obj[prop] = eng_obj[prop]
+                    transformer_obj[prop] = eng_obj[prop]
                 end
             end
 
 
-            if haskey(transformer_2wa_obj["dss"], "kvs")
+            if haskey(transformer_obj, "vm_nom")
                 if transformer_2wa_obj["dss"]["phases"] == 3
-                    data_math["bus"][string(transformer_2wa_obj["f_bus"])]["vbase"] = transformer_2wa_obj["dss"]["kvs"][1]/sqrt(3)
-                    data_math["bus"][string(transformer_2wa_obj["t_bus"])]["vbase"] = transformer_2wa_obj["dss"]["kvs"][2]/sqrt(3)
+                    data_math["bus"][string(transformer_obj["f_bus"])]["vbase"] = transformer_obj["vm_nom"][1]/sqrt(3)
+                    data_math["bus"][string(transformer_obj["t_bus"])]["vbase"] = transformer_obj["vm_nom"][2:end]./sqrt(3)
                 else
-                    data_math["bus"][string(transformer_2wa_obj["f_bus"])]["vbase"] = transformer_2wa_obj["dss"]["kvs"][1]
-                    data_math["bus"][string(transformer_2wa_obj["t_bus"])]["vbase"] = transformer_2wa_obj["dss"]["kvs"][2]
+                    data_math["bus"][string(transformer_obj["f_bus"])]["vbase"] = transformer_obj["vm_nom"][1]
+                    data_math["bus"][string(transformer_obj["t_bus"])]["vbase"] = transformer_obj["vm_nom"][2:end]
                 end
             end
 
-            data_math["transformer"]["$(transformer_2wa_obj["index"])"] = transformer_2wa_obj
+            data_math["transformer"]["$(transformer_obj["index"])"] = transformer_obj
             
             if haskey(eng_obj,"controls") #&& !all(data_math["transformer"]["$(transformer_2wa_obj["index"])"]["tm_fix"])
                 reg_obj = Dict{String,Any}(
@@ -196,7 +212,7 @@ function _map_eng2math_transformer!(data_math::Dict{String,<:Any}, data_eng::Dic
                     "r" => eng_obj["controls"]["r"],
                     "x" => eng_obj["controls"]["x"],
                 )
-                data_math["transformer"]["$(transformer_2wa_obj["index"])"]["controls"] = reg_obj
+                data_math["transformer"]["$(transformer_obj["index"])"]["controls"] = reg_obj
             end
         end
     end

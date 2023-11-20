@@ -207,7 +207,7 @@ function transform_admittance_data_model(
             kwargs...
         )
 
-        correct_network_data && _PMD.correct_network_data!(data_math; make_pu=false, make_pu_extensions=make_pu_extensions)
+        correct_network_data && correct_network_data!(data_math)
 
         correct_grounds!(data_math)
 
@@ -277,23 +277,32 @@ function _map_eng2math_mc_admittance_nw!(data_math::Dict{String,<:Any}, data_eng
 end
 
 
-"mod with out per unit corrections see: common.jl in io PowerModelsDistribution"
+# "mod with out per unit corrections see: common.jl in io PowerModelsDistribution"
 function correct_network_data!(data::Dict{String,Any})
     if _PMD.iseng(data)
-        check_eng_data_model(data)
+        _PMD.check_eng_data_model(data)
     elseif _PMD.ismath(data)
-        
-        _PMD.check_connectivity(data)
-        
-        _PMD.correct_branch_directions!(data)
-        _PMD.check_branch_loops(data)
+        nothing
+        # check_connectivity(data) not done here becuase checks are performed during admittance creation 
 
-        _PMD.correct_bus_types!(data)
-        
-        _PMD. propagate_network_topology!(data)
-        
+        # correct_branch_directions!(data) used to tell if parallel lines are in same direction
+        # check_branch_loops(data) ill add check in admit creation 
+
+        # correct_bus_types!(data) check for islands, slack and no slack and fixes. will need to add TODO
+
+        #  TODO propagate_network_topology!(data) need to add chck for it 
+
+        #  no pu 
+        # if make_pu
+        #     make_per_unit!(data; make_pu_extensions=make_pu_extensions)
+
+        #     correct_mc_voltage_angle_differences!(data)
+        #     correct_mc_thermal_limits!(data)
+
+        #     correct_cost_functions!(data)
+        #     standardize_cost_terms!(data)
+        # end
     end
-    return data
 end
 
 function populate_bus_voltages!(data::Dict{String,Any})
@@ -305,8 +314,17 @@ function populate_bus_voltages!(data::Dict{String,Any})
             if !haskey(data["bus"][string(f_bus)], "vbase")
                 data["bus"][string(f_bus)]["vbase"] = transformer["tm_nom"][1]*multi
             end
-            if !haskey(data["bus"][string(t_bus)], "vbase")
-                data["bus"][string(t_bus)]["vbase"] = transformer["tm_nom"][2]*multi
+            # Vector{Vector{Int}}
+            if typeof(t_bus) == Vector{Int64}
+                for (indx, bus) in enumerate(t_bus)
+                    if !haskey(data["bus"][string(bus)], "vbase")
+                        data["bus"][string(bus)]["vbase"] = transformer["tm_nom"][indx+1]*multi
+                    end
+                end
+            else
+                if !haskey(data["bus"][string(t_bus)], "vbase")
+                    data["bus"][string(t_bus)]["vbase"] = transformer["tm_nom"][2]*multi
+                end
             end
         end
     end

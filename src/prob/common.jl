@@ -1,5 +1,5 @@
 
-function instantiate_mc_admmitance_model(
+function instantiate_mc_admittance_model(
     data::Dict{String,<:Any}; 
     loading::Bool=true,
     ref_extensions::Vector{<:Function}=Function[],

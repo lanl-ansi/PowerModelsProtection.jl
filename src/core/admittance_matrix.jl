@@ -5,7 +5,7 @@ function build_mc_admittance_matrix(data::Dict{String,<:Any};loading=loading)
     current_matrix = zeros(Complex{Float64}, n, n)
     add_mc_voltage_source_p_matrix!(data, admit_matrix)
     add_mc_branch_p_matrix!(data, admit_matrix)
-    admit_matrix = add_mc_transformer_p_matrix!(data, admit_matrix)
+    add_mc_transformer_p_matrix!(data, admit_matrix)
     loading ? add_mc_load_p_matrix!(data, admit_matrix, current_matrix) : nothing 
     add_mc_shunt_p_matrix!(data, admit_matrix)
     # --> need to finish other devices 
@@ -16,6 +16,7 @@ function add_mc_admittance_map!(data_math::Dict{String,<:Any})
     admittance_map = Dict{Tuple,Int}()
     admittance_type = Dict{Int,Any}()
     indx = 1
+# TODO determine if bus is inactive
     for (_, bus) in data_math["bus"]
         id = bus["index"]
         for (i, t) in enumerate(bus["terminals"])
@@ -91,6 +92,16 @@ end
 
 function add_mc_transformer_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Matrix{ComplexF64})
     for (indx, transformer) in data["transformer"]
+if typeof(transformer["t_bus"]) == Vector{Int}
+            add_mc_3w_transformer_p_matrix!(transformer, data, admit_matrix)
+        else
+            add_mc_2w_transformer_p_matrix!(transformer, data, admit_matrix)
+        end
+    end
+end
+
+
+function add_mc_2w_transformer_p_matrix!(transformer::Dict{String,<:Any}, data::Dict{String,<:Any}, admit_matrix::Matrix{ComplexF64})
         f_bus = transformer["f_bus"]
         for (_i, i) in enumerate(transformer["f_connections"])
             if haskey(data["admittance_map"], (f_bus, i))
@@ -136,7 +147,59 @@ function add_mc_transformer_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Ma
             end
         end
     end
-    return admit_matrix
+    
+
+function add_mc_3w_transformer_p_matrix!(transformer::Dict{String,<:Any}, data::Dict{String,<:Any}, admit_matrix::Matrix{ComplexF64})
+    f_bus = transformer["f_bus"]
+    for (_i, i) in enumerate(transformer["f_connections"])
+        if haskey(data["admittance_map"], (f_bus, i))
+            for (_j, j) in enumerate(transformer["f_connections"])
+                if haskey(data["admittance_map"], (f_bus, j))
+                    admit_matrix[data["admittance_map"][(f_bus, i)], data["admittance_map"][(f_bus, j)]] += transformer["p_matrix"][_i,_j]
+                end
+            end
+            for (indx, t_bus) in enumerate(transformer["t_bus"])
+                for (_, t_connections) in enumerate(transformer["t_connections"][indx])
+                    for (_j, j) in enumerate(t_connections)
+                        if haskey(data["admittance_map"], (t_bus, j))
+                            if transformer["dss"]["phases"] == 3
+                                admit_matrix[data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)]] += transformer["p_matrix"][_i,_j+4]
+                            elseif transformer["dss"]["phases"] == 1
+                                admit_matrix[data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)]] += transformer["p_matrix"][_i,_j+2]
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    for (indx, t_bus) in enumerate(transformer["t_bus"])
+        for (_, t_connections) in enumerate(transformer["t_connections"][indx])
+            for (_i, i) in enumerate(t_connections)
+                if haskey(data["admittance_map"], (t_bus, i))
+                    for (_j, j) in enumerate(transformer["t_connections"][indx])
+                        if haskey(data["admittance_map"], (t_bus, j))
+                            if transformer["dss"]["phases"] == 3
+                                admit_matrix[data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)]] += transformer["p_matrix"][_i+4,_j+4]
+                            elseif transformer["dss"]["phases"] == 1
+                                admit_matrix[data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)]] += transformer["p_matrix"][_i+2,_j+2]
+                            end
+                        end
+                    end
+                    f_bus = transformer["f_bus"]
+                    for (_j, j) in enumerate(transformer["f_connections"])
+                        if haskey(data["admittance_map"], (f_bus, j))
+                            if transformer["dss"]["phases"] == 3
+                                admit_matrix[data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)]] += transformer["p_matrix"][_i+4,_j]
+                            elseif transformer["dss"]["phases"] == 1
+                                admit_matrix[data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)]] += transformer["p_matrix"][_i+2,_j]
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
 

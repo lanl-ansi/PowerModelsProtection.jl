@@ -19,6 +19,7 @@ New Transformer.TX1 windings=2 phases=3 Buses=[1 2]
 ~ %imag=11
 ~ leadlag=lead
 ~ taps=[1.02 0.97]
+!~ ppm_antifloat=0.0
 ! Transmission Lines
 New Line.LINE1 Bus1=SourceBus Bus2=1 phases=3 X1=3 R1=6
 New Line.LINE2 Bus1=2 Bus2=3 phases=3 X1=0.3 R1=0.6

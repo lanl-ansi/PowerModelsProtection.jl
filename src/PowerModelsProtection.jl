@@ -39,6 +39,7 @@ module PowerModelsProtection
     include("data_model/cts.jl")
     include("data_model/fuses.jl")
     include("data_model/relays.jl")
+    include("data_model/utils.jl")
 
     include("io/common.jl")
     include("io/dss/dss2eng.jl")
