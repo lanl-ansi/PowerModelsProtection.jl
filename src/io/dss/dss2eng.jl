@@ -1,7 +1,11 @@
-"helper function to build extra dynamics information for pvsystem objects"
+"helper function to build extra dynamics information for pvsystem objects
+    model = 1:P Q gen  2: constant z  3: P V gen  4: balance Voltage 
+    balanced = current balance true or false 
+    transformer = true (contained in model) or false (not in model)
+"
 function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     if haskey(data_eng, "solar")
-        for (id,solar) in data_eng["solar"]
+        for (id, solar) in data_eng["solar"]
             dss_obj = data_dss["pvsystem"][id]
             _PMD._apply_like!(dss_obj, data_dss, "pvsystem")
             defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
@@ -27,18 +31,80 @@ function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{S
             end
             if haskey(dss_obj, "pf")
                 pf = dss_obj["pf"]
+                if abs(sum(solar["pg"]) + 1im*sum(solar["qg"])) > kva
+                    solar["pg"] = [kva/length(solar["pg"])*pf for i in solar["pg"]]
+                    solar["qg"] = [kva/length(solar["qg"])*sqrt(1-pf^2) for i in solar["qg"]]
+                end
             else
                 pf = defaults["pf"]
+            end
+            if haskey(dss_obj, "balanced")
+                balanced = dss_obj["balanced"]
+            else
+                balanced = defaults["balanced"]
+            end
+            if haskey(dss_obj, "pv_model")
+                model = dss_obj["model"]
+            else
+                model = 1
             end
             ncnd = length(solar["connections"]) >= 3 ? 3 : 1
             solar["i_max"] = fill(1/vminpu * kva / (ncnd/sqrt(3)*dss_obj["kv"]), ncnd)
             solar["solar_max"] = irradiance*pmpp
             solar["pf"] = pf
             solar["kva"] = kva
+            solar["balanced"] = balanced
+            solar["vminpu"] = vminpu
+            solar["type"] = "solar"
+            solar["pv_model"] = model
+            solar["transformer"] = false
+            solar["grid_forming"] = false
         end
     end
 end
 
+
+"helper function to build extra dynamics information for load objects"
+function _dss2eng_load_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    if haskey(data_eng, "load")
+        for (id, load) in data_eng["load"]
+            dss_obj = data_dss["load"][id]
+            if haskey(dss_obj, "vminpu")
+                vminpu = dss_obj["vminpu"]
+            else
+                vminpu = .95
+            end
+            if haskey(dss_obj, "vmaxpu")
+                vmaxpu = dss_obj["vmaxpu"]
+            else
+                vmaxpu = 1.05
+            end
+            load["vminpu"] = vminpu
+            load["vmaxpu"] = vmaxpu
+        end
+    end
+end
+
+
+"helper function to build extra dynamics information for transfomer objects"
+function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    if haskey(data_eng, "transformer")
+        for (id, transformer) in data_eng["transformer"]
+            dss_obj = data_dss["transformer"][id]
+            if haskey(dss_obj, "leadlag")
+                transformer["leadlag"] = dss_obj["leadlag"]
+            else
+                transformer["leadlag"] = "lag"
+            end
+        end
+    end
+end
+
+"helper function to build extra dynamics information for pvsystem objects
+    model = 1:P Q gen  2: constant z  3: P V gen  4-6 not modeled 7: inverter connected
+    balanced = current balance true or false 
+    transformer = true (contained in model) or false (not in model)
+"
 
 "helper function to build extra dynamics information for generator or vsource objects"
 function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
@@ -315,6 +381,57 @@ function _dss2eng_gen_model!(data_eng::Dict{String,<:Any}, data_dss::Dict{String
             else
                 generator["gen_model"] = 1
             end
+        end
+    end
+end
+
+
+function _dss2eng_transformers!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    if haskey(data_eng, "transformer")
+        for (_,transformer) in data_eng["transformer"]
+            if haskey(transformer, "xfmrcode")
+                xfmrcode = data_dss["xfmrcode"][transformer["xfmrcode"]]
+                haskey(xfmrcode, "phases") ? transformer["dss"]["phases"] = xfmrcode["phases"] : transformer["dss"]["phases"] = 3
+            end
+        end
+    end
+end
+
+
+function _dss2eng_solar_transformer(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    #TODO add function that checks for transformer 
+    if haskey(data_eng, "solar")
+        for (id, solar) in data_eng["solar"]
+            bus = "virtual_bus_$(id)"
+            transformer = Dict{String,Any}(
+                "polarity"      => [1, -1],
+                "sm_nom"        => [solar["kva"]/sqrt(3), solar["kva"]],
+                "tm_lb"         => [[0.9, 0.9, 0.9], [0.9, 0.9, 0.9]],
+                "connections"   => [[1, 2, 3], [2, 3, 1, 4]],
+                "tm_set"        => [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+                "tm_step"       => [[0.03125, 0.03125, 0.03125], [0.03125, 0.03125, 0.03125]],
+                "bus"           => [bus, deepcopy(solar["bus"])],
+                "configuration" => _PMD.ConnConfig[_PMD.DELTA, _PMD.WYE],
+                "status"        => _PMD.ENABLED,
+                "noloadloss"    => 0.005,
+                "dss"           =>  Dict{String, Any}("phases" => 3, "buses" => [bus, solar["bus"]]),
+                "cmag"          => 0.11,
+                "xsc"           => [0.05],
+                "source_id"     => "virtual_transformer.$(id)",
+                "sm_ub"         => 1.5 * solar["kva"],
+                "rw"            => [0.001, 0.002],
+                "tm_fix"        => Vector{Bool}[[1, 1, 1], [1, 1, 1]],
+                "vm_nom"        => [solar["dss"]["kv"], solar["dss"]["kv"]],
+                "leadlag"       => "lag",
+                "tm_ub"         => [[1.1, 1.1, 1.1], [1.1, 1.1, 1.1]],
+            )
+            if !haskey(data_eng, "transformer")
+                data_eng["transformer"] = Dict{String,Any}()
+            end
+            data_eng["transformer"]["virtual_$(id)"] = transformer
+            data_eng["bus"][bus] = deepcopy(data_eng["bus"][solar["bus"]])
+            solar["bus"] = bus
+            solar["transformer_id"] = "virtual_$(id)"
         end
     end
 end

@@ -219,6 +219,7 @@ function compute_mc_pf(model::AdmittanceModel)
                     it_control += 1
                 end
             end
+            println(it_control)
             delta_i = update_mc_delta_current_vector(model, _v)
             _i = i + _delta_i_control + delta_i
             last_v = _v
@@ -242,30 +243,102 @@ function compute_mc_pf(y, model::AdmittanceModel)
     last_v = deepcopy(v)
     while it_pf != max_it
         _v = z*_i
+        # println("calc v: ", abs.(_v))
+        # println("calc va:", angle.(_v).*180/pi)
         if maximum((abs.(_v-last_v))) < .0001
             break
         else
             _delta_i_control = update_mc_delta_current_control_vector(model, _v)
+            # println("calc delta_i: ", abs.(_delta_i_control))
+            # println("calc ia:", angle.(_delta_i_control).*180/pi)
             it_control = 0
             _i = i + _delta_i_control + delta_i
             while it_control != max_it
                 __v = z*_i
+                # println("calc v: ", abs.(__v))
+                # println("calc va:", angle.(__v).*180/pi)
+                # println("_____________________________________________________")
                 if maximum((abs.(__v-_v))) < .0001
                     _v = __v
                     break
                 else
                     _delta_i_control = update_mc_delta_current_control_vector(model, __v)
+                    # println("calc delta_i: ", abs.(_delta_i_control))
+                    # println("calc ia:", angle.(_delta_i_control).*180/pi)
                     _i = i + _delta_i_control + delta_i
                     _v = __v
                     it_control += 1
+                    if it_control == 10
+                        println("over: control")
+                    end
                 end
             end
+            println(it_control)
             delta_i = update_mc_delta_current_vector(model, _v)
             _i = i + _delta_i_control + delta_i
             last_v = _v
             it_pf += 1
+            if it_pf == 10
+                println("over: pf")
+            end
         end
     end
+    println(it_pf)
     return _v
 end
+
+# function _compute_mc_pf(model::AdmittanceModel)
+#     z = _SP.sparse(model.z)
+#     i = _SP.sparse(model.i)
+#     v = _SP.sparse(model.v)
+#     delta_i = _SP.sparse(model.delta_i)
+#     max_it = 10
+#     it = 1
+#     _i = i + delta_i
+#     _v = deepcopy(v)
+#     last_v = deepcopy(v)
+#     while it != max_it
+#         _v = z*_i
+#         println()
+#         if maximum((abs.(_v-last_v))) < .0001
+#             break
+#         else
+#             _delta_i = update_mc_delta_current_vector(model, _v)
+#             _i = i + _delta_i
+#             last_v = _v
+#             it += 1
+#         end
+#     end
+#     return _v, it, maximum((abs.(_v-last_v)))
+# end
+
+# function _compute_mc_pf(model::AdmittanceModel)
+#     z = _SP.sparse(model.z)
+#     i = _SP.sparse(model.i)
+#     v = _SP.sparse(model.v)
+#     c = _SP.sparse(model.c)
+#     max_it = 10
+#     it = 1
+#     _i = i
+#     _v = deepcopy(v)
+#     last_v = deepcopy(v)
+#     delta_i = i
+#     println(abs.(z*_i))
+#     println(abs.(v))
+#     println(i)
+#     while it != max_it
+#         _v = z*_i
+#         if maximum((abs.(_v-last_v))) < .0001
+#             break
+#         else
+#             _delta_i = -conj.(c*(abs.(v).^2-abs.(_v).^2)./_v)
+#             _i = i + _delta_i
+#             last_v = _v
+#             it += 1
+#         end
+#     end
+#     println(it)
+#     println(maximum((abs.(_v-last_v))))
+#     return _v
+# end
 

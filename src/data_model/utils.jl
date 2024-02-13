@@ -39,3 +39,33 @@ function _map_conductor_ids!(data_math::Dict{String,<:Any})
         bus["terminals"] = Vector{Int}([cnd_map[t] for t in bus["terminals"]])
     end
 end
+
+
+function _convert_sparse_matrix(m::Dict{Tuple,Complex{Float64}})
+    rows = zeros(Int64, length(m))
+    columns = zeros(Int64, length(m))
+    values = zeros(Complex{Float64}, length(m))
+    indx = 1
+    for ((i,j), val) in m
+        rows[indx] = i
+        columns[indx] = j
+        values[indx] = val
+        indx += 1
+    end
+    return SparseArrays.sparse(rows, columns, values)
+end
+
+
+function _add_phases!(data)
+    phases = 0
+    if haskey(data, "connections")
+        phases = length(f_connections)
+    end
+    data["phases"] = phases
+end
+
+
+" checks if delta-gwye transformer is connected to gen "
+function check_gen_transformer(data)
+    nothing
+end

@@ -9,7 +9,7 @@ function solve_mc_fault_study(case::Dict{String,<:Any}, solver; kwargs...)
     data = deepcopy(case)
 
     # TODO can this be moved?
-    check_microgrid!(data)
+    # check_microgrid!(data)
 
     solution = _PMD.solve_mc_model(
         data,
@@ -143,9 +143,9 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
 end
 
 
-
 function solve_mc_fault_study(model::AdmittanceModel;build_output=true)
     t = @elapsed begin
+    model.data["settings"]["loading"] = false
         output = Dict{String,Any}()
         fault_study = create_fault(model.data["bus"])
         for (bus_indx, bus_faults) in fault_study
@@ -160,14 +160,12 @@ function solve_mc_fault_study(model::AdmittanceModel;build_output=true)
                             y[i,j] += faults[i_indx,j_indx]
                         end
                     end            
+                    v = compute_mc_pf(y, model)        
                     v_bus = zeros(Complex{Float64},3)
-                    z = _SP.sparse(inv(y))
-                    i = _SP.sparse(model.i)
-                    v = z*i
                     for j = 1:3
                         v_bus[j,1] = v[model.data["admittance_map"][(bus["bus_i"],j)],1]
                     end
-                    bus["3pg"] = abs.(faults*v_bus).*1000
+                    bus["3pg"] = abs.(faults*v_bus)
                     build_output ? build_output_schema!(output, v, model.data, y, bus, fault_type, faults) : nothing 
                 elseif fault_type == "ll" 
                     bus["ll"] = Dict{Tuple,Any}()
@@ -180,14 +178,12 @@ function solve_mc_fault_study(model::AdmittanceModel;build_output=true)
                                 y[i,j] += fault[i_indx,j_indx]
                             end
                         end  
+                        v = compute_mc_pf(y, model) 
                         v_bus = zeros(Complex{Float64},2)
-                        z = _SP.sparse(inv(y))
-                        i = _SP.sparse(model.i)
-                        v = z*i
                         for i_indx = 1:2
                             v_bus[i_indx,1] = v[model.data["admittance_map"][(bus["bus_i"],bus["terminals"][indx[i_indx]])],1]
                         end
-                        bus["ll"][indx] = abs.(fault*v_bus).*1000
+                        bus["ll"][indx] = abs.(fault*v_bus)
                         build_output ? build_output_schema!(output, v, model.data, y, bus, fault_type, fault, indx) : nothing 
                     end
                 elseif fault_type == "lg" 
@@ -196,12 +192,10 @@ function solve_mc_fault_study(model::AdmittanceModel;build_output=true)
                         y = deepcopy(model.y)
                         i = model.data["admittance_map"][(bus["bus_i"],bus["terminals"][indx])]
                         y[i,i] += fault[1,1]
+                        v = compute_mc_pf(y, model) 
                         v_bus = zeros(Complex{Float64},1)
-                        z = _SP.sparse(inv(y))
-                        i = _SP.sparse(model.i)
-                        v = z*i
-                        v_bus[1,1] = v[model.data["admittance_map"][(bus["bus_i"],bus["terminals"][indx])],1]
-                        bus["lg"][indx] = abs.(fault[1,1]*v_bus).*1000
+                                                v_bus[1,1] = v[model.data["admittance_map"][(bus["bus_i"],bus["terminals"][indx])],1]
+                        bus["lg"][indx] = abs.(fault[1,1]*v_bus)
                         build_output ? build_output_schema!(output, v, model.data, y, bus, fault_type, fault, indx) : nothing
                     end
                 end

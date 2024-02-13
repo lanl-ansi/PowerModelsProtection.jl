@@ -266,7 +266,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
     for j = 1:3
         v_bus[j,1] = v[data["admittance_map"][(bus["bus_i"],j)],1]
     end
-    i = fault*v_bus.*1000
+    i = fault*v_bus
     i012 = get_current_sequence(i,connections)
     obj = Dict{String,Any}(
             "fault" => Dict{String,Any}(
@@ -304,7 +304,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
                 v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
             end
         end
-        i_line = y_line * (v_f_bus - v_t_bus) * 1000
+        i_line = y_line * (v_f_bus - v_t_bus)
         i012 = get_current_sequence(i_line,branch["f_connections"])
         branch_obj = Dict{String,Any}(
             "|I| (A)" => abs.(i_line),
@@ -336,7 +336,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
     for j =1:2
         v_bus[j,1] = v[data["admittance_map"][(bus["bus_i"],connections[j])],1]
     end
-    i = fault*v_bus.*1000
+    i = fault*v_bus
     i012 = get_current_sequence(i,connections)
     obj = Dict{String,Any}(
             "fault" => Dict{String,Any}(
@@ -375,7 +375,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
                 v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
             end
         end
-        i_line = y_line * (v_f_bus - v_t_bus) * 1000
+        i_line = y_line * (v_f_bus - v_t_bus)
         i012 = get_current_sequence(i_line,branch["f_connections"])
         branch_obj = Dict{String,Any}(
             "|I| (A)" => abs.(i_line),
@@ -405,7 +405,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
     connections = [bus["terminals"][indx]]
     v_bus = zeros(Complex{Float64},2)
     v_bus[1,1] = v[data["admittance_map"][(bus["bus_i"],connections[1])],1]
-    i = fault*v_bus.*1000
+    i = fault*v_bus
     i012 = get_current_sequence(i,connections)
     obj = Dict{String,Any}(
             "fault" => Dict{String,Any}(
@@ -443,7 +443,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
                 v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
             end
         end
-        i_line = y_line * (v_f_bus - v_t_bus) * 1000
+        i_line = y_line * (v_f_bus - v_t_bus)
         i012 = get_current_sequence(i_line,branch["f_connections"])
         branch_obj = Dict{String,Any}(
             "|I| (A)" => abs.(i_line),

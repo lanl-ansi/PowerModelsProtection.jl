@@ -158,8 +158,10 @@ end
 "field/values to passthrough from the ENGINEERING to MATHEMATICAL data models"
 const _pmp_eng2math_passthrough = Dict{String,Vector{String}}(
         "generator" => String["zr", "zx", "grid_forming"],
-        "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming"],
-        "voltage_source" => String["zr", "zx", "grid_forming"],
+        "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming", "balanced", "vminpu", "transformer", "type", "pv_model", "transformer_id"],
+        "voltage_source" => String["zr", "zx"],
+        "load" => String["vminpu", "vmaxpu"],
+        "transformer" => String["leadlag"]
     )
 
 
@@ -178,14 +180,14 @@ transform_data_model(
 
 "admittance model"
 const _mc_admittance_asset_types = [
-    "line", "voltage_source", "load", "transformer", "shunt"
+    "line", "voltage_source", "load", "transformer", "shunt", "solar"
 ]
 
 "custom version of 'transform_data_model' to build admittance model and deal with transformers" 
 function transform_admittance_data_model(
     data::Dict{String,<:Any};
     global_keys::Set{String}=Set{String}(),
-    eng2math_passthrough::Dict{String,<:Vector{<:String}}=Dict{String,Vector{String}}(),
+    eng2math_passthrough::Dict{String,<:Vector{<:String}}=_pmp_eng2math_passthrough,
     eng2math_extensions::Vector{<:Function}=Function[],
     make_pu::Bool=true,
     make_pu_extensions::Vector{<:Function}=Function[],  
@@ -199,7 +201,8 @@ function transform_admittance_data_model(
     elseif data["method"] == "PMD"
         data_math = _map_eng2math_mc_admittance( 
             data;
-            eng2math_extensions = eng2math_extensions,
+            eng2math_extensions = [_eng2math_link_transformer, eng2math_extensions...],
+            # eng2math_extensions = [_eng2math_gen_model!], # TODO concat eng2math_extensions
             eng2math_passthrough = eng2math_passthrough,
             make_pu_extensions = make_pu_extensions,
             global_keys = global_keys,
@@ -269,10 +272,6 @@ end
 function _map_eng2math_mc_admittance_nw!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; eng2math_passthrough::Dict{String,<:Vector{<:String}}=Dict{String,Vector{String}}(), eng2math_extensions::Vector{<:Function}=Function[])
     for type in _mc_admittance_asset_types # --> anything from missing from the model needed for the solve or admittance matrix maybe per unit to actual 
         getfield(PowerModelsProtection, Symbol("_map_eng2math_mc_admittance_$(type)!"))(data_math, data_eng; pass_props=get(eng2math_passthrough, type, String[]))
-    end
-
-    for eng2math_func! in eng2math_extensions
-        eng2math_func!(data_math, data_eng)
     end
 end
 

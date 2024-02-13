@@ -17,8 +17,8 @@ Creates a fault dictionary given the `type` of fault, i.e., one of "3p", "ll", "
 the `connections` on which the fault applies, the `resistance` between the phase and ground, in the case of "lg", or phase and phase.
 """
 function create_fault(buses::Dict{String,Any})::Dict{String,Any}
-    phase_resistance = 1e-6
-    ground_resistance = 1e-6
+    phase_resistance = 1e-4
+    ground_resistance = 1e-4
 
     Gf_3p = zeros(Real, 3, 3)
     gp = 1 / phase_resistance
@@ -53,22 +53,24 @@ function create_fault(buses::Dict{String,Any})::Dict{String,Any}
 
     fault = Dict{String,Any}()
     for (indx,bus) in buses
-        fault[indx] = Dict{String,Any}()
-        if length(bus["terminals"]) > 3
-            fault[indx]["3pg"] = Gf_3p
-        elseif length(bus["terminals"]) == 3 && !(4 in bus["terminals"])
-            fault[indx]["3pg"] = Gf_3p
-        end
-        fault[indx]["lg"] = Dict{Int,Any}()
-        fault[indx]["ll"] = Dict{Tuple,Any}()
-        for i = 1:length(bus["terminals"])
-            if bus["grounded"][i] == 0
-                for j = i:length(bus["terminals"])
-                    if bus["grounded"][j] == 0 && i != j
-                        fault[indx]["ll"][(i,j)] = Gf_ll
+        if !(occursin("virtual", bus["name"]))
+            fault[indx] = Dict{String,Any}()
+            if length(bus["terminals"]) > 3
+                fault[indx]["3pg"] = Gf_3p
+            elseif length(bus["terminals"]) == 3 && !(4 in bus["terminals"])
+                fault[indx]["3pg"] = Gf_3p
+            end
+            fault[indx]["lg"] = Dict{Int,Any}()
+            fault[indx]["ll"] = Dict{Tuple,Any}()
+            for i = 1:length(bus["terminals"])
+                if bus["grounded"][i] == 0
+                    for j = i:length(bus["terminals"])
+                        if bus["grounded"][j] == 0 && i != j
+                            fault[indx]["ll"][(i,j)] = Gf_ll
+                        end
                     end
+                    fault[indx]["lg"][i] = Gf_lg
                 end
-                fault[indx]["lg"][i] = Gf_lg
             end
         end
     end
@@ -354,6 +356,28 @@ function _map_eng2math_mc_admittance_voltage_source!(data_math::Dict{String,<:An
 end
 
 
+function _map_eng2math_mc_admittance_solar!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; pass_props::Vector{String}=String[])
+    if haskey(data_math, "gen")
+        for (name, gen) in data_math["gen"]
+            if occursin("solar", gen["source_id"])
+                                n = length(gen["connections"]) 
+                y = zeros(n, n)
+                if gen["configuration"] == _PMD.WYE
+                    for (i, connection) in enumerate(gen["connections"]) 
+                        j = findall(x->x==4, gen["connections"])[1]
+                        if connection != 4
+                            y[i,i] = 1/1e6
+                            y[j,j] = y[i,i]
+                        end
+                    end
+                end
+                gen["p_matrix"] = y
+            end
+        end
+    end
+end
+
+
 function _map_eng2math_mc_admittance_load!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; pass_props::Vector{String}=String[])
     if haskey(data_math, "load")
         for (name, load) in data_math["load"]
@@ -364,7 +388,7 @@ function _map_eng2math_mc_admittance_load!(data_math::Dict{String,<:Any}, data_e
                     for (j,_j) in enumerate(load["connections"])
                         if _i != 4 && _j == 4
                             s = conj.(load["pd"][i] + 1im .* load["qd"][i])
-                            _y = s / load["vnom_kv"]^2 / 1000
+                            _y = s / (load["vnom_kv"])^2 / 1000
                             y[i,i] += _y
                             y[i,j] -= _y
                             y[j,i] -= _y

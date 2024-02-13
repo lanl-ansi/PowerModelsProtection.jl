@@ -17,6 +17,11 @@ const pmp_eng_asset_types = String[
     "transformer", "voltage_source", "switch",
 ]
 
+const pmd_math_asset_types = String[
+    "branch", "load", "gen"
+]
+
+
 function _map_eng2math_nw!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; eng2math_passthrough::Dict{String,Vector{String}}=Dict{String,Vector{String}}(), eng2math_extensions::Vector{<:Function}=Function[])
     data_math["map"] = Vector{Dict{String,Any}}([
         Dict{String,Any}("unmap_function" => "_map_math2eng_root!")
@@ -37,6 +42,9 @@ function _map_eng2math_nw!(data_math::Dict{String,<:Any}, data_eng::Dict{String,
     for type in pmp_eng_asset_types
         getfield(PowerModelsProtection, Symbol("_map_eng2math_$(type)!"))(data_math, data_eng; pass_props=get(eng2math_passthrough, type, String[]))
     end
+
+    # Custom base eng2math transformation functions for pmd assets
+    _add_bus_phases_key!(data_math, data_eng)
 
     # Custom eng2math transformation functions
     for eng2math_func! in eng2math_extensions
@@ -353,5 +361,66 @@ function _map_eng2math_switch!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
             "to" => map_to,
             "unmap_function" => "_map_math2eng_switch!",
         ))
+    end
+end
+
+
+function _add_bus_phases_key!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
+    for (_, bus) in data_math["bus"]
+        phases = 0
+        if !(haskey(bus, "phases"))
+            for (i, terminal) in enumerate(bus["terminals"])
+                if bus["grounded"][i]
+                    phases += 1
+                end
+            end
+        end
+        bus["phases"] = phases
+    end
+end
+
+
+"fix the control components by adding extra data from dss model"
+function _fix_control_components!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
+    _fix_control_load!(data_math, data_eng)
+    # _fix_control_transformer!(data_math, data_eng)
+end
+
+
+"fix load control adds vminpu from dss"
+function _fix_control_load!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
+    if haskey(data_math, "load")
+        for (name, load) in data_math["load"]
+            vminpu = .95
+            vmaxpu = 1.05
+            vlowpu = .5
+            if haskey(load, "dss")
+                if haskey(load["dss"], "vminpu")
+                    load["dss"]["vminpu"] >= .75 ? vminpu = load["dss"]["vminpu"] : vminpu = .75
+                end
+                haskey(load["dss"], "vmaxpu") ? vmaxpu = load["dss"]["vmaxpu"] : nothing
+                if haskey(load["dss"], "vlowpu")
+                    load["dss"]["vlowpu"] < vminpu && load["dss"]["vlowpu"] >= .5 ? vlowpu = load["dss"]["vlowpu"] : nothing    
+                end 
+            end
+        end
+    end  
+end
+
+
+
+function _eng2math_link_transformer(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
+    if haskey(data_math, "gen")
+        for (name, gen) in data_math["gen"]
+            if haskey(gen, "transformer")
+                if !(gen["transformer"])
+                    for (id, transformer) in data_math["transformer"]
+                        if gen["transformer_id"] == transformer["name"]
+                            gen["transformer_id"] = id
+                        end
+                    end
+                end
+            end
+        end
     end
 end
