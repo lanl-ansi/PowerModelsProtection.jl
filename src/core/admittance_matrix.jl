@@ -424,8 +424,36 @@ function build_mc_delta_current_vector(data, v, z_matrix)
     (n, m) = size(v)
     delta_i = zeros(Complex{Float64}, n, 1)
     build_mc_delta_current_load!(delta_i, v, data)
+    build_mc_delta_current_generator!(delta_i, v, data)
     build_mc_delta_current_inverter!(delta_i, v, data, z_matrix)
     return _SP.sparse(delta_i)
+end
+
+
+function build_mc_delta_current_generator!(delta_i, v, data)
+    for (_, gen) in data["gen"]
+        if occursin("generator", gen["source_id"])
+            if gen["gen_model"] == 1
+                calc_delta_current_generator!(gen, delta_i, v, data)
+            end
+        end
+    end
+end
+
+
+function calc_delta_current_generator!(gen, delta_i, v, data)
+    bus = gen["gen_bus"]
+    if occursin("generator", gen["source_id"])
+        if gen["gen_model"] == 1
+            for (_j, j) in enumerate(gen["connections"])
+                if haskey(data["admittance_map"], (bus, j)) 
+                    s = -(gen["pg"][_j] + 1im * gen["qg"][_j])
+                    y = conj(s) / gen["vnom_kv"]^2 / 1000
+                    delta_i[data["admittance_map"][(bus, j)], 1] += conj(s * data["settings"]["power_scale_factor"] / v[data["admittance_map"][(bus, j)], 1])  - y * v[data["admittance_map"][(bus, j)], 1]
+                end
+            end
+        end
+    end
 end
 
 
@@ -565,8 +593,20 @@ end
 function update_mc_delta_current_vector(model, v)
     (n, m) = size(v)
     delta_i = zeros(Complex{Float64}, n, 1)
+    update_mc_delta_current_generator!(delta_i, v, model.data)
     update_mc_delta_current_load!(delta_i, v, model.data)
     return _SP.sparse(delta_i)
+end
+
+
+function update_mc_delta_current_generator!(delta_i, v, data)
+    for (_, gen) in data["gen"]
+        if occursin("generator", gen["source_id"])
+            if gen["gen_model"] == 1
+                calc_delta_current_generator!(gen, delta_i, v, data)
+            end
+        end
+    end
 end
 
 

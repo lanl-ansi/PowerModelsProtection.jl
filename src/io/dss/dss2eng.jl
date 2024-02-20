@@ -110,19 +110,43 @@ end
 function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     if haskey(data_eng, "generator")
         for (id, generator) in data_eng["generator"]
+            dss_obj = data_dss["generator"][id]
+            _PMD._apply_like!(dss_obj, data_dss, "generator")
+            defaults = _PMD._apply_ordered_properties(_PMD._create_generator(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
+            zbase = defaults["kv"]^2/defaults["kva"]*1000
+            xdp = defaults["xdp"] * zbase
+            rp = xdp/defaults["xrdp"]
+            xdpp = defaults["xdpp"] * zbase
+            generator["xdp"] = fill(xdp, length(generator["connections"]))
+            generator["rp"] = fill(rp, length(generator["connections"]))
+            generator["xdpp"] = fill(xdpp, length(generator["connections"]))
             if haskey(generator["dss"], "model")
-                if generator["dss"]["model"] == 3
-                    dss_obj = data_dss["generator"][id]
-                    _PMD._apply_like!(dss_obj, data_dss, "generator")
-                    defaults = _PMD._apply_ordered_properties(_PMD._create_generator(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
-                    zbase = defaults["kv"]^2/defaults["kva"]*1000
-                    xdp = defaults["xdp"] * zbase
-                    rp = xdp/defaults["xrdp"]
-                    xdpp = defaults["xdpp"] * zbase
-                    generator["xdp"] = fill(xdp, length(generator["connections"]))
-                    generator["rp"] = fill(rp, length(generator["connections"]))
-                    generator["xdpp"] = fill(xdpp, length(generator["connections"]))
+                model = generator["dss"]["model"]
+            else
+                model = 1
+            end
+            generator["gen_model"] = model
+            if model == 1
+                if haskey(generator["dss"], "kvar")
+                    generator["qg"] =  fill(generator["dss"]["kvar"]/length(generator["pg"]), length(generator["pg"]))
+                else
+                    generator["qg"] = fill(0.0, length(generator["pg"]))
                 end
+                if haskey(generator["dss"], "kv")
+                    generator["vnom_kv"] = generator["dss"]["kv"] / sqrt(3)
+                end
+            # if generator["dss"]["model"] == 3
+            #         dss_obj = data_dss["generator"][id]
+            #         _PMD._apply_like!(dss_obj, data_dss, "generator")
+            #         defaults = _PMD._apply_ordered_properties(_PMD._create_generator(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
+            #         zbase = defaults["kv"]^2/defaults["kva"]*1000
+            #         xdp = defaults["xdp"] * zbase
+            #         rp = xdp/defaults["xrdp"]
+            #         xdpp = defaults["xdpp"] * zbase
+            #         generator["xdp"] = fill(xdp, length(generator["connections"]))
+            #         generator["rp"] = fill(rp, length(generator["connections"]))
+            #         generator["xdpp"] = fill(xdpp, length(generator["connections"]))
+            #     end
             end
         end
     end

@@ -356,11 +356,34 @@ function _map_eng2math_mc_admittance_voltage_source!(data_math::Dict{String,<:An
 end
 
 
+function _map_eng2math_mc_admittance_generator!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; pass_props::Vector{String}=String[])
+    if haskey(data_math, "gen")
+        for (name, gen) in data_math["gen"]
+            if occursin("generator", gen["source_id"])
+                if gen["gen_model"] == 1
+                    y = zeros(Complex{Float64}, 4, 4)
+                    for (i, pg) in enumerate(gen["pg"])
+                        kv = gen["vnom_kv"]
+                        s = -(pg + 1im * gen["qg"][i])
+                        y_ = conj(s) / kv^2 / 1000
+                        y[i,i] += y_
+                        y[i,4] -= y[i,i]
+                        y[4,i] -= y[i,4]
+                        y[4,4] += y[i,i]
+                    end
+                end
+                gen["p_matrix"] = y
+            end
+        end
+    end
+end
+
+
 function _map_eng2math_mc_admittance_solar!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; pass_props::Vector{String}=String[])
     if haskey(data_math, "gen")
         for (name, gen) in data_math["gen"]
             if occursin("solar", gen["source_id"])
-                                n = length(gen["connections"]) 
+                n = length(gen["connections"]) 
                 y = zeros(n, n)
                 if gen["configuration"] == _PMD.WYE
                     for (i, connection) in enumerate(gen["connections"]) 
@@ -436,90 +459,93 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
         (2,1) => [3,2],
         (2,2) => [7,4],
         (2,3) => [11,6]
-    )
-    
-            if transformer["dss"]["phases"] == 3
-                z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
-                z_1volt= z * 3/transformer["sm_nom"][1]/1000
-                z_b = [z_1volt 0 0;0 z_1volt 0;0 0 z_1volt]
-                b = [1 0 0;-1 0 0;0 1 0;0 -1 0;0 0 1;0 0 -1]
-                y1 = b*inv(z_b)*transpose(b)
-                n = zeros(Float64, 12, 6)
-                a = zeros(Int64,8,12)
-                for w = 1:2
-                    if transformer["configuration"][w] == _PMD.WYE 
-                        w == 1 ? connections = transformer["f_connections"] : connections = transformer["t_connections"]
-                        for (_,k) in enumerate(connections)
-                            if haskey(lookup, (w,k))
-                                i = lookup[(w,k)][1]
-                                j = lookup[(w,k)][2]
-                                n[i,j] = 1/(transformer["tm_nom"][w]/sqrt(3)*1000*transformer["tm_set"][w][k])
-                                n[i+1,j] = - n[i,j]
-                            end
-                        end
-                        if w == 1
-                            a[1,1] = a[2,5] = a[3,9] = a[4,2] = a[4,6] = a[4,10] = 1
-                        else
-                            a[5,3] = a[6,7] = a[7,11] = a[8,4] = a[8,8] = a[8,12] = 1
-                        end
-                    elseif transformer["configuration"][w] == _PMD.DELTA
-                        w == 1 ? connections = transformer["f_connections"] : connections = transformer["t_connections"]
-                        for (_,k) in enumerate(connections)
-                            if haskey(lookup, (w,k))
-                                i = lookup[(w,k)][1]
-                                j = lookup[(w,k)][2]
-                                n[i,j] = 1/(transformer["tm_nom"][w]*1000*transformer["tm_set"][w][k])
-                                n[i+1,j] = - n[i,j]
-                            end
-                        end
-                        if w == 1
-                            a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
-                        else
-                            a[5,3] = a[6,7] = a[7,11] = a[8,4] = a[8,8] = a[8,12] = 1  # wrong
-                        end
-                    end
-                end
-                y_w = n*y1*transpose(n)
-                p_matrix = a*y_w*transpose(a)
-                 
-                ybase = (transformer["sm_nom"][1]/3) / (transformer["tm_nom"][2]*transformer["tm_set"][2][1]/sqrt(3))^2 /1000
-                if haskey(transformer["dss"], "%noloadloss")
-                    shunt = (transformer["g_sh"] + 1im * transformer["b_sh"])*ybase
-                    p_matrix[5,5] += shunt
-                    p_matrix[5,8] -= shunt
-                    p_matrix[6,6] += shunt
-                    p_matrix[6,8] -= shunt
-                    p_matrix[7,7] += shunt
-                    p_matrix[7,8] -= shunt
-                    p_matrix[8,5] -= shunt
-                    p_matrix[8,6] -= shunt
-                    p_matrix[8,7] -= shunt
-                    p_matrix[8,8] += 3*shunt
-                end
-                transformer["p_matrix"] = p_matrix
-            elseif transformer["dss"]["phases"] == 1
-                z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
-                z_1volt= z * 1/transformer["sm_nom"][1]/1000
-                b = [1 ;-1]
-                y1 = b*1/z_1volt*transpose(b)
-                n = zeros(Float64, 4, 2)
-                a = zeros(Int64,4,4)
-                for w = 1:2
-                    if transformer["configuration"][w] == _PMD.WYE
-                        i = lookup[(w,1)][1]
-                        j = lookup[(w,1)][2]
-                        n[i,j] = 1/(transformer["tm_nom"][w]*1000*transformer["tm_set"][w][1])
+    )  
+    if transformer["dss"]["phases"] == 3
+        z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
+        z_1volt= z * 3/transformer["sm_nom"][1]/1000
+        z_b = [z_1volt 0 0;0 z_1volt 0;0 0 z_1volt]
+        b = [1 0 0;-1 0 0;0 1 0;0 -1 0;0 0 1;0 0 -1]
+        y1 = b*inv(z_b)*transpose(b)
+        n = zeros(Float64, 12, 6)
+        a = zeros(Int64,8,12)
+        for w = 1:2
+            if transformer["configuration"][w] == _PMD.WYE 
+                w == 1 ? connections = transformer["f_connections"] : connections = transformer["t_connections"]
+                for (_,k) in enumerate(connections)
+                    if haskey(lookup, (w,k))
+                        i = lookup[(w,k)][1]
+                        j = lookup[(w,k)][2]
+                        n[i,j] = 1/(transformer["tm_nom"][w]/sqrt(3)*1000*transformer["tm_set"][w][k])
                         n[i+1,j] = - n[i,j]
-                        if w == 1
-                            a[1,1] = a[2,2] = 1
-                        else
-                            a[3,3] = a[4,4] = 1
-                        end
                     end
                 end
-                y_w = n*y1*transpose(n)
-                p_matrix = a*y_w*transpose(a)
-                transformer["p_matrix"] = p_matrix
+                if w == 1
+                    a[1,1] = a[2,5] = a[3,9] = a[4,2] = a[4,6] = a[4,10] = 1
+                else
+                    a[5,3] = a[6,7] = a[7,11] = a[8,4] = a[8,8] = a[8,12] = 1
+                end
+            elseif transformer["configuration"][w] == _PMD.DELTA
+                w == 1 ? connections = transformer["f_connections"] : connections = transformer["t_connections"]
+                for (_,k) in enumerate(connections)
+                    if haskey(lookup, (w,k))
+                        i = lookup[(w,k)][1]
+                        j = lookup[(w,k)][2]
+                        n[i,j] = 1/(transformer["tm_nom"][w]*1000*transformer["tm_set"][w][k])
+                        n[i+1,j] = - n[i,j]
+                    end
+                end
+                if w == 1
+                    if transformer["leadlag"] == "lag"
+                        a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
+                    else
+                        a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
+                    end
+                else
+                    a[5,3] = a[6,7] = a[7,11] = a[8,4] = a[8,8] = a[8,12] = 1  # wrong
+                end
+            end
+        end
+        y_w = n*y1*transpose(n)
+        p_matrix = a*y_w*transpose(a)
+                 
+        ybase = (transformer["sm_nom"][1]/3) / (transformer["tm_nom"][2]*transformer["tm_set"][2][1]/sqrt(3))^2 /1000
+        if haskey(transformer["dss"], "%noloadloss")
+            shunt = (transformer["g_sh"] + 1im * transformer["b_sh"])*ybase
+            p_matrix[5,5] += shunt
+            p_matrix[5,8] -= shunt
+            p_matrix[6,6] += shunt
+            p_matrix[6,8] -= shunt
+            p_matrix[7,7] += shunt
+            p_matrix[7,8] -= shunt
+            p_matrix[8,5] -= shunt
+            p_matrix[8,6] -= shunt
+            p_matrix[8,7] -= shunt
+            p_matrix[8,8] += 3*shunt
+        end
+        transformer["p_matrix"] = p_matrix
+    elseif transformer["dss"]["phases"] == 1
+        z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
+        z_1volt= z * 1/transformer["sm_nom"][1]/1000
+        b = [1 ;-1]
+        y1 = b*1/z_1volt*transpose(b)
+        n = zeros(Float64, 4, 2)
+        a = zeros(Int64,4,4)
+        for w = 1:2
+            if transformer["configuration"][w] == _PMD.WYE
+                i = lookup[(w,1)][1]
+                j = lookup[(w,1)][2]
+                n[i,j] = 1/(transformer["tm_nom"][w]*1000*transformer["tm_set"][w][1])
+                n[i+1,j] = - n[i,j]
+                if w == 1
+                    a[1,1] = a[2,2] = 1
+                else
+                    a[3,3] = a[4,4] = 1
+                end
+            end
+        end
+        y_w = n*y1*transpose(n)
+        p_matrix = a*y_w*transpose(a)
+        transformer["p_matrix"] = p_matrix
     end        
 end
 

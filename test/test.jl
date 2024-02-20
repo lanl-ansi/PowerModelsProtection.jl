@@ -32,5 +32,7 @@ ipopt_solver = optimizer_with_attributes(Ipopt.Optimizer, "tol"=>1e-6, "print_le
 # result = PowerModelsProtection.solve_mc_fault_study(model)
 
 
-data = parse_file("../test/data/dist/case3_unbalanced.dss")
-model = PowerModelsProtection.instantiate_mc_admittance_model(data;loading=true) 
+# data = parse_file("../test/data/dist/ut_trans_2w_dy_lead.dss")
+data = parse_file("../test/data/dist/case3_gen_wye.dss")
+model = PowerModelsProtection.instantiate_mc_admittance_model(data) 
+sol = PowerModelsProtection.compute_mc_pf(model)
