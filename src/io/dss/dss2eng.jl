@@ -459,3 +459,22 @@ function _dss2eng_solar_transformer(data_eng::Dict{String,<:Any}, data_dss::Dict
         end
     end
 end
+
+
+function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+#     println(keys(data_eng))
+#     # println(data_eng["bus"])
+#     if haskey(data_eng, "line")
+#         for (id, line) in data_eng["line"]
+#             if haskey(line["dss"], "geometry")
+#                 # println(line)
+#                 # calc_line_paramters!(line, data_dss)
+#                 if length(line["rs"]) != length(line["f_connections"])^2
+
+#                     println(line)
+#                 end
+#             end
+#         end
+#     end
+#     println(oooo)
+end

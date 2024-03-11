@@ -433,7 +433,7 @@ end
 function build_mc_delta_current_generator!(delta_i, v, data)
     for (_, gen) in data["gen"]
         if occursin("generator", gen["source_id"])
-            if gen["gen_model"] == 1
+            if gen["gen_model"] == 1 
                 calc_delta_current_generator!(gen, delta_i, v, data)
             end
         end
@@ -494,7 +494,6 @@ function build_mc_delta_current_inverter!(delta_i, v, data, z_matrix)
         if occursin("solar.", gen["source_id"])
             if gen["pv_model"] == 1
                 if gen["grid_forming"]
-                    println(oooooo)
                     calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
                 else
                     calc_mc_delta_current_gfli!(gen, delta_i, v, data)
@@ -595,6 +594,7 @@ function update_mc_delta_current_vector(model, v)
     delta_i = zeros(Complex{Float64}, n, 1)
     update_mc_delta_current_generator!(delta_i, v, model.data)
     update_mc_delta_current_load!(delta_i, v, model.data)
+    update_mc_delta_current_inverter!(delta_i, v, model.data)
     return _SP.sparse(delta_i)
 end
 
@@ -615,6 +615,21 @@ function update_mc_delta_current_load!(delta_i, v, data)
         if data["settings"]["loading"]
             if load["model"] == _PMD.POWER
                 calc_delta_current_load!(load, delta_i, v, data)
+            end
+        end
+    end
+end
+
+
+function update_mc_delta_current_inverter!(delta_i, v, data)
+    for (_, gen) in data["gen"]
+        if occursin("solar.", gen["source_id"])
+            if gen["pv_model"] == 1
+                if gen["grid_forming"]
+                    calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
+                else
+                    calc_mc_delta_current_gfli!(gen, delta_i, v, data)
+                end
             end
         end
     end

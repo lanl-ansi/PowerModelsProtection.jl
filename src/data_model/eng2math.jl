@@ -157,7 +157,7 @@ end
 
 "field/values to passthrough from the ENGINEERING to MATHEMATICAL data models"
 const _pmp_eng2math_passthrough = Dict{String,Vector{String}}(
-        "generator" => String["zr", "zx", "grid_forming", "gen_model", "xdp", "rp", "xdpp", "vnom_kv"],
+        "generator" => String["zr", "zx", "gen_model", "xdp", "rp", "xdpp", "vnom_kv"],
         "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming", "balanced", "vminpu", "transformer", "type", "pv_model", "transformer_id"],
         "voltage_source" => String["zr", "zx"],
         "load" => String["vminpu", "vmaxpu"],

@@ -495,7 +495,7 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
                     end
                 end
                 if w == 1
-                    if transformer["leadlag"] == "lag"
+                    if transformer["leadlag"] == "lead"
                         a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
                     else
                         a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1

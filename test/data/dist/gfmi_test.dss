@@ -1,0 +1,58 @@
+Clear
+New Circuit.3Bus_example
+!  define a really stiff source
+~ basekv=4.16 BaseMVA=.5  pu=0.9959  r1=.7  x1=3.5
+
+!Define Linecodes
+
+
+New linecode.556MCM nphases=3 basefreq=60  ! ohms per 5 mile
+~ rmatrix = ( 0.1000 | 0.0400    0.1000 |  0.0400    0.0400    0.1000)
+~ xmatrix = ( 0.0583 |  0.0233    0.0583 | 0.0233    0.0233    0.0583)
+~ cmatrix = (50.92958178940651  | -0  50.92958178940651 | -0 -0 50.92958178940651  ) ! small capacitance
+
+
+New linecode.4/0QUAD nphases=3 basefreq=60  ! ohms per 100ft
+~ rmatrix = ( 0.1167 | 0.0467    0.1167 | 0.0467    0.0467    0.1167)
+~ xmatrix = (0.0667  |  0.0267    0.0667  |  0.0267    0.0267    0.0667 )
+~ cmatrix = (50.92958178940651  | -0  50.92958178940651 | -0 -0 50.92958178940651  )  ! small capacitance
+
+!Define lines
+
+New Line.OHLine  bus1=sourcebus.1.2.3  Primary.1.2.3  linecode = 556MCM   length=1  ! 5 mile line
+New Line.Quad    Bus1=Primary.1.2.3  loadbus.1.2.3  linecode = 4/0QUAD  length=1   ! 100 ft
+New Line.PV_line    Bus1=PV_bus.1.2.3 Primary.1.2.3  linecode = 4/0QUAD  length=1   ! 100 ft
+
+!Loads - single phase
+
+!New Load.L1 phases=3  bus1=loadbus.1.2.3  Conn=Wye kW=160  kvar=130  model=1 kV=4.16
+New Load.L1 phases=3  bus1=loadbus.1.2.3  Conn=Wye kW=18  kvar=8  model=1 kV=4.16
+
+New Transformer.TX1 windings=2 phases=3 Buses=[PV_bus1 PV_bus]
+~ Conns=[Delta Wye]
+~ kVs=[.4 4.16]
+~ kVAs=[25 25]
+~ %Rs=[1 2]
+~ xhl=5
+~ %noloadloss=0.0
+~ %imag=0.0
+~ leadlag=lag
+
+New PVSystem.PV1 phases=3 bus1=PV_bus1.1.2.3 kv=0.4 conn=wye irradiance=1 Pmpp=25 kva=25 pf=.95 balanced=true limitcurrent=true vminpu=0.9090909
+
+
+Set voltagebases=[4.16 0.4]
+Set tolerance=0.000001
+set defaultbasefreq=60
+Calcvoltagebases
+solve
+
+!batchedit load..* enable=false
+!batchedit capacitor..* enabled=false
+new fault.test phases=3 bus1=loadbus.1.2.3 r=.0001 enabled=true
+
+Solve mode=snap
+
+set mode=dynamic controlmode=time
+set stepsize=.0002s number=800
+solve
