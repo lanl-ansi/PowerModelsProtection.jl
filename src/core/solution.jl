@@ -244,7 +244,7 @@ end
 
 const A = inv([1 1 1; 1 exp(-1im*2/3*pi) exp(1im*2/3*pi); 1 exp(1im*2/3*pi) exp(-1im*2/3*pi)])
 
-function get_current_sequence(i::Vector{ComplexF64}, connections::Vector{Int})
+function get_current_sequence(i, connections::Vector{Int})
     i_abc = zeros(Complex{Float64}, 3)
     for (_j,j) in enumerate(connections)
         if j <= 3

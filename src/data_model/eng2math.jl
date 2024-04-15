@@ -161,7 +161,7 @@ const _pmp_eng2math_passthrough = Dict{String,Vector{String}}(
         "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming", "balanced", "vminpu", "transformer", "type", "pv_model", "transformer_id"],
         "voltage_source" => String["zr", "zx"],
         "load" => String["vminpu", "vmaxpu"],
-        "transformer" => String["leadlag"]
+        "transformer" => String["leadlag", "phases"]
     )
 
 
@@ -309,7 +309,7 @@ function populate_bus_voltages!(data::Dict{String,Any})
         f_bus = transformer["f_bus"] 
         t_bus = transformer["t_bus"]
         if haskey(transformer, "tm_nom")
-            transformer["dss"]["phases"] == 3 ? multi = 1/sqrt(3) : multi = 1 
+            transformer["phases"] == 3 ? multi = 1/sqrt(3) : multi = 1 
             if !haskey(data["bus"][string(f_bus)], "vbase")
                 data["bus"][string(f_bus)]["vbase"] = transformer["tm_nom"][1]*multi
             end

@@ -83,7 +83,7 @@ function _map_eng2math_transformer!(data_math::Dict{String,<:Any}, data_eng::Dic
         if haskey(eng_obj, "f_bus") && haskey(eng_obj, "t_bus")
             @assert all(haskey(eng_obj, k) for k in ["f_bus", "t_bus", "f_connections", "t_connections"]) "Incomplete definition of AL2W tranformer $name, aborting eng2math conversion"
 
-            nphases = length(eng_obj["f_connections"])
+            nphases = length(eng_obj["phases"])
 
             math_obj = Dict{String,Any}(
                 "name" => name,
@@ -189,7 +189,7 @@ function _map_eng2math_transformer!(data_math::Dict{String,<:Any}, data_eng::Dic
                     "g_sh"          => g_sh,
                     "b_sh"          => b_sh,
                     "dss"           => haskey(eng_obj, "dss") ? eng_obj["dss"] : Dict{String,Any}(),
-                    "sm_nom"        => eng_obj["sm_nom"]
+                    "sm_nom"        => eng_obj["sm_nom"],
             )
 
             for prop in [["tm_lb", "tm_ub", "tm_step"]; pass_props]
@@ -231,7 +231,6 @@ end
 function _map_eng2math_voltage_source!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; pass_props::Vector{String}=String[])
  
     for (name, eng_obj) in get(data_eng, "voltage_source", Dict{String,Any}())
-
         nconductors = length(eng_obj["connections"])
         nphases = get(eng_obj, "configuration", _PMD.WYE) == _PMD.WYE && !get(data_eng, "is_kron_reduced", false) ? nconductors - 1 : nconductors
 
@@ -286,7 +285,6 @@ function _map_eng2math_voltage_source!(data_math::Dict{String,<:Any}, data_eng::
         end
 
         data_math["gen"]["$(math_obj["index"])"] = math_obj
-
     end
 end
 

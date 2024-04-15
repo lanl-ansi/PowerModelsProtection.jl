@@ -145,7 +145,7 @@ end
 
 function solve_mc_fault_study(model::AdmittanceModel;build_output=true)
     t = @elapsed begin
-    model.data["settings"]["loading"] = false
+        model.data["settings"]["loading"] = false
         output = Dict{String,Any}()
         fault_study = create_fault(model.data["bus"])
         for (bus_indx, bus_faults) in fault_study

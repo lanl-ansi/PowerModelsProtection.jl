@@ -47,7 +47,7 @@ function instantiate_mc_admittance_model(
 
     data_math["settings"]["loading"] = loading
 
-    y_matrix = build_mc_admittance_matrix(data_math;loading=loading)
+    y_matrix = build_mc_admittance_matrix(data_math)
     z_matrix = inv(Matrix(y_matrix))
     println("z_matrix is $(sizeof(z_matrix)) bytes")
     v = build_mc_voltage_vector(data_math)

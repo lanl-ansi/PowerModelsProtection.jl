@@ -235,7 +235,7 @@ function compute_mc_pf(y, model::AdmittanceModel)
     v = _SP.sparse(model.v)
     delta_i_control = _SP.sparse(model.delta_i_control)
     delta_i = _SP.sparse(model.delta_i)
-    max_it = 10
+    max_it = 100
     it_pf = 0
     _i = i + delta_i_control + delta_i
     _v = deepcopy(v)
