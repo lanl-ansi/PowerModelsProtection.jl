@@ -443,7 +443,7 @@ end
 
 
 function _map_eng2math_mc_admittance_transformer!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; pass_props::Vector{String}=String[])
-    if haskey(data_math, "transformer")
+if haskey(data_math, "transformer")
         for (name, transformer) in data_math["transformer"]
             if typeof(transformer["t_bus"]) == Vector{Int}
                 _map_eng2math_mc_admittance_3w_transformer!(transformer, data_math, data_eng; pass_props=pass_props)
@@ -464,7 +464,7 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
         (2,2) => [7,4],
         (2,3) => [11,6]
     )  
-    if transformer["phases"] == 3
+    if transformer["dss"]["phases"] == 3
         z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
         z_1volt= z * 3/transformer["sm_nom"][1]/1000
         z_b = [z_1volt 0 0;0 z_1volt 0;0 0 z_1volt]
@@ -472,19 +472,6 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
         y1 = b*inv(z_b)*transpose(b)
         n = zeros(Float64, 12, 6)
         a = zeros(Int64,8,12)
-        option = 1
-        if transformer["configuration"][1] != transformer["configuration"][2]
-            if transformer["tm_nom"][1] > transformer["tm_nom"][2] 
-                if transformer["leadlag"] == "lead"
-                    option = 2
-                end
-            else
-                if transformer["leadlag"] == "lag"
-                    option = 2
-                end
-            end
-        end
-
         for w = 1:2
             if transformer["configuration"][w] == _PMD.WYE 
                 w == 1 ? connections = transformer["f_connections"] : connections = transformer["t_connections"]
@@ -526,8 +513,7 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
                         end
                     end
                 else
-                    # a[5,3] = a[6,7] = a[7,11] = a[8,4] = a[8,8] = a[8,12] = 1  # wrong
-                    a[5,3] = a[5,8] = a[6,7] = a[6,12] = a[7,11] = a[7,4] = 1  
+                    a[5,3] = a[6,7] = a[7,11] = a[8,4] = a[8,8] = a[8,12] = 1  # wrong
                 end
             end
         end
@@ -548,21 +534,8 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
             p_matrix[8,7] -= shunt
             p_matrix[8,8] += 3*shunt
         end
-        for w = 1:2
-            if transformer["configuration"][w] == _PMD.DELTA
-                if w == 1
-                    for i = 1:3
-                        p_matrix[i,i] += 1e-6
-                    end
-                else
-                    for i = 5:7
-                        p_matrix[i,i] += 1e-6
-                    end
-                end
-            end
-        end
         transformer["p_matrix"] = p_matrix
-    elseif transformer["phases"] == 1
+    elseif transformer["dss"]["phases"] == 1
         z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
         z_1volt= z * 1/transformer["sm_nom"][1]/1000
         b = [1 ;-1]
@@ -667,7 +640,7 @@ function _map_eng2math_mc_admittance_3w_transformer!(transformer::Dict{String,<:
             p_matrix[8,8] += 3*shunt
             end
             transformer["p_matrix"] = p_matrix
-        elseif transformer["phases"] == 1
+        elseif transformer["dss"]["phases"] == 1
         z_1volt_base = 1/transformer["sm_nom"][1]/1000
         z_b = [z_12*z_1volt_base z_23*z_1volt_base;z_23*z_1volt_base z_13*z_1volt_base]
         b = [1 1 ;-1 0;0 -1]

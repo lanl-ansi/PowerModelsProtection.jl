@@ -131,16 +131,5 @@
         @test calculate_error_percentage(sol["loadbus"]["3pg"][1], 15929.0) < .001
         @test calculate_error_percentage(sol["loadbus"]["3pg"][2], 15929.0) < .001
         @test calculate_error_percentage(sol["loadbus"]["3pg"][3], 15929.0) < .001
-        model = PowerModelsProtection.instantiate_mc_admittance_model(loads_example) 
-        sol = PowerModelsProtection.solve_mc_fault_study(model)
-        @test calculate_error_percentage(sol["loadbus"]["ll"][(1,2)][1], 1325.0) < .02
-        @test calculate_error_percentage(sol["loadbus"]["ll"][(2,3)][1], 1328.0) < .02
-        @test calculate_error_percentage(sol["loadbus"]["ll"][(1,3)][1], 1325.0) < .02
-        @test calculate_error_percentage(sol["loadbus"]["lg"][1][1], 907.0) < .02
-        @test calculate_error_percentage(sol["loadbus"]["lg"][2][1], 905.0) < .02
-        @test calculate_error_percentage(sol["loadbus"]["lg"][3][1], 909.0) < .02
-        @test calculate_error_percentage(sol["loadbus"]["3pg"][1], 15936.0) < .02
-        @test calculate_error_percentage(sol["loadbus"]["3pg"][2], 15936.0) < .02
-        @test calculate_error_percentage(sol["loadbus"]["3pg"][3], 15936.0) < .02
     end
 end

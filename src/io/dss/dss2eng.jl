@@ -107,11 +107,6 @@ function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::
                     transformer["leadlag"] = "lag"
                 end
             end
-            if haskey(dss_obj, "phases")
-                transformer["phases"] = dss_obj["phases"]
-            else
-                transformer["phases"] = defaults["phases"]
-            end
         end
     end
 end

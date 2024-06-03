@@ -309,7 +309,7 @@ function populate_bus_voltages!(data::Dict{String,Any})
         f_bus = transformer["f_bus"] 
         t_bus = transformer["t_bus"]
         if haskey(transformer, "tm_nom")
-            transformer["phases"] == 3 ? multi = 1/sqrt(3) : multi = 1 
+            transformer["dss"]["phases"] == 3 ? multi = 1/sqrt(3) : multi = 1 
             if !haskey(data["bus"][string(f_bus)], "vbase")
                 data["bus"][string(f_bus)]["vbase"] = transformer["tm_nom"][1]*multi
             end

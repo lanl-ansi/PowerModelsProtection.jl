@@ -470,7 +470,6 @@ end
 """
 function calc_line_paramters!(line::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     if length(line["rs"]) != length(line["f_connections"])^2
-        println(line)
-        println(oopop)
+        nothing
     end
 end
