@@ -27,9 +27,7 @@ New Line.Quad    Bus1=Primary.1.2.3  loadbus.1.2.3  linecode = 4/0QUAD  length=1
 New Load.L1 phases=1  loadbus.1.2   conn=Delta kv=0.4   kW=9   kvar=3  model=1
 New Load.L2 phases=1  loadbus.2.3   conn=Delta kv=0.4  kW=6   kvar=3  model=2
 New Load.L3 phases=1  loadbus.3.1   conn=Delta kv=0.4  kW=6   kvar=3  model=5
-New Load.L4 phases=1  loadbus.1.0   ( 0.4 3 sqrt / )   kW=9   kvar=3  model=1
-New Load.L5 phases=1  loadbus.2.0   ( 0.4 3 sqrt / )   kW=6   kvar=3  model=2
-New Load.L6 phases=1  loadbus.3.0   ( 0.4 3 sqrt / )   kW=6   kvar=3  model=5
+
 
 
 Set voltagebases=[0.4]
@@ -38,3 +36,7 @@ set defaultbasefreq=50
 Calcvoltagebases
 
 Solve
+
+solve mode=faultstudy
+show f
+

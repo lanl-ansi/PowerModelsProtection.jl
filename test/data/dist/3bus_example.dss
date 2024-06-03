@@ -23,7 +23,7 @@ New Line.OHLine  bus1=sourcebus.1.2.3  Primary.1.2.3  linecode = 556MCM   length
 New Line.OHLine2    Bus1=Primary.1.2.3  Primary2.1.2.3  linecode = 556MCM  length=1   ! 100 ft
 New Line.Quad   Bus1=Primary2.1.2.3 loadbus.1.2.3  linecode = 4/0QUAD length=1
 
-New relay.R1  MonitoredObj=ohline TS=380 TDS=.5 type=overcurrent SwitchedTerm=1 phasecurve=relay_curve
+!New relay.R1  MonitoredObj=ohline TS=380 TDS=.5 type=overcurrent SwitchedTerm=1 phasecurve=relay_curve
 !New relay.R2 TS=380 TDS=.5 type=overcurrent SwitchedTerm=1 MonitoredObj=L1
 !New relay.R3 TS=380 TDS=.5 type=overcurrent SwitchedTerm=1 MonitoredObj=L1
 !New relay.R2 element1=ohline TS=1 TDS=.5 shots=4 ct=ct1 type=overcurrent
@@ -32,7 +32,7 @@ New relay.R1  MonitoredObj=ohline TS=380 TDS=.5 type=overcurrent SwitchedTerm=1 
 !New relay.R5 element1=ohline element2=ohline2 TS=5 TDS=.5 cts=[ct1,ct2] type=differential
 !New relay.r6 ohline 1 ohline 1 phasetrip=5 tdphase=0.5 type=overcurrent
 
-New tcc_curve.relay_curve t_array=[3, .8, 0.3] c_array=[15,20, 30] npts=4
+!New tcc_curve.relay_curve t_array=[3, .8, 0.3] c_array=[15,20, 30] npts=4
 !New fuse.fuse1 element=ohline min_melt_curve=[1,2,3;4,5,6]
 
 !New monitor.ct1 element=ohline n_p=1900 n_s=5
@@ -52,3 +52,6 @@ set defaultbasefreq=50
 Calcvoltagebases
 
 Solve
+
+solve mode=faultstudy
+show f

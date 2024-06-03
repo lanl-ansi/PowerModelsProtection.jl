@@ -460,31 +460,117 @@ end
 function build_mc_delta_current_load!(delta_i, v, data)
     for (_, load) in data["load"]
         if load["model"] == _PMD.POWER
-            calc_delta_current_load!(load, delta_i, v, data)
+            calc_delta_current_load_constantpq!(load, delta_i, v, data)
         end
     end
 end
 
 
-function calc_delta_current_load!(load, delta_i, v, data)
+function calc_delta_current_load_constantpq!(load, delta_i, v, data)
     bus = load["load_bus"]
     if load["configuration"] == _PMD.WYE
         n = length(load["connections"])
         for (_j, j) in enumerate(load["connections"])
             if haskey(data["admittance_map"], (bus, j))
-                s = load["pd"][_j] + 1im * load["qd"][_j]
-                y = conj.(s / (load["vnom_kv"])^2 / 1000) 
+                s = load["pd"][_j] + 1im .* load["qd"][_j]
+                y = load["p_matrix"][_j,_j] 
                 if abs(v[data["admittance_map"][(bus, j)], 1]) < load["vminpu"] * load["vnom_kv"]*data["settings"]["voltage_scale_factor"]
-                    y_vmin = conj(s) / (load["vnom_kv"]*load["vminpu"])^2 / 1000
+                    y_vmin = conj(s*data["settings"]["power_scale_factor"]) / (load["vnom_kv"]*load["vminpu"]*data["settings"]["voltage_scale_factor"])^2
                     delta_i[data["admittance_map"][(bus, j)], 1] -= v[data["admittance_map"][(bus, j)], 1] * (y_vmin - y)
                 elseif abs(v[data["admittance_map"][(bus, j)], 1]) > load["vmaxpu"] * load["vnom_kv"]*data["settings"]["voltage_scale_factor"]
-                    y_vmax = conj(s) / (load["vnom_kv"]*load["vmaxpu"])^2 / 1000
+                    y_vmax = conj(s*data["settings"]["power_scale_factor"]) / (load["vnom_kv"]*load["vmaxpu"]*data["settings"]["voltage_scale_factor"])^2 
                     delta_i[data["admittance_map"][(bus, j)], 1] -= v[data["admittance_map"][(bus, j)], 1] * (y_vmax - y)
                 else
                     delta_i[data["admittance_map"][(bus, j)], 1] -= conj(s * data["settings"]["power_scale_factor"] / v[data["admittance_map"][(bus, j)], 1])  - y * v[data["admittance_map"][(bus, j)], 1]
                 end
             end
         end
+    elseif load["configuration"] == _PMD.DELTA
+        n = length(load["connections"])
+        phases = load["dss"]["phases"]
+        if phases == 1
+            i = load["connections"][1]
+            j = load["connections"][2]
+            if haskey(data["admittance_map"], (bus, i)) && haskey(data["admittance_map"], (bus, j))
+                s = load["pd"][1] + 1im .* load["qd"][1]
+                y = load["p_matrix"][1,1]
+                if abs(v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]) < load["vminpu"] * load["vnom_kv"]*data["settings"]["voltage_scale_factor"]
+                    y_vmin = conj(s*data["settings"]["power_scale_factor"]) / (load["vnom_kv"]*load["vminpu"]*data["settings"]["voltage_scale_factor"])^2
+                    delta_i[data["admittance_map"][(bus, i)], 1] -= (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]) * (y_vmin - y)
+                elseif abs(v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]) > load["vmaxpu"] * load["vnom_kv"]*data["settings"]["voltage_scale_factor"]
+                    y_vmax = conj(s*data["settings"]["power_scale_factor"]) / (load["vnom_kv"]*load["vmaxpu"]*data["settings"]["voltage_scale_factor"])^2
+                    delta_i[data["admittance_map"][(bus, i)], 1] -= (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]) * (y_vmax - y)
+                else
+                    delta_i[data["admittance_map"][(bus, i)], 1] -= conj(s * data["settings"]["power_scale_factor"] / (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]))  - y * (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1])
+                end
+            end
+        else
+            for (_i, i) in enumerate(load["connections"])
+                if haskey(data["admittance_map"], (bus, i))
+                    for (_j, j) in enumerate(load["connections"])
+                        if _i < _j 
+                            if haskey(data["admittance_map"], (bus, j))
+                                length(load["pd"]) == n ? s = load["pd"][_i] + 1im .* load["qd"][_i] : s = load["pd"][1] + 1im .* load["qd"][1]
+                                y = -load["p_matrix"][_i,_j]
+                                if abs(v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]) < load["vminpu"] * load["vnom_kv"]*data["settings"]["voltage_scale_factor"]
+                                    y_vmin = conj(s*data["settings"]["power_scale_factor"]) / (load["vnom_kv"]*load["vminpu"]*data["settings"]["voltage_scale_factor"])^2
+                                    delta_i[data["admittance_map"][(bus, i)], 1] -= (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]) * (y_vmin - y)
+                                elseif abs(v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]) > load["vmaxpu"] * load["vnom_kv"]*data["settings"]["voltage_scale_factor"]
+                                    y_vmax = conj(s*data["settings"]["power_scale_factor"]) / (load["vnom_kv"]*load["vmaxpu"]*data["settings"]["voltage_scale_factor"])^2
+                                    delta_i[data["admittance_map"][(bus, i)], 1] -= (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]) * (y_vmax - y)
+                                else
+                                    delta_i[data["admittance_map"][(bus, i)], 1] -= conj(s * data["settings"]["power_scale_factor"] / (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]))  - y * (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1])
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+    end
+end
+
+
+function calc_delta_current_load_constanti!(load, delta_i, v, data)
+    bus = load["load_bus"]
+    if load["configuration"] == _PMD.WYE
+        n = length(load["connections"])
+        for (_j, j) in enumerate(load["connections"])
+            if haskey(data["admittance_map"], (bus, j))
+                constant_i = conj(((load["pd"][_j] + 1im .* load["qd"][_j]) * data["settings"]["power_scale_factor"]) / (load["vnom_kv"] * data["settings"]["voltage_scale_factor"])) 
+                y = load["p_matrix"][_j,_j] 
+                delta_i[data["admittance_map"][(bus, j)], 1] -= (abs(constant_i) - abs(y * v[data["admittance_map"][(bus, j)], 1])) * (cos(angle(y * v[data["admittance_map"][(bus, j)], 1])) + 1im * sin(angle(y * v[data["admittance_map"][(bus, j)], 1]))) 
+            end
+        end
+    elseif load["configuration"] == _PMD.DELTA
+        n = length(load["connections"])
+        phases = load["dss"]["phases"]
+        if phases == 1
+            i = load["connections"][1]
+            j = load["connections"][2]
+            if haskey(data["admittance_map"], (bus, i)) && haskey(data["admittance_map"], (bus, j))
+                constant_i = conj(((load["pd"][1] + 1im .* load["qd"][1]) * data["settings"]["power_scale_factor"]) / (load["vnom_kv"] * data["settings"]["voltage_scale_factor"])) 
+                y = load["p_matrix"][1,1]
+                delta_i[data["admittance_map"][(bus, i)], 1] -= (abs(constant_i) - abs(y * (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]))) * (cos(angle(y * (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]))) + 1im * sin(angle(y * (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]))))
+            end
+        else
+            for (_i, i) in enumerate(load["connections"])
+                if haskey(data["admittance_map"], (bus, i))
+                    for (_j, j) in enumerate(load["connections"])
+                        if _i < _j 
+                            if haskey(data["admittance_map"], (bus, j))
+                                length(load["pd"]) == n ? s = load["pd"][_i] + 1im .* load["qd"][_i] : s = load["pd"][1] + 1im .* load["qd"][1]
+                                constant_i = conj((s * data["settings"]["power_scale_factor"]) / (load["vnom_kv"] * data["settings"]["voltage_scale_factor"])) 
+                                y = -load["p_matrix"][_i,_j]
+                                delta_i[data["admittance_map"][(bus, i)], 1] -= (abs(constant_i) - abs(y * (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]))) * (cos(angle(y * (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]))) + 1im * sin(angle(y * (v[data["admittance_map"][(bus, i)], 1] - v[data["admittance_map"][(bus, j)], 1]))))
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
     end
 end
 
@@ -613,8 +699,12 @@ end
 function update_mc_delta_current_load!(delta_i, v, data)
     for (_, load) in data["load"]
         if data["settings"]["loading"]
-            if load["model"] == _PMD.POWER
-                calc_delta_current_load!(load, delta_i, v, data)
+            if load["response"] == ConstantPQ
+                calc_delta_current_load_constantpq!(load, delta_i, v, data)
+            elseif load["response"] == ConstantZ
+               nothing
+            elseif load["response"] == ConstantI
+                calc_delta_current_load_constanti!(load, delta_i, v, data)
             end
         end
     end

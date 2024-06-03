@@ -21,6 +21,10 @@ Set Controlmode=OFF
 
 solve
 
+solve mode=faultstudy
+show f
+
+
 dump Transformer.xfmr_1 debug
  
 

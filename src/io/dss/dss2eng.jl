@@ -81,6 +81,15 @@ function _dss2eng_load_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{St
             end
             load["vminpu"] = vminpu
             load["vmaxpu"] = vmaxpu
+            if load["model"] == _PMD.IMPEDANCE
+                load["response"] = ConstantZ
+            elseif load["model"] == _PMD.POWER
+                load["response"] = ConstantPQ
+            elseif load["model"] == _PMD.CURRENT
+                load["response"] = ConstantI
+            elseif load["model"] == _PMD.ZIP
+                load["response"] = ConstantZIP
+            end
         end
     end
 end
@@ -90,11 +99,13 @@ end
 function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     if haskey(data_eng, "transformer")
         for (id, transformer) in data_eng["transformer"]
-            dss_obj = data_dss["transformer"][id]
-            if haskey(dss_obj, "leadlag")
-                transformer["leadlag"] = dss_obj["leadlag"]
-            else
-                transformer["leadlag"] = "lag"
+            if transformer["configuration"] != _PMD.ConnConfig[_PMD.WYE, _PMD.WYE] # need to fix combining single phase into 3 phase 
+                dss_obj = data_dss["transformer"][id]
+                if haskey(dss_obj, "leadlag")
+                    transformer["leadlag"] = dss_obj["leadlag"]
+                else
+                    transformer["leadlag"] = "lag"
+                end
             end
         end
     end
@@ -410,7 +421,7 @@ function _dss2eng_gen_model!(data_eng::Dict{String,<:Any}, data_dss::Dict{String
 end
 
 
-function _dss2eng_transformers!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+function _dss2eng_phases!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     if haskey(data_eng, "transformer")
         for (_,transformer) in data_eng["transformer"]
             if haskey(transformer, "xfmrcode")
@@ -462,19 +473,5 @@ end
 
 
 function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
-#     println(keys(data_eng))
-#     # println(data_eng["bus"])
-#     if haskey(data_eng, "line")
-#         for (id, line) in data_eng["line"]
-#             if haskey(line["dss"], "geometry")
-#                 # println(line)
-#                 # calc_line_paramters!(line, data_dss)
-#                 if length(line["rs"]) != length(line["f_connections"])^2
-
-#                     println(line)
-#                 end
-#             end
-#         end
-#     end
-#     println(oooo)
+    nothing
 end

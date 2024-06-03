@@ -64,6 +64,7 @@ function _map_eng2math_nw!(data_math::Dict{String,<:Any}, data_eng::Dict{String,
     _map_conductor_ids!(data_math)
 
     _PMD._map_settings_vbases_default!(data_math)
+
 end
 
 
@@ -118,7 +119,7 @@ function _map_eng2math_transformer!(data_math::Dict{String,<:Any}, data_eng::Dic
             snom = eng_obj["sm_nom"] * data_eng["settings"]["power_scale_factor"]
 
             nrw = length(eng_obj["bus"])
-
+            
             !haskey(eng_obj["dss"], "buses") ? eng_obj["dss"]["buses"] = eng_obj["bus"] : nothing # fix to buses issue missing form dss (single buses are defined on some transformers)
 
             # calculate zbase in which the data is specified, and convert to SI
@@ -410,14 +411,13 @@ end
 
 
 function _eng2math_link_transformer(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
-    if haskey(data_math, "gen")
-        for (name, gen) in data_math["gen"]
-            if haskey(gen, "transformer")
-                if !(gen["transformer"])
-                    for (id, transformer) in data_math["transformer"]
-                        if gen["transformer_id"] == transformer["name"]
-                            gen["transformer_id"] = id
-                        end
+    for (_, gen) in data_math["gen"]
+        if haskey(gen, "type")
+            if gen["type"] == "solar"
+                # TODO adds transformer need to add for when transformer key set to false
+                for (id, transformer) in data_math["transformer"]
+                    if transformer["f_bus"] == gen["gen_bus"] || transformer["t_bus"] == gen["gen_bus"]
+                        gen["transformer_id"] = id
                     end
                 end
             end

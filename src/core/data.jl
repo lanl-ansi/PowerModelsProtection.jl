@@ -463,3 +463,14 @@ function zero_gen_setpoints!(data::Dict{String,<:Any})
         end
     end
 end
+
+
+"""
+    function to calculate line parameters based of carson's equation 1st term only 
+"""
+function calc_line_paramters!(line::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    if length(line["rs"]) != length(line["f_connections"])^2
+        println(line)
+        println(oopop)
+    end
+end

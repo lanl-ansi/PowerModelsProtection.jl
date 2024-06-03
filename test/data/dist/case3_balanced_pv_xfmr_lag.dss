@@ -1,8 +1,7 @@
-
 Clear
 New Circuit.3Bus_example
 !  define a really stiff source
-~ basekv=0.4 BaseMVA=1  pu=0.9959  MVAsc1=1e6  MVAsc3=1e6
+~ basekv=4.16 BaseMVA=.5  pu=0.9959  r1=.7  x1=3.5
 
 !Define Linecodes
 
@@ -26,24 +25,34 @@ New Line.PV_line    Bus1=PV_bus.1.2.3 Primary.1.2.3  linecode = 4/0QUAD  length=
 
 !Loads - single phase
 
-New Load.L1 phases=3  bus1=loadbus.1.2.3  Conn=Wye kW=60  kvar=30  model=1 kV=.4
+!New Load.L1 phases=3  bus1=loadbus.1.2.3  Conn=Wye kW=160  kvar=130  model=1 kV=4.16
+New Load.L1 phases=3  bus1=loadbus.1.2.3  Conn=Wye kW=18  kvar=8  model=1 kV=4.16
 
-New Generator.G1 phases=3 bus1=PV_bus.1.2.3 conn=wye kv=.4 kw=20 kvar=10
+New Transformer.TX1 windings=2 phases=3 Buses=[PV_bus1 PV_bus]
+~ Conns=[Delta Wye]
+~ kVs=[.4 4.16]
+~ kVAs=[25 25]
+~ %Rs=[1 2]
+~ xhl=5
+~ %noloadloss=0.0
+~ %imag=0.0
+~ leadlag=lag
+
+New PVSystem.PV1 phases=3 bus1=PV_bus1.1.2.3 kv=0.4 conn=wye irradiance=1 Pmpp=25 kva=25 pf=.95 balanced=true limitcurrent=true vminpu=0.9090909
 
 
-Set voltagebases=[0.4]
+Set voltagebases=[4.16 0.4]
 Set tolerance=0.000001
 set defaultbasefreq=60
 Calcvoltagebases
 solve
 
-batchedit load..* enable=false
-batchedit capacitor..* enabled=false
-new fault.test phases=3 bus1=loadbus.1.2.3 r=.005 enabled=true
+!batchedit load..* enable=false
+!batchedit capacitor..* enabled=false
+new fault.test phases=3 bus1=loadbus.1.2.3 r=.0001 enabled=true
 
 Solve mode=snap
 
 set mode=dynamic controlmode=time
-set stepsize=.0002s
-number=800
+set stepsize=.0002s number=800
 solve

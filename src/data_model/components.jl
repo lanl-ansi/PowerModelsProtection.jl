@@ -407,27 +407,31 @@ function _map_eng2math_mc_admittance_load!(data_math::Dict{String,<:Any}, data_e
             n = length(load["connections"])
             y = zeros(Complex{Float64}, n, n)
             if load["configuration"] == _PMD.WYE
-                for (i,_i) in enumerate(load["connections"])
-                    for (j,_j) in enumerate(load["connections"])
-                        if _i != 4 && _j == 4
-                            s = conj.(load["pd"][i] + 1im .* load["qd"][i])
-                            _y = s / (load["vnom_kv"])^2 / 1000
-                            y[i,i] += _y
-                            y[i,j] -= _y
-                            y[j,i] -= _y
-                            y[j,j] += _y
+                if haskey(load, "pd") && haskey(load, "qd")
+                    for (i,_i) in enumerate(load["connections"])
+                        for (j,_j) in enumerate(load["connections"])
+                            if _i != 4 && _j == 4
+                                s = conj.(load["pd"][i] + 1im .* load["qd"][i])
+                                _y = (s*data_math["settings"]["power_scale_factor"]) / (load["vnom_kv"]*data_math["settings"]["voltage_scale_factor"])^2
+                                y[i,i] += _y
+                                y[i,j] -= _y
+                                y[j,i] -= _y
+                                y[j,j] += _y
+                            end
                         end
                     end
                 end
                 load["p_matrix"] = y
             elseif load["configuration"] == _PMD.DELTA
-                for (i,_i) in enumerate(load["connections"])
-                    length(load["pd"]) == n ? s = conj.(load["pd"][i] + 1im .* load["qd"][i]) : s = conj.(load["pd"][1] + 1im .* load["qd"][1])
-                    for (j,_j) in enumerate(load["connections"])
-                        if i != j
-                            _y = s / load["vnom_kv"]^2 / 1000
-                            y[i,i] += _y
-                            y[i,j] -= _y
+                if haskey(load, "pd") && haskey(load, "qd")
+                    for (i,_i) in enumerate(load["connections"])
+                        length(load["pd"]) == n ? s = conj.(load["pd"][i] + 1im .* load["qd"][i]) : s = conj.(load["pd"][1] + 1im .* load["qd"][1])
+                        for (j,_j) in enumerate(load["connections"])
+                            if i != j
+                                _y = (s*data_math["settings"]["power_scale_factor"]) / (load["vnom_kv"]*data_math["settings"]["voltage_scale_factor"])^2 
+                                y[i,i] += _y
+                                y[i,j] -= _y
+                            end
                         end
                     end
                 end
@@ -496,9 +500,17 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
                 end
                 if w == 1
                     if transformer["leadlag"] == "lead"
-                        a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
+                        if transformer["tm_nom"][1] > transformer["tm_nom"][2]
+                            a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
+                        else
+                            a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
+                        end
                     else
-                        a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
+                        if transformer["tm_nom"][1] > transformer["tm_nom"][2]
+                            a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
+                        else
+                            a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
+                        end
                     end
                 else
                     a[5,3] = a[6,7] = a[7,11] = a[8,4] = a[8,8] = a[8,12] = 1  # wrong

@@ -8,3 +8,8 @@ struct AdmittanceModel
     delta_i::Matrix{Complex{Float64}}
 end
 
+@enum ResponseCharateristic ConstantPQ ConstantZ ConstantI ConstantZIP ConstantPAtPF ConstantPV ConstantPFixedQ ConstantPXFixedQ ConstantPQCurrentLimited
+
+
+
+

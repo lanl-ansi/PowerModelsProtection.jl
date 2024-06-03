@@ -20,8 +20,9 @@ include("test_cases.jl")
 
 @testset "PowerModelsProtection" begin
     include("admittance.jl")
+    include("pf_mc.jl")
     # include("fs.jl")
-    # include("fs_mc.jl")
+    include("fs_mc.jl")
     # include("pf_mc.jl")
     # include("protection_tests.jl")
     # include("sparse_fault.jl")
