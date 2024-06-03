@@ -107,9 +107,35 @@ function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::
                     transformer["leadlag"] = "lag"
                 end
             end
+            if haskey(dss_obj, "phases")
+                transformer["phases"] = dss_obj["phases"]
+            else
+                transformer["phases"] = defaults["phases"]
+            end
         end
     end
 end
+
+
+"helper function to fix voltage source objects"
+function _dss2eng_voltage_source_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    if haskey(data_eng, "voltage_source")
+        for (id, voltage_source) in data_eng["voltage_source"]
+            dss_obj = data_dss["vsource"][id]
+            defaults = _PMD._apply_ordered_properties(_PMD._create_vsource(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
+            if haskey(dss_obj, "r1") && haskey(dss_obj, "x1")
+                r1 = dss_obj["r1"]
+                x1 = dss_obj["x1"]
+                haskey(dss_obj, "r0") ? r0 = dss_obj["r0"] : r0 = 1.796
+                haskey(dss_obj, "x0") ? x0 = dss_obj["x0"] : x0 = 5.3881
+                zabc = _A *[r0+x0*1im 0 0;0 r1+x1*1im 0;0 0 r1+x1*1im] * inv(_A)
+                voltage_source["rs"] = real(zabc)
+                voltage_source["xs"] = imag(zabc)
+            end
+        end
+    end
+end
+
 
 "helper function to build extra dynamics information for pvsystem objects
     model = 1:P Q gen  2: constant z  3: P V gen  4-6 not modeled 7: inverter connected
