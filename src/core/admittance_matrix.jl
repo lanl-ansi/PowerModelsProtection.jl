@@ -665,7 +665,7 @@ function calc_mc_delta_current_gfli!(gen, delta_i, v, data)
                 v_seq = inv(_A)*v_solar
                 deadband = .1 * bus["vbase"] * data["settings"]["voltage_scale_factor"]
                 if haskey(bus, "pre_fault")
-                    v0_seq = inv(_A)*v0exz
+                    v0_seq = inv(_A)*v0
                 else
                     v0_seq = [0.0;v0[1];0.0]
                 end
