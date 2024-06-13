@@ -17,6 +17,7 @@ module PowerModelsProtection
     const _SP = SparseArrays
     import JSON
 
+    include("core/types.jl")
     include("core/admittance_matrix.jl")
     include("core/variable.jl")
     include("core/constraint_template.jl")
@@ -26,7 +27,6 @@ module PowerModelsProtection
     include("core/expression.jl")
     include("core/ref.jl")
     include("core/objective.jl")
-    include("core/types.jl")
     include("core/solution.jl")
 
     include("data_model/units.jl")

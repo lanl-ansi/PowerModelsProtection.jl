@@ -48,6 +48,11 @@ function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{S
             else
                 model = 1
             end
+            if haskey(dss_obj, "phases")
+                phases = dss_obj["phases"]
+            else
+                phases = 3
+            end
             ncnd = length(solar["connections"]) >= 3 ? 3 : 1
             solar["i_max"] = fill(1/vminpu * kva / (ncnd/sqrt(3)*dss_obj["kv"]), ncnd)
             solar["solar_max"] = irradiance*pmpp
@@ -57,8 +62,16 @@ function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{S
             solar["vminpu"] = vminpu
             solar["type"] = "solar"
             solar["pv_model"] = model
-            solar["transformer"] = false
             solar["grid_forming"] = false
+            if model == 1
+                solar["response"] = ConstantPAtPF
+            elseif model == 2
+                solar["response"] = ConstantI
+            elseif model == 3
+                solar["response"] = ConstantPQ
+            end
+            solar["phases"] = phases
+            solar["element"] = SolarElement
         end
     end
 end
@@ -69,18 +82,25 @@ function _dss2eng_load_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{St
     if haskey(data_eng, "load")
         for (id, load) in data_eng["load"]
             dss_obj = data_dss["load"][id]
+            defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
             if haskey(dss_obj, "vminpu")
                 vminpu = dss_obj["vminpu"]
             else
-                vminpu = .95
+                vminpu = defaults["vminpu"]
             end
             if haskey(dss_obj, "vmaxpu")
                 vmaxpu = dss_obj["vmaxpu"]
             else
-                vmaxpu = 1.05
+                vmaxpu = defaults["vmaxpu"]
+            end
+            if haskey(dss_obj, "phases")
+                phases = dss_obj["phases"]
+            else
+                phases = defaults["phases"]
             end
             load["vminpu"] = vminpu
             load["vmaxpu"] = vmaxpu
+            load["phases"] = phases
             if load["model"] == _PMD.IMPEDANCE
                 load["response"] = ConstantZ
             elseif load["model"] == _PMD.POWER
@@ -90,6 +110,7 @@ function _dss2eng_load_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{St
             elseif load["model"] == _PMD.ZIP
                 load["response"] = ConstantZIP
             end
+            load["element"] = LoadElement
         end
     end
 end
@@ -99,13 +120,28 @@ end
 function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
     if haskey(data_eng, "transformer")
         for (id, transformer) in data_eng["transformer"]
-            if transformer["configuration"] != _PMD.ConnConfig[_PMD.WYE, _PMD.WYE] # need to fix combining single phase into 3 phase 
-                dss_obj = data_dss["transformer"][id]
-                if haskey(dss_obj, "leadlag")
-                    transformer["leadlag"] = dss_obj["leadlag"]
+            dss_obj = data_dss["transformer"][id]
+            defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
+            if haskey(dss_obj, "leadlag")
+                leadlag = dss_obj["leadlag"]
+            else
+                if haskey(defaults, "leadlag")
+                    leadlag = defaults["leadlag"]
                 else
-                    transformer["leadlag"] = "lag"
+                    leadlag = "lag"
                 end
+            end
+            if haskey(dss_obj, "phases")
+                phases = dss_obj["phases"]
+            else
+                phases = defaults["phases"]
+            end
+            transformer["leadlag"] = leadlag
+            transformer["phases"] = phases
+            if length(transformer["connections"]) == 2
+                transformer["element"] = Transformer2WElement
+            else
+                Nothing
             end
         end
     end
@@ -118,6 +154,13 @@ function _dss2eng_voltage_source_dynamics!(data_eng::Dict{String,<:Any}, data_ds
         for (id, voltage_source) in data_eng["voltage_source"]
             dss_obj = data_dss["vsource"][id]
             defaults = _PMD._apply_ordered_properties(_PMD._create_vsource(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
+            if haskey(dss_obj, "phases")
+                phases = dss_obj["phases"]
+            else
+                phases = defaults["phases"]
+            end
+            voltage_source["phases"] = phases
+            voltage_source["element"] = VoltageSourceElement
             if haskey(dss_obj, "r1") && haskey(dss_obj, "x1")
                 r1 = dss_obj["r1"]
                 x1 = dss_obj["x1"]
@@ -167,6 +210,7 @@ function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{Str
                 if haskey(generator["dss"], "kv")
                     generator["vnom_kv"] = generator["dss"]["kv"] / sqrt(3)
                 end
+            generator["element"] = GeneratorElement
             # if generator["dss"]["model"] == 3
             #         dss_obj = data_dss["generator"][id]
             #         _PMD._apply_like!(dss_obj, data_dss, "generator")

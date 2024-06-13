@@ -8,7 +8,11 @@ struct AdmittanceModel
     delta_i::Matrix{Complex{Float64}}
 end
 
-@enum ResponseCharateristic ConstantPQ ConstantZ ConstantI ConstantZIP ConstantPAtPF ConstantPV ConstantPFixedQ ConstantPXFixedQ ConstantPQCurrentLimited
+@enum ResponseCharateristic ConstantPQ ConstantZ ConstantI ConstantZIP ConstantPAtPF ConstantPV ConstantPFixedQ ConstantPXFixedQ ConstantPQCurrentLimited ConstantV ConstantVCurrentLimited 
+
+@enum Element VoltageSourceElement CurrentSourceElement LoadElement Transformer2WElement Transformer3WElement TransformerCenterTapElement SolarElement GeneratorElement 
+
+@enum Standard IEEE2800
 
 
 

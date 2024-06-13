@@ -382,15 +382,21 @@ end
 function _map_eng2math_mc_admittance_solar!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; pass_props::Vector{String}=String[])
     if haskey(data_math, "gen")
         for (name, gen) in data_math["gen"]
-            if occursin("solar", gen["source_id"])
+            if gen["element"] == SolarElement
                 n = length(gen["connections"]) 
-                y = zeros(n, n)
+                y = zeros(Complex{Float64}, n, n)
                 if gen["configuration"] == _PMD.WYE
                     for (i, connection) in enumerate(gen["connections"]) 
                         j = findall(x->x==4, gen["connections"])[1]
                         if connection != 4
-                            y[i,i] = 1/1e6
-                            y[j,j] = y[i,i]
+                            if gen["grid_forming"]
+                                zs = .0001 + .0005im
+                                y[i,i] = 1/zs
+                                y[j,j] = y[i,i]
+                            else 
+                                y[i,i] = 1/1e6im
+                                y[j,j] = y[i,i]
+                            end
                         end
                     end
                 end
@@ -464,7 +470,7 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
         (2,2) => [7,4],
         (2,3) => [11,6]
     )  
-    if transformer["dss"]["phases"] == 3
+    if transformer["phases"] == 3
         z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
         z_1volt= z * 3/transformer["sm_nom"][1]/1000
         z_b = [z_1volt 0 0;0 z_1volt 0;0 0 z_1volt]
@@ -519,6 +525,9 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
         end
         y_w = n*y1*transpose(n)
         p_matrix = a*y_w*transpose(a)
+        if transformer["dss"]["name"] == "xfm1"
+            Nothing
+        end
                  
         ybase = (transformer["sm_nom"][1]/3) / (transformer["tm_nom"][2]*transformer["tm_set"][2][1]/sqrt(3))^2 /1000
         if haskey(transformer["dss"], "%noloadloss")
@@ -535,7 +544,7 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
             p_matrix[8,8] += 3*shunt
         end
         transformer["p_matrix"] = p_matrix
-    elseif transformer["dss"]["phases"] == 1
+    elseif transformer["phases"] == 1
         z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
         z_1volt= z * 1/transformer["sm_nom"][1]/1000
         b = [1 ;-1]

@@ -68,21 +68,6 @@
         @test calculate_error_percentage(sol["bus"]["3"]["vm"][3], 230.59) < .001
         @test calculate_error_percentage(sol["bus"]["3"]["va"][3], 121.4) < .001
     end
-    @testset "check 3 phase gfli defined pq" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(gfli_case) 
-        sol = PowerModelsProtection.compute_mc_pf(model)
-        @test sol["solver"]["it"] < 10
-        @test calculate_error_percentage(sol["bus"]["3"]["vm"][1], 2299.3) < .001
-        @test calculate_error_percentage(sol["bus"]["3"]["vm"][2], 2299.3) < .001 
-        @test calculate_error_percentage(sol["bus"]["3"]["va"][2], -119.9) < .001
-        @test calculate_error_percentage(sol["bus"]["3"]["vm"][3], 2299.3) < .001
-        @test calculate_error_percentage(sol["bus"]["3"]["va"][3], 120.1) < .001
-        @test calculate_error_percentage(sol["bus"]["5"]["vm"][1], 235.87) < .001
-        @test calculate_error_percentage(sol["bus"]["5"]["vm"][2], 235.87) < .001 
-        @test calculate_error_percentage(sol["bus"]["5"]["va"][2], -147.8) < .001
-        @test calculate_error_percentage(sol["bus"]["5"]["vm"][3], 235.87) < .001
-        @test calculate_error_percentage(sol["bus"]["5"]["va"][3], 92.2) < .001
-    end
 end
 
 

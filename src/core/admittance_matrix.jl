@@ -125,9 +125,9 @@ function add_mc_2w_transformer_p_matrix!(transformer::Dict{String,<:Any}, data::
                 t_bus = transformer["t_bus"]
                 for (_j, j) in enumerate(transformer["t_connections"])
                     if haskey(data["admittance_map"], (t_bus, j))
-                        if transformer["dss"]["phases"] == 3
+                        if transformer["phases"] == 3
                             haskey(admit_matrix, (data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])) ? admit_matrix[(data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])] += transformer["p_matrix"][_i,_j+4] : admit_matrix[(data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])] = transformer["p_matrix"][_i,_j+4]
-                        elseif transformer["dss"]["phases"] == 1
+                        elseif transformer["phases"] == 1
                             haskey(admit_matrix, (data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])) ? admit_matrix[(data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])] += transformer["p_matrix"][_i,_j+2] : admit_matrix[(data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])] = transformer["p_matrix"][_i,_j+2]
                         end
                     end
@@ -139,9 +139,9 @@ function add_mc_2w_transformer_p_matrix!(transformer::Dict{String,<:Any}, data::
             if haskey(data["admittance_map"], (t_bus, i))
                 for (_j, j) in enumerate(transformer["t_connections"])
                     if haskey(data["admittance_map"], (t_bus, j))
-                        if transformer["dss"]["phases"] == 3
+                        if transformer["phases"] == 3
                             haskey(admit_matrix, (data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])) ? admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])] += transformer["p_matrix"][_i+4,_j+4] : admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])] = transformer["p_matrix"][_i+4,_j+4]
-                        elseif transformer["dss"]["phases"] == 1
+                        elseif transformer["phases"] == 1
                             haskey(admit_matrix, (data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])) ? admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])] += transformer["p_matrix"][_i+2,_j+2] : admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])] = transformer["p_matrix"][_i+2,_j+2]
                         end
                     end
@@ -149,9 +149,9 @@ function add_mc_2w_transformer_p_matrix!(transformer::Dict{String,<:Any}, data::
                 f_bus = transformer["f_bus"]
                 for (_j, j) in enumerate(transformer["f_connections"])
                     if haskey(data["admittance_map"], (f_bus, j))
-                        if transformer["dss"]["phases"] == 3
+                        if transformer["phases"] == 3
                             haskey(admit_matrix, (data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])) ? admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])] += transformer["p_matrix"][_i+4,_j] : admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])] = transformer["p_matrix"][_i+4,_j]
-                        elseif transformer["dss"]["phases"] == 1
+                        elseif transformer["phases"] == 1
                             haskey(admit_matrix, (data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])) ? admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])] += transformer["p_matrix"][_i+2,_j] : admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])] = transformer["p_matrix"][_i+2,_j]
                         end
                     end
@@ -279,32 +279,55 @@ end
 """
 function build_mc_current_vector(data::Dict{String,<:Any}, v::Matrix{ComplexF64})
     i = zeros(Complex{Float64}, length(keys(data["admittance_type"])), 1)
-# TODO look at models for gen and how they are defined
+    # TODO look at models for gen and how they are defined
     for (_, gen) in data["gen"]
-if occursin("voltage_source.", gen["source_id"])
+        if gen["element"] == SolarElement
+            if gen["gen_status"] == 1 && gen["grid_forming"]
+                bus = data["bus"][string(gen["gen_bus"])]
+                n = 3 #TODO fix when 4 is included
+                p_matrix = zeros(Complex{Float64}, n, n)
+                va = [0 -2*pi/3 2*pi/3]
+                for i in gen["connections"]
+                    if i != 4
+                        v[i,1] = bus["vbase"] * data["settings"]["voltage_scale_factor"] * exp(1im * va[i])
+                        for j in gen["connections"]
+                            if j != 4
+                                p_matrix[i,j] = gen["p_matrix"][i,j]
+                            end
+                        end
+                    end
+                end
+                i_update = p_matrix * v
+                for (_j, j) in enumerate(gen["connections"])
+                    if (gen["gen_bus"], j) in keys(data["admittance_map"])
+                        i[data["admittance_map"][(gen["gen_bus"], j)],1] = i_update[_j,1]
+                    end
+                end
+            end
+        elseif gen["element"] == VoltageSourceElement
             if gen["gen_status"] == 1
-        bus = data["bus"][string(gen["gen_bus"])]
-        n = 3 #TODO fix when 4 is included
-        p_matrix = zeros(Complex{Float64}, n, n)
-        v = zeros(Complex{Float64}, n, 1)
-        for i in gen["connections"]
-            if i != 4
-                v[i,1] = bus["vm"][i] * data["settings"]["voltage_scale_factor"] * exp(1im * bus["va"][i] * pi/180)
-                for j in gen["connections"]
-                    if j != 4
-                        p_matrix[i,j] = gen["p_matrix"][i,j]
+                bus = data["bus"][string(gen["gen_bus"])]
+                n = 3 #TODO fix when 4 is included
+                p_matrix = zeros(Complex{Float64}, n, n)
+                _v = zeros(Complex{Float64}, n, 1)
+                for i in gen["connections"]
+                    if i != 4
+                        _v[i,1] = bus["vm"][i] * data["settings"]["voltage_scale_factor"] * exp(1im * bus["va"][i] * pi/180)
+                        for j in gen["connections"]
+                            if j != 4
+                                p_matrix[i,j] = gen["p_matrix"][i,j]
+                            end
+                        end
+                    end
+                end
+                i_update = p_matrix * _v
+                for (_j, j) in enumerate(gen["connections"])
+                    if (gen["gen_bus"], j) in keys(data["admittance_map"])
+                        i[data["admittance_map"][(gen["gen_bus"], j)],1] = i_update[_j,1]
                     end
                 end
             end
         end
-                i_update = p_matrix * v
-        for (_j, j) in enumerate(gen["connections"])
-            if (gen["gen_bus"], j) in keys(data["admittance_map"])
-                i[data["admittance_map"][(gen["gen_bus"], j)],1] = i_update[_j,1]
-            end
-        end
-    end
- end
     end
     return i
 end
@@ -338,6 +361,7 @@ end
 function calc_mc_delta_current_control_gfmi!(gen, delta_i, v, data)
     bus = gen["gen_bus"]
     v_solar = [gen["vg"][1]; gen["vg"][1]*exp(-2im/3*pi); gen["vg"][1]*exp(2im/3*pi)]
+    i_vsource = gen["vs_matrix"][1:3, 1:3] * v_solar
     pg = gen["pg"]
     haskey(gen, "qg") ? qg = gen["qg"] : qg = gen["pg"].*0.0
     s = pg .+ 1im .* qg
@@ -368,6 +392,33 @@ function update_mc_delta_current_gfmi_control!(delta_i, v, data)
             if gen["grid_forming"]
                 if gen["pv_model"] == 4
                     update_mc_delta_current_gfmi_control_vbalance!(gen, delta_i, v, data) 
+                end
+            end
+        end
+    end
+end
+
+
+function update_mc_delta_current_regulator_control!(delta_i, v, data)
+    for (_, transformer) in data["transformer"]
+        if haskey(transformer, "controls")
+            if transformer["phases"] == 1
+                f_bus = transformer["f_bus"]
+                t_bus = transformer["t_bus"]
+                v_regulator = zeros(Complex{Float64}, 2, 1)
+                y = transformer["p_matrix"][3:4,3:4]
+                n = transformer["f_connections"][1]
+                if haskey(data["admittance_map"], (f_bus, n)) && haskey(data["admittance_map"], (t_bus, n))
+                    v_regulator[1, 1] = v[data["admittance_map"][(f_bus, n)], 1]
+                    v_regulator[2, 1] = v[data["admittance_map"][(t_bus, n)], 1]
+                    i_regulator = y * v_regulator
+                    ptratio = transformer["controls"]["ptratio"][2]
+                    ctprim = transformer["controls"]["ctprim"][2]
+                    z_volts = transformer["controls"]["r"][2] + 1im * transformer["controls"]["x"][2]
+                    v_pt = v[data["admittance_map"][(t_bus, n)], 1] ./ ptratio
+                    band = transformer["controls"]["band"][2]
+                    z_load = z_volts ./ 5 
+                    v_reg = v_pt .- z_load * i_regulator[2] ./ (ctprim/5)
                 end
             end
         end
@@ -577,13 +628,11 @@ end
 
 function build_mc_delta_current_inverter!(delta_i, v, data, z_matrix)
     for (_, gen) in data["gen"]
-        if occursin("solar.", gen["source_id"])
-            if gen["pv_model"] == 1
-                if gen["grid_forming"]
-                    calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
-                else
-                    calc_mc_delta_current_gfli!(gen, delta_i, v, data)
-                end
+        if gen["element"] == SolarElement
+            if gen["grid_forming"]           
+                calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
+            else
+                calc_mc_delta_current_gfli!(gen, delta_i, v, data)
             end
         end
     end
@@ -591,40 +640,75 @@ end
 
 
 function calc_mc_delta_current_gfli!(gen, delta_i, v, data)
-    bus = gen["gen_bus"]
-    pg = gen["pg"]
-    haskey(gen, "qg") ? qg = gen["qg"] : qg = gen["pg"].*0.0
-    s = (pg .+ 1im .* qg) .* data["settings"]["power_scale_factor"]
-    if gen["configuration"] == _PMD.WYE
-        if gen["balanced"]
-            v_solar = zeros(Complex{Float64}, length(s), 1)
-            for (_j, j) in enumerate(gen["connections"])
-                if haskey(data["admittance_map"], (bus, j))
-                    v_solar[_j, 1] = v[data["admittance_map"][(bus, j)], 1]
+    if gen["response"] == ConstantPAtPF
+        bus = data["bus"]["$(gen["gen_bus"])"]
+        pg = gen["pg"]
+        haskey(gen, "qg") ? qg = gen["qg"] : qg = gen["pg"].*0.0
+        s = (pg .+ 1im .* qg) .* data["settings"]["power_scale_factor"]
+        if gen["configuration"] == _PMD.WYE
+            if gen["balanced"]
+                v_solar = zeros(Complex{Float64}, length(s), 1)
+                v0 = zeros(Complex{Float64}, length(s), 1)
+                for (_j, j) in enumerate(gen["connections"])
+                    if haskey(data["admittance_map"], (bus["bus_i"], j))
+                        v_solar[_j, 1] = v[data["admittance_map"][(bus["bus_i"], j)], 1]
+                        if haskey(bus, "pre_fault")
+                            v0[_j, 1] = bus["pre_fault"][_j]
+                        else
+                            v0[_j, 1] = bus["vbase"] * data["settings"]["voltage_scale_factor"]
+                        end
+                    end
                 end
-            end
-            s_seq = s[1] 
-            v_seq = inv(_A)*v_solar
-            i_seq = conj(s_seq/v_seq[2])
-            if abs(i_seq) <= gen["i_max"][1]
-                i_inj = _A*[0;i_seq;0]
-            else
-                i_inj = _A*[0;gen["i_max"][1]*exp(1im*angle(i_seq));0]
-            end
-            for (_j, j) in enumerate(gen["connections"]) 
-                if j != 4
-                    delta_i[data["admittance_map"][(bus, j)], 1] += i_inj[j] 
+                deadband = .1 * bus["vbase"] * data["settings"]["voltage_scale_factor"]
+                k = 2
+                s_seq = s[1] 
+                v_seq = inv(_A)*v_solar
+                deadband = .1 * bus["vbase"] * data["settings"]["voltage_scale_factor"]
+                if haskey(bus, "pre_fault")
+                    v0_seq = inv(_A)*v0exz
+                else
+                    v0_seq = [0.0;v0[1];0.0]
                 end
-            end
-        else
-            k = findall(x->x==4, gen["connections"])[1]
-            for (_j, j) in enumerate(gen["connections"]) 
-                if j != 4
-                    i_inj = conj(s[_j]/v[data["admittance_map"][(bus, j)], 1])
-                    if abs(i_inj) < gen["i_max"][_j]
-                        delta_i[data["admittance_map"][(bus, j)], 1] += i_inj * exp(-1im*angle(i_inj))
+                if abs(abs(v_seq[2]) - abs(v0_seq[2])) > deadband
+                    i_q = k * (abs(v_seq[2]) - abs(v0_seq[2]))/(bus["vbase"] * data["settings"]["voltage_scale_factor"])*abs(gen["pre_fault"][1])
+                    if abs(i_q) > gen["i_max"][1]
+                        i_q = i_q/abs(i_q)*gen["i_max"][1]
+                        i_p = 0.0
                     else
-                        delta_i[data["admittance_map"][(bus, j)], 1] += gen["i_max"][_j] * exp(-1im*angle(i_inj))
+                        i_p = sqrt(gen["i_max"][1]^2 - i_q^2)
+                    end
+                    if abs(v_seq[3]) > .25 * bus["vbase"] * data["settings"]["voltage_scale_factor"]
+                        i_neg = .5*gen["i_max"][1]*exp(1im*(angle(v_seq[3]) + pi/2))
+                    else
+                        i_neg = .5*abs(v_seq[3])/(bus["vbase"] * data["settings"]["voltage_scale_factor"])*gen["i_max"][1]*exp(1im*(angle(v_seq[3]) + pi/2))
+                    end
+                    i_pos_q = i_q - abs(i_neg) * sin(angle(i_neg))
+                    i_pos_r = i_p - abs(i_neg) * cos(angle(i_neg))
+                    i_seq = [0; i_pos_r + 1im*i_pos_q; i_neg]
+                    i_inj = _A*i_seq
+                else
+                    i_seq = conj(s_seq/v_seq[2])
+                    if abs(i_seq) <= gen["i_max"][1]
+                        i_inj = _A*[0;i_seq;0]
+                    else
+                        i_inj = _A*[0;gen["i_max"][1]*exp(1im*angle(i_seq));0]
+                    end
+                end
+                for (_j, j) in enumerate(gen["connections"]) 
+                    if j != 4
+                        delta_i[data["admittance_map"][(bus["bus_i"], j)], 1] += i_inj[j] 
+                    end
+                end
+            else
+                k = findall(x->x==4, gen["connections"])[1]
+                for (_j, j) in enumerate(gen["connections"]) 
+                    if j != 4
+                        i_inj = conj(s[_j]/v[data["admittance_map"][(bus, j)], 1])
+                        if abs(i_inj) < gen["i_max"][_j]
+                            delta_i[data["admittance_map"][(bus, j)], 1] += i_inj * exp(-1im*angle(i_inj))
+                        else
+                            delta_i[data["admittance_map"][(bus, j)], 1] += gen["i_max"][_j] * exp(-1im*angle(i_inj))
+                        end
                     end
                 end
             end
@@ -681,6 +765,7 @@ function update_mc_delta_current_vector(model, v)
     update_mc_delta_current_generator!(delta_i, v, model.data)
     update_mc_delta_current_load!(delta_i, v, model.data)
     update_mc_delta_current_inverter!(delta_i, v, model.data)
+    update_mc_delta_current_regulator_control!(delta_i, v, model.data)
     return _SP.sparse(delta_i)
 end
 
@@ -713,13 +798,11 @@ end
 
 function update_mc_delta_current_inverter!(delta_i, v, data)
     for (_, gen) in data["gen"]
-        if occursin("solar.", gen["source_id"])
-            if gen["pv_model"] == 1
-                if gen["grid_forming"]
-                    calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
-                else
-                    calc_mc_delta_current_gfli!(gen, delta_i, v, data)
-                end
+        if gen["element"] == SolarElement
+            if gen["grid_forming"]
+                calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
+            else
+                calc_mc_delta_current_gfli!(gen, delta_i, v, data)
             end
         end
     end

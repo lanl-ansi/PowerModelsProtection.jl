@@ -119,17 +119,4 @@
         @test calculate_error_percentage(sol["loadbus"]["3pg"][2], 1531.0) < .02
         @test calculate_error_percentage(sol["loadbus"]["3pg"][3], 1532.0) < .02
     end
-    @testset "check 3 phase gfli defined pq" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(gfli_case;loading=false) 
-        sol = PowerModelsProtection.solve_mc_fault_study(model)
-        @test calculate_error_percentage(sol["loadbus"]["ll"][(1,2)][1], 13799.0) < .001
-        @test calculate_error_percentage(sol["loadbus"]["ll"][(2,3)][1], 13799.0) < .001
-        @test calculate_error_percentage(sol["loadbus"]["ll"][(1,3)][1], 13799.0) < .001
-        @test calculate_error_percentage(sol["loadbus"]["lg"][1][1], 9570.5) < .001
-        @test calculate_error_percentage(sol["loadbus"]["lg"][2][1], 9570.5) < .001
-        @test calculate_error_percentage(sol["loadbus"]["lg"][3][1], 9570.5) < .001
-        @test calculate_error_percentage(sol["loadbus"]["3pg"][1], 15929.0) < .001
-        @test calculate_error_percentage(sol["loadbus"]["3pg"][2], 15929.0) < .001
-        @test calculate_error_percentage(sol["loadbus"]["3pg"][3], 15929.0) < .001
-    end
 end

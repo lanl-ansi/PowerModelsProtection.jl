@@ -413,7 +413,7 @@ end
 function _eng2math_link_transformer(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
     for (_, gen) in data_math["gen"]
         if haskey(gen, "type")
-            if gen["type"] == "solar"
+            if gen["element"] == SolarElement
                 # TODO adds transformer need to add for when transformer key set to false
                 for (id, transformer) in data_math["transformer"]
                     if transformer["f_bus"] == gen["gen_bus"] || transformer["t_bus"] == gen["gen_bus"]
