@@ -504,31 +504,39 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
                         n[i+1,j] = - n[i,j]
                     end
                 end
-                if w == 1
-                    if transformer["leadlag"] == "lead"
-                        if transformer["tm_nom"][1] > transformer["tm_nom"][2]
-                            a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
-                        else
-                            a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
-                        end
+                if transformer["configuration"][1] == _PMD.DELTA && transformer["configuration"][2] == _PMD.DELTA
+                    if w == 1
+                        a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
+                        # a[1,2] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
                     else
-                        if transformer["tm_nom"][1] > transformer["tm_nom"][2]
-                            a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
-                        else
-                            a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
-                        end
+                        a[5,3] = a[5,12] = a[6,4] = a[6,7] = a[7,8] = a[7,11] = 1
                     end
                 else
-                    a[5,3] = a[6,7] = a[7,11] = a[8,4] = a[8,8] = a[8,12] = 1  # wrong
+                    if w == 1
+                        if transformer["leadlag"] == "lead"
+                            if transformer["tm_nom"][1] > transformer["tm_nom"][2]
+                                a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
+                            else
+                                a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
+                            end
+                        else
+                            if transformer["tm_nom"][1] > transformer["tm_nom"][2]
+                                a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
+                            else
+                                a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
+                            end
+                        end
+                    else
+                        if transformer["configuration"][1] == _PMD.DELTA 
+                            a[5,4] = a[5,7] = a[6,8] = a[6,11] = a[7,12] = a[7,3] = 1
+                            # a[5,3] = a[5,12] = a[6,4] = a[6,7] = a[7,8] = a[7,11] = 1  
+                        end
+                    end
                 end
             end
         end
         y_w = n*y1*transpose(n)
         p_matrix = a*y_w*transpose(a)
-        if transformer["dss"]["name"] == "xfm1"
-            Nothing
-        end
-                 
         ybase = (transformer["sm_nom"][1]/3) / (transformer["tm_nom"][2]*transformer["tm_set"][2][1]/sqrt(3))^2 /1000
         if haskey(transformer["dss"], "%noloadloss")
             shunt = (transformer["g_sh"] + 1im * transformer["b_sh"])*ybase
@@ -543,6 +551,15 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
             p_matrix[8,7] -= shunt
             p_matrix[8,8] += 3*shunt
         end
+        z_float = 1e-6
+        p_matrix[1,1] += z_float
+        p_matrix[2,2] += z_float
+        p_matrix[3,3] += z_float
+        # p_matrix[4,4] += z_float
+        p_matrix[5,5] += z_float
+        p_matrix[6,6] += z_float
+        p_matrix[7,7] -= z_float
+        # p_matrix[8,8] += z_float
         transformer["p_matrix"] = p_matrix
     elseif transformer["phases"] == 1
         z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
