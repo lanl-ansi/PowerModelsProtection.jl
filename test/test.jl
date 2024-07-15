@@ -1,19 +1,19 @@
 
 
-using PowerModelsProtection
+# using PowerModelsProtection
 
-import PowerModels
-import PowerModelsDistribution
+# import PowerModels
+# import PowerModelsDistribution
 
-import Ipopt
+# import Ipopt
 
-const PMD = PowerModelsDistribution
-const PM = PowerModels
+# const PMD = PowerModelsDistribution
+# const PM = PowerModels
 
-PowerModels.silence()
-PowerModelsDistribution.silence!()
+# PowerModels.silence()
+# PowerModelsDistribution.silence!()
 
-ipopt_solver = optimizer_with_attributes(Ipopt.Optimizer, "tol"=>1e-6, "print_level"=>0)
+# ipopt_solver = optimizer_with_attributes(Ipopt.Optimizer, "tol"=>1e-6, "print_level"=>0)
 
 
 # t = @elapsed begin
@@ -33,6 +33,32 @@ ipopt_solver = optimizer_with_attributes(Ipopt.Optimizer, "tol"=>1e-6, "print_le
 
 
 # data = parse_file("../test/data/dist/ut_trans_2w_dy_lead.dss")
-data = parse_file("../test/data/dist/case3_gen_wye.dss")
-model = PowerModelsProtection.instantiate_mc_admittance_model(data) 
-sol = PowerModelsProtection.compute_mc_pf(model)
+# data = parse_file("../test/data/dist/case3_gen_wye.dss")
+# model = PowerModelsProtection.instantiate_mc_admittance_model(data) 
+# sol = PowerModelsProtection.compute_mc_pf(model)
+
+
+using PowerModelsProtection
+
+import PowerModels
+import PowerModelsDistribution
+
+import Ipopt
+
+using Printf
+
+const PMD = PowerModelsDistribution
+
+PowerModelsDistribution.silence!()
+
+ipopt_solver = optimizer_with_attributes(Ipopt.Optimizer, "tol"=>1e-6, "print_level"=>0)
+
+data = parse_file("../test/data/dist/gfmi_test.dss")
+
+
+data["solar"]["pv1"]["fault_standard"] = {
+    "model" => IEEE2800,
+    "k" => 2,
+}
+
+data_math = transform_admittance_data_model(data)

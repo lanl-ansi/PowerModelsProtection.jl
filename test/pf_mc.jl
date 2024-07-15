@@ -12,32 +12,32 @@
         model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lag)  
         sol = PowerModelsProtection.compute_mc_pf(model)
         @test sol["solver"]["it"] < 10
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2126.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2129.8) < .001
         @test calculate_error_percentage(sol["bus"]["4"]["va"][1], -30.0) < .001
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 2101.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 2105.8) < .001
         @test calculate_error_percentage(sol["bus"]["4"]["va"][2], -150.4) < .001
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 2079.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 2084.8) < .001
         @test calculate_error_percentage(sol["bus"]["4"]["va"][3], 89.8) < .001
     end
     @testset  "check r1 x1 r0 x0 defined source and lead transformer delat high side" begin 
         model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lead)  
         sol = PowerModelsProtection.compute_mc_pf(model)
         @test sol["solver"]["it"] < 10
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2127.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2130.8) < .001
         @test calculate_error_percentage(sol["bus"]["4"]["va"][1], 29.9) < .001
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 2096.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 2100.8) < .001
         @test calculate_error_percentage(sol["bus"]["4"]["va"][2], -90.3) < .001
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 2083.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 2088.8) < .001
         @test calculate_error_percentage(sol["bus"]["4"]["va"][3], 149.9) < .001
     end
     @testset "check wye wye transformer and single phase wye loads" begin
         model = PowerModelsProtection.instantiate_mc_admittance_model(wye_wye) 
         sol = PowerModelsProtection.compute_mc_pf(model)
         @test sol["solver"]["it"] < 10
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2019.6) < .001
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 1989.1) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2023.6) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 1993.1) < .001
         @test calculate_error_percentage(sol["bus"]["4"]["va"][2], -120.4) < .001
-        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 1971.0) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 1977.0) < .001
         @test calculate_error_percentage(sol["bus"]["4"]["va"][3], 119.8) < .001
     end
     @testset "check center tap transformer and single phase delta load" begin

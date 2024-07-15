@@ -55,6 +55,7 @@ function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{S
             end
             ncnd = length(solar["connections"]) >= 3 ? 3 : 1
             solar["i_max"] = fill(1/vminpu * kva / (ncnd/sqrt(3)*dss_obj["kv"]), ncnd)
+            solar["i_nom"] =  kva / (ncnd/sqrt(3)*dss_obj["kv"])
             solar["solar_max"] = irradiance*pmpp
             solar["pf"] = pf
             solar["kva"] = kva

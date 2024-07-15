@@ -189,18 +189,18 @@ end
 
 
 function compute_mc_pf(model::AdmittanceModel)
-    z = _SP.sparse(model.z)
-    i = _SP.sparse(model.i)
-    v = _SP.sparse(model.v)
-    delta_i_control = _SP.sparse(model.delta_i_control)
-    delta_i = _SP.sparse(model.delta_i)
-    max_it = 10
+    y = model.y
+    i = model.i
+    v = model.v
+    delta_i_control = model.delta_i_control
+    delta_i = model.delta_i
+    max_it = 2
     it_pf = 0
     _i = i + delta_i_control + delta_i
     _v = deepcopy(v)
     last_v = deepcopy(v)
     while it_pf != max_it
-        _v = z*_i
+        _v = y \ _i
         if maximum((abs.(_v-last_v))) < .0001
             break
         else
@@ -208,7 +208,7 @@ function compute_mc_pf(model::AdmittanceModel)
             it_control = 0
             _i = i + _delta_i_control + delta_i
             while it_control != max_it
-                __v = z*_i
+                __v = y \ _i
                 if maximum((abs.(__v-_v))) < .0001
                     _v = __v
                     break
@@ -230,18 +230,18 @@ end
 
 
 function compute_mc_pf(y, model::AdmittanceModel)
-    z = _SP.sparse(inv(y)) 
-    i = _SP.sparse(model.i)
-    v = _SP.sparse(model.v)
-    delta_i_control = _SP.sparse(model.delta_i_control)
-    delta_i = _SP.sparse(model.delta_i)
+    y = _SP.sparse(y)
+    i = model.i
+    v = model.v
+    delta_i_control = model.delta_i_control
+    delta_i = model.delta_i
     max_it = 10
     it_pf = 0
     _i = i + delta_i_control + delta_i
     _v = deepcopy(v)
     last_v = deepcopy(v)
     while it_pf != max_it
-        _v = z*_i
+        _v = y \ _i
         if maximum((abs.(_v-last_v))) < .0001
             break
         else
@@ -249,7 +249,7 @@ function compute_mc_pf(y, model::AdmittanceModel)
             it_control = 0
             _i = i + _delta_i_control + delta_i
             while it_control != max_it
-                __v = z*_i
+                __v = y \ _i
                 if maximum((abs.(__v-_v))) < .0001
                     _v = __v
                     break

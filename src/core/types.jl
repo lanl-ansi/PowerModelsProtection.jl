@@ -12,7 +12,7 @@ end
 
 @enum Element VoltageSourceElement CurrentSourceElement LoadElement Transformer2WElement Transformer3WElement TransformerCenterTapElement SolarElement GeneratorElement 
 
-@enum Standard IEEE2800
+@enum Standard IEEE2800 KFactor
 
 
 

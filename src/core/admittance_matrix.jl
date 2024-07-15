@@ -1,5 +1,5 @@
 
-function build_mc_admittance_matrix(data::Dict{String,<:Any};loading=loading)
+function build_mc_admittance_matrix(data::Dict{String,<:Any}; loading=loading, )
     add_mc_admittance_map!(data)
     admit_matrix = Dict{Tuple,Complex{Float64}}()
     add_mc_generator_p_matrix!(data, admit_matrix)
@@ -382,7 +382,7 @@ function update_mc_delta_current_control_vector(model, v)
     (n, m) = size(v)
     delta_i = zeros(Complex{Float64}, n, 1)
     update_mc_delta_current_gfmi_control!(delta_i, v, model.data)
-    return _SP.sparse(delta_i)
+    return delta_i
 end
 
 
@@ -645,71 +645,65 @@ function calc_mc_delta_current_gfli!(gen, delta_i, v, data)
         pg = gen["pg"]
         haskey(gen, "qg") ? qg = gen["qg"] : qg = gen["pg"].*0.0
         s = (pg .+ 1im .* qg) .* data["settings"]["power_scale_factor"]
-        if gen["configuration"] == _PMD.WYE
-            if gen["balanced"]
-                v_solar = zeros(Complex{Float64}, length(s), 1)
-                v0 = zeros(Complex{Float64}, length(s), 1)
-                for (_j, j) in enumerate(gen["connections"])
-                    if haskey(data["admittance_map"], (bus["bus_i"], j))
-                        v_solar[_j, 1] = v[data["admittance_map"][(bus["bus_i"], j)], 1]
-                        if haskey(bus, "pre_fault")
-                            v0[_j, 1] = bus["pre_fault"][_j]
-                        else
-                            v0[_j, 1] = bus["vbase"] * data["settings"]["voltage_scale_factor"]
-                        end
-                    end
-                end
-                deadband = .1 * bus["vbase"] * data["settings"]["voltage_scale_factor"]
-                k = 2
-                s_seq = s[1] 
-                v_seq = inv(_A)*v_solar
-                deadband = .1 * bus["vbase"] * data["settings"]["voltage_scale_factor"]
+        v_solar = zeros(Complex{Float64}, length(s), 1)
+        v0 = zeros(Complex{Float64}, length(s), 1)
+        for (_j, j) in enumerate(gen["connections"])
+            if haskey(data["admittance_map"], (bus["bus_i"], j))
+                v_solar[_j, 1] = v[data["admittance_map"][(bus["bus_i"], j)], 1]
                 if haskey(bus, "pre_fault")
-                    v0_seq = inv(_A)*v0
+                    v0[_j, 1] = bus["pre_fault"][_j]
                 else
-                    v0_seq = [0.0;v0[1];0.0]
+                    v0[_j, 1] = bus["vbase"] * data["settings"]["voltage_scale_factor"]
                 end
-                if abs(abs(v_seq[2]) - abs(v0_seq[2])) > deadband
-                    i_q = k * (abs(v_seq[2]) - abs(v0_seq[2]))/(bus["vbase"] * data["settings"]["voltage_scale_factor"])*abs(gen["pre_fault"][1])
-                    if abs(i_q) > gen["i_max"][1]
-                        i_q = i_q/abs(i_q)*gen["i_max"][1]
-                        i_p = 0.0
+            end
+        end
+        if gen["fault_model"]["standard"] == IEEE2800
+            v_012 = inv(_A) * v_solar
+            if gen["fault_model"]["priority"] == "active"
+                i_pq = conj(s[1]/v_012[2])
+                if abs(i_pq) < gen["i_max"][1]
+                    if abs(v_012[2]) < (1-gen["fault_model"]["ir1_dead_band"]) * bus["vbase"] * data["settings"]["voltage_scale_factor"] 
+                        delta_v1 = abs(v_012[2])/(bus["vbase"] * data["settings"]["voltage_scale_factor"]) - 1 + gen["fault_model"]["ir1_dead_band"]
+                        ir1 = gen["fault_model"]["delta_ir1"] * delta_v1 * gen["i_nom"]
                     else
-                        i_p = sqrt(gen["i_max"][1]^2 - i_q^2)
+                        ir1 = 0.0
                     end
-                    if abs(v_seq[3]) > .25 * bus["vbase"] * data["settings"]["voltage_scale_factor"]
-                        i_neg = .5*gen["i_max"][1]*exp(1im*(angle(v_seq[3]) + pi/2))
+                    if abs(v_012[3]) > gen["fault_model"]["ir2_dead_band"] * bus["vbase"] * data["settings"]["voltage_scale_factor"]
+                        delta_v2 = abs(v_012[3])/(bus["vbase"] * data["settings"]["voltage_scale_factor"]) - gen["fault_model"]["ir2_dead_band"] 
+                        ir2 = gen["fault_model"]["delta_ir2"] * delta_v2 * gen["i_nom"]
                     else
-                        i_neg = .5*abs(v_seq[3])/(bus["vbase"] * data["settings"]["voltage_scale_factor"])*gen["i_max"][1]*exp(1im*(angle(v_seq[3]) + pi/2))
+                        ir2 = 0.0
                     end
-                    i_pos_q = i_q - abs(i_neg) * sin(angle(i_neg))
-                    i_pos_r = i_p - abs(i_neg) * cos(angle(i_neg))
-                    i_seq = [0; i_pos_r + 1im*i_pos_q; i_neg]
-                    i_inj = _A*i_seq
+                    iq = sqrt(gen["i_max"][1]^2 - abs(i_pq)^2)
+                    if ir1 + ir2 > iq
+                        delta_iq = iq - (ir1 + ir2)
+                        ir1 = ir1 - delta_iq/2
+                        ir2 = ir2 - delta_iq/2
+                    end
+                    i_inj = _A * [0; (i_pq+1im*ir1); (1im*ir2)*exp(1im*angle(v_012[3]))]
                 else
-                    i_seq = conj(s_seq/v_seq[2])
-                    if abs(i_seq) <= gen["i_max"][1]
-                        i_inj = _A*[0;i_seq;0]
-                    else
-                        i_inj = _A*[0;gen["i_max"][1]*exp(1im*angle(i_seq));0]
-                    end
+                    i_inj = _A * [0;gen["i_max"][1]*exp(1im*angle(v_012[2])); 0.0]
+                end
+            elseif gen["fault_model"]["priority"] == "reactive"
+                i_pq = conj(s[1]/v_012[2])
+                if abs(v_012[2]) < (1-gen["fault_model"]["ir1_dead_band"]) * bus["vbase"] * data["settings"]["voltage_scale_factor"] 
+                    delta_v1 = abs(v_012[2])/(bus["vbase"] * data["settings"]["voltage_scale_factor"]) - 1 + gen["fault_model"]["ir1_dead_band"]
+                    ir1 = gen["fault_model"]["delta_ir1"] * delta_v1 * gen["i_nom"]
+                else
+                    ir1 = 0.0
+                end
+                if abs(v_012[3]) > gen["fault_model"]["ir2_dead_band"] * bus["vbase"] * data["settings"]["voltage_scale_factor"]
+                    delta_v2 = abs(v_012[3])/(bus["vbase"] * data["settings"]["voltage_scale_factor"]) - gen["fault_model"]["ir2_dead_band"] 
+                    ir2 = gen["fault_model"]["delta_ir2"] * delta_v2 * gen["i_nom"]
+                else
+                    ir2 = 0.0
+                end
+                i_p = min(real(i_pq), sqrt(gen["i_max"][1]^2 - (imag(i_pq) + ir1 + ir2)^2))
+                i_inj = _A * [0; i_p+1im*(imag(i_pq) + ir1); (1im*ir2)*exp(1im*angle(v_012[3]))]
                 end
                 for (_j, j) in enumerate(gen["connections"]) 
                     if j != 4
                         delta_i[data["admittance_map"][(bus["bus_i"], j)], 1] += i_inj[j] 
-                    end
-                end
-            else
-                k = findall(x->x==4, gen["connections"])[1]
-                for (_j, j) in enumerate(gen["connections"]) 
-                    if j != 4
-                        i_inj = conj(s[_j]/v[data["admittance_map"][(bus, j)], 1])
-                        if abs(i_inj) < gen["i_max"][_j]
-                            delta_i[data["admittance_map"][(bus, j)], 1] += i_inj * exp(-1im*angle(i_inj))
-                        else
-                            delta_i[data["admittance_map"][(bus, j)], 1] += gen["i_max"][_j] * exp(-1im*angle(i_inj))
-                        end
-                    end
                 end
             end
         end
@@ -759,6 +753,7 @@ function calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
     end
 end
 
+
 function update_mc_delta_current_vector(model, v)
     (n, m) = size(v)
     delta_i = zeros(Complex{Float64}, n, 1)
@@ -766,7 +761,7 @@ function update_mc_delta_current_vector(model, v)
     update_mc_delta_current_load!(delta_i, v, model.data)
     update_mc_delta_current_inverter!(delta_i, v, model.data)
     update_mc_delta_current_regulator_control!(delta_i, v, model.data)
-    return _SP.sparse(delta_i)
+    return delta_i
 end
 
 

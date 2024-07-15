@@ -194,7 +194,7 @@ function _solution_protection!(ref::Dict{Symbol,Any},sol::Dict{String,<:Any})
 end
 
 
-function solution_mc_pf(v::SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, it::Int64, last_delta::Float64, i::SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, model)
+function solution_mc_pf(v::Matrix{ComplexF64}, it::Int64, last_delta::Float64, i::Matrix{ComplexF64}, model::AdmittanceModel)
     solution = Dict{String, Any}()
     solution["bus"] = Dict{String, Any}()
     for (indx,bus) in model.data["bus"]
