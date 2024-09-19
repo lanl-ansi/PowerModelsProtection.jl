@@ -1,5 +1,5 @@
 # 3-bus
-bus_example3 = parse_file("../test/data/dist/3Bus_example.dss")
+bus_example3 = parse_file("../test/data/dist/3bus_example.dss")
 delta_wye_lag = parse_file("../test/data/dist/ut_trans_2w_dy_lag.dss")
 delta_wye_lead = parse_file("../test/data/dist/ut_trans_2w_dy_lead.dss")
 wye_wye = parse_file("../test/data/dist/ut_trans_2w_yy.dss")
