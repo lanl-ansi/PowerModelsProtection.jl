@@ -2,7 +2,9 @@
 
 ## staged
 
-- none
+- Fixed solver and removed the z-matrix to handle larger problems 
+- The solver was updated to be more stable with larger problems 
+- Started to add fault controls to inverters for positive and zero sequence currents  
 
 ## v0.5.2
 
