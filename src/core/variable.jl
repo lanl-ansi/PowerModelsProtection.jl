@@ -44,8 +44,8 @@ function variable_gen(pm::_PM.AbstractIVRModel; nw::Int=nw_id_default, bounded::
             JuMP.set_upper_bound(cig, cmax)
         end
 
-        pg[i] = JuMP.@NLexpression(pm.model, vr * crg  + vi * cig)
-        qg[i] = JuMP.@NLexpression(pm.model, vi * crg  - vr * cig)
+        pg[i] = JuMP.@expression(pm.model, vr * crg  + vi * cig)
+        qg[i] = JuMP.@expression(pm.model, vi * crg  - vr * cig)
     end
 
     _PM.var(pm, nw)[:pg] = pg
