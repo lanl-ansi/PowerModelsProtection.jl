@@ -58,12 +58,12 @@ function constraint_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::Int, bu
     crg =  _PM.var(pm, n, :crg)
     cig =  _PM.var(pm, n, :cig)
 
-    JuMP.@constraint(pm.model, sum(cr[a] for a in bus_arcs)
+    JuMP.@NLconstraint(pm.model, sum(cr[a] for a in bus_arcs)
                                 ==
                                 sum(crg[g] for g in bus_gens)
                                 - sum(gs for gs in values(bus_gs)) * vr + sum(bs for bs in values(bus_bs)) * vi
                                 )
-    JuMP.@constraint(pm.model, sum(ci[a] for a in bus_arcs)
+    JuMP.@NLconstraint(pm.model, sum(ci[a] for a in bus_arcs)
                                 ==
                                 sum(cig[g] for g in bus_gens)
                                 - sum(gs for gs in values(bus_gs)) * vi - sum(bs for bs in values(bus_bs)) * vr
@@ -89,13 +89,13 @@ function constraint_fault_current_balance(pm::_PM.AbstractIVRModel, n::Int, i::I
     cfr = _PM.var(pm, n, :cfr_bus, i)
     cfi = _PM.var(pm, n, :cfi_bus, i)
 
-    JuMP.@constraint(pm.model, sum(cr[a] for a in bus_arcs)
+    JuMP.@NLconstraint(pm.model, sum(cr[a] for a in bus_arcs)
                                 ==
                                 sum(crg[g] for g in bus_gens)
                                 - sum(gs for gs in values(bus_gs)) * vr + sum(bs for bs in values(bus_bs)) * vi
                                 - cfr
                                 )
-    JuMP.@constraint(pm.model, sum(ci[a] for a in bus_arcs)
+    JuMP.@NLconstraint(pm.model, sum(ci[a] for a in bus_arcs)
                                 ==
                                 sum(cig[g] for g in bus_gens)
                                 - sum(gs for gs in values(bus_gs)) * vi - sum(bs for bs in values(bus_bs)) * vr
@@ -177,7 +177,7 @@ function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel
 
     for (idx, t) in ungrounded_terminals
         if t in fault_conns
-            JuMP.@constraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
+            JuMP.@NLconstraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
                                         + sum(crsw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
                                         + sum(crt[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
                                         ==
@@ -186,7 +186,7 @@ function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel
                                         - sum( Gt[idx,jdx]*vr[u] -Bt[idx,jdx]*vi[u] for (jdx,u) in ungrounded_terminals) # shunts
                                         - cfr[t] # faults
                                         )
-            JuMP.@constraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
+            JuMP.@NLconstraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
                                         + sum(cisw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
                                         + sum(cit[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
                                         ==
@@ -196,7 +196,7 @@ function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel
                                         - cfi[t] # faults
                                         )
         else
-            JuMP.@constraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
+            JuMP.@NLconstraint(pm.model,  sum(cr[a][t] for (a, conns) in bus_arcs if t in conns)
                                         + sum(crsw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
                                         + sum(crt[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
                                         ==
@@ -204,7 +204,7 @@ function constraint_mc_fault_current_balance(pm::_PMD.AbstractUnbalancedIVRModel
                                         - sum(crs[s][t]         for (s, conns) in bus_storage if t in conns)
                                         - sum( Gt[idx,jdx]*vr[u] -Bt[idx,jdx]*vi[u] for (jdx,u) in ungrounded_terminals) # shunts
                                         )
-            JuMP.@constraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
+            JuMP.@NLconstraint(pm.model,  sum(ci[a][t] for (a, conns) in bus_arcs if t in conns)
                                         + sum(cisw[a_sw][t] for (a_sw, conns) in bus_arcs_sw if t in conns)
                                         + sum(cit[a_trans][t] for (a_trans, conns) in bus_arcs_trans if t in conns)
                                         ==

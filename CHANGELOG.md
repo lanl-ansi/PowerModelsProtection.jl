@@ -4,10 +4,6 @@
 
 - none
 
-## v0.7.0
-
-- Upgrade to new JuMP NL interface (v1.23.2+)
-
 ## v0.6.0
 
 - Fixed solver and removed the z-matrix to handle larger problems

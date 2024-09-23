@@ -320,10 +320,10 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
         JuMP.@constraint(pm.model, (1/3)*vr[1] + ar*vr[2] - ai*vi[2] + a2r*vr[3] - a2i*vi[3] == vr_pos)
         JuMP.@constraint(pm.model, (1/3)*vi[1] + ar*vi[2] + ai*vr[2] + a2r*vi[3] + a2i*vr[3] == vi_pos)
 
-        JuMP.@constraint(pm.model, imax[1]^2 - crg_pos^2 - cig_pos^2 >= 0.0)
-        JuMP.@constraint(pm.model, (imax[1]^2 - crg_pos^2 - cig_pos^2)*z <= 0.0)
-        JuMP.@constraint(pm.model, vr_pos*crg_pos + vi_pos*cig_pos == pg[1] - pg_int*z)
-        JuMP.@constraint(pm.model, vi_pos*crg_pos - vr_pos*cig_pos == 0.0)
+        JuMP.@NLconstraint(pm.model, imax[1]^2 - crg_pos^2 - cig_pos^2 >= 0.0)
+        JuMP.@NLconstraint(pm.model, (imax[1]^2 - crg_pos^2 - cig_pos^2)*z <= 0.0)
+        JuMP.@NLconstraint(pm.model, vr_pos*crg_pos + vi_pos*cig_pos == pg[1] - pg_int*z)
+        JuMP.@NLconstraint(pm.model, vi_pos*crg_pos - vr_pos*cig_pos == 0.0)
 
     else
         z = _PMD.var(pm, nw)[:z_gfli] = JuMP.@variable(pm.model,
@@ -347,10 +347,10 @@ function constraint_mc_pq_inverter(pm::_PMD.AbstractUnbalancedIVRModel, nw::Int,
         )
 
         for (idx,c) in enumerate(connections)
-            JuMP.@constraint(pm.model, imax[idx]^2 - crg[c]^2 - cig[c]^2 >= 0.0)
-            JuMP.@constraint(pm.model, m*(imax[idx]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
-            JuMP.@constraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] == pg[idx]-z[c]*pg_int[c])
-            JuMP.@constraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] == qg[idx]-z[c]*qg_int[c])
+            JuMP.@NLconstraint(pm.model, imax[idx]^2 - crg[c]^2 - cig[c]^2 >= 0.0)
+            JuMP.@NLconstraint(pm.model, m*(imax[idx]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
+            JuMP.@NLconstraint(pm.model, vr[c]*crg[c] + vi[c]*cig[c] == pg[idx]-z[c]*pg_int[c])
+            JuMP.@NLconstraint(pm.model, vi[c]*crg[c] - vr[c]*cig[c] == qg[idx]-z[c]*qg_int[c])
         end
     end
 end
@@ -381,7 +381,7 @@ function constraint_mc_grid_forming_inverter(pm::_PMD.AbstractUnbalancedIVRModel
         # current limits
         # z = 1 -> invert in in current limiting mode
         JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax^2)
-        JuMP.@constraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
+        JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - cmax^2)*z[c] >= 0.0)
 
         # terminal voltage mag
         JuMP.@constraint(pm.model, vr[c]^2 + vi[c]^2 <= vm[idx] * (1+z[c]))
@@ -429,8 +429,8 @@ function constraint_mc_grid_formimg_inverter_impedance(pm::_PMD.AbstractUnbalanc
 
     for (idx,c) in enumerate(cnds)
         # current limits
-        JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax[c]^2)
-        JuMP.@constraint(pm.model, m*(cmax[c]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
+        JuMP.@NLconstraint(pm.model, crg[c]^2 + cig[c]^2 <= cmax[c]^2)
+        JuMP.@NLconstraint(pm.model, m*(cmax[c]^2 - crg[c]^2 - cig[c]^2)*z[c] <= 0.0)
 
         # setpoint voltage mag
         JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[idx] * (1+z[c]))
@@ -482,7 +482,7 @@ function constraint_mc_grid_formimg_inverter_virtual_impedance(pm::_PMD.Abstract
 
     for (idx,c) in enumerate(connections)
         JuMP.@constraint(pm.model, crg[c]^2 + cig[c]^2 <= imax[c]^2)
-        JuMP.@constraint(pm.model, (crg[c]^2 + cig[c]^2 - imax[c]^2)*z[c] >= 0.0)
+        JuMP.@NLconstraint(pm.model, (crg[c]^2 + cig[c]^2 - imax[c]^2)*z[c] >= 0.0)
 
         JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 >= vm[idx] * (1-z[c]))
         JuMP.@constraint(pm.model, vrstar[c]^2 + vistar[c]^2 <= vm[idx])
