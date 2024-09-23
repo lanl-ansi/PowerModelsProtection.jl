@@ -15,7 +15,7 @@ function _eng2math_fault!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<
             _PMD._apply_filter!(eng_obj, ["connections"], f)
         end
 
-        math_obj = _PMD._init_math_obj("fault", name, eng_obj, length(data_math["fault"])+1; pass_props=pass_props)
+        math_obj = _PMD._init_math_obj("fault", name, eng_obj, length(data_math["fault"]) + 1; pass_props=pass_props)
 
         math_obj["fault_bus"] = data_math["bus_lookup"][eng_obj["bus"]]
 
@@ -33,23 +33,23 @@ end
 
 "helper function to transform protection equipment objects from ENGINEERING to MATHEMATICAL data models"
 function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any})
-    map_dict = Dict{String,Any}("bus"=>Dict{String,Any}(),"branch"=>Dict{String,Any}())
-    for (_, obj) in get(data_math,"branch",Dict())
+    map_dict = Dict{String,Any}("bus" => Dict{String,Any}(), "branch" => Dict{String,Any}())
+    for (_, obj) in get(data_math, "branch", Dict())
         map_dict["branch"]["$(obj["name"])"] = obj["index"]
     end
-    for (_, obj) in get(data_math,"bus",Dict())
+    for (_, obj) in get(data_math, "bus", Dict())
         map_dict["bus"]["$(obj["name"])"] = obj["index"]
     end
     ct_map = Dict{String,Any}()
     curve_map = Dict{String,Any}()
 
     if "C_Transformers" in keys(data_eng["protection"])
-        pass_props = ["turns","element"]
-        if !haskey(data_math,"c_transformer")
+        pass_props = ["turns", "element"]
+        if !haskey(data_math, "c_transformer")
             data_math["c_transformer"] = Dict{String,Any}()
         end
-        for (name,eng_obj) in get(data_eng["protection"],"C_Transformers",Dict())
-            math_obj = _PMD._init_math_obj("c_transformer",name,eng_obj,length(data_math["c_transformer"])+1;pass_props=pass_props)
+        for (name, eng_obj) in get(data_eng["protection"], "C_Transformers", Dict())
+            math_obj = _PMD._init_math_obj("c_transformer", name, eng_obj, length(data_math["c_transformer"]) + 1; pass_props=pass_props)
             math_obj["prot_obj"] = :branch
             math_obj["element_enum"] = map_dict["branch"]["$(math_obj["element"])"]
             data_math["c_transformer"]["$(math_obj["index"])"] = math_obj
@@ -58,29 +58,29 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
                 "to" => "c_transformer.$(math_obj["index"])",
                 "unmap_function" => "_map_math2eng_protection!",
                 "apply_to_subnetworks" => true,
-                )
+            )
             )
             ct_map["$name"] = length(data_math["c_transformer"])
         end
     end
 
     if "relays" in keys(data_eng["protection"])
-        pass_props = ["TDS","TS","phase","breaker_time","shots","type","CT","CTs","trip","restraint","element2","state"]
-        if !haskey(data_math,"relay")
+        pass_props = ["TDS", "TS", "phase", "breaker_time", "shots", "type", "CT", "CTs", "trip", "restraint", "element2", "state"]
+        if !haskey(data_math, "relay")
             data_math["relay"] = Dict{String,Any}()
         end
-        for (element_name,relay_dict) in get(data_eng["protection"],"relays",Dict())
+        for (element_name, relay_dict) in get(data_eng["protection"], "relays", Dict())
             for (name, eng_obj) in relay_dict
-                math_obj = _PMD._init_math_obj("relay", name, eng_obj, length(data_math["relay"])+1; pass_props=pass_props)
+                math_obj = _PMD._init_math_obj("relay", name, eng_obj, length(data_math["relay"]) + 1; pass_props=pass_props)
                 if haskey(math_obj, "CT")
                     math_obj["ct_enum"] = ct_map["$(math_obj["CT"])"]
                 elseif haskey(math_obj, "CTs")
                     math_obj["cts_enum"] = []
-                    for i=1:length(math_obj["CTs"])
-                        push!(math_obj["cts_enum"],ct_map["$(math_obj["CTs"][i])"])
+                    for i = 1:length(math_obj["CTs"])
+                        push!(math_obj["cts_enum"], ct_map["$(math_obj["CTs"][i])"])
                     end
                 end
-                if haskey(map_dict["branch"],element_name)
+                if haskey(map_dict["branch"], element_name)
                     math_obj["prot_obj"] = :branch
                     math_obj["element_enum"] = map_dict["branch"]["$element_name"]
                 else
@@ -88,7 +88,7 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
                     math_obj["element_enum"] = map_dict["bus"]["$element_name"]
                 end
 
-                if haskey(math_obj,"element2")
+                if haskey(math_obj, "element2")
                     math_obj["element2_enum"] = map_dict["branch"]["$(math_obj["element2"])"]
                 end
                 math_obj["element"] = element_name
@@ -98,7 +98,7 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
                     "to" => "relay.$(math_obj["index"])",
                     "unmap_function" => "_map_math2eng_protection!",
                     "apply_to_subnetworks" => true,
-                    )
+                )
                 )
             end
         end
@@ -106,31 +106,31 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
 
     if "curves" in keys(data_eng["protection"])
         pass_props = ["curve_mat"]
-        if !haskey(data_math,"curve")
+        if !haskey(data_math, "curve")
             data_math["curve"] = Dict{String,Any}()
         end
-        for (name,eng_obj) in get(data_eng["protection"],"curves",Dict())
-            math_obj = _PMD._init_math_obj("curve",name,eng_obj,length(data_math["curve"])+1;pass_props=pass_props)
+        for (name, eng_obj) in get(data_eng["protection"], "curves", Dict())
+            math_obj = _PMD._init_math_obj("curve", name, eng_obj, length(data_math["curve"]) + 1; pass_props=pass_props)
             data_math["curve"]["$(math_obj["index"])"] = math_obj
             push!(data_math["map"], Dict{String,Any}(
                 "from" => name,
                 "to" => "curve.$(math_obj["index"])",
                 "unmap_function" => "_map_math2eng_protection!",
                 "apply_to_subnetworks" => true,
-                )
+            )
             )
             curve_map["$name"] = length(data_math["curve"])
         end
     end
 
     if "fuses" in keys(data_eng["protection"])
-        pass_props = ["min_melt_curve","max_clear_curve","phase"]
-        if !haskey(data_math,"fuse")
+        pass_props = ["min_melt_curve", "max_clear_curve", "phase"]
+        if !haskey(data_math, "fuse")
             data_math["fuse"] = Dict{String,Any}()
         end
-        for (line_name,fuse_dict) in get(data_eng["protection"],"fuses",Dict())
-            for (name,eng_obj) in fuse_dict
-                math_obj = _PMD._init_math_obj("fuse",name,eng_obj,length(data_math["fuse"])+1;pass_props=pass_props)
+        for (line_name, fuse_dict) in get(data_eng["protection"], "fuses", Dict())
+            for (name, eng_obj) in fuse_dict
+                math_obj = _PMD._init_math_obj("fuse", name, eng_obj, length(data_math["fuse"]) + 1; pass_props=pass_props)
                 math_obj["element"] = line_name
                 math_obj["element_enum"] = map_dict["branch"]["$line_name"]
                 if (typeof(math_obj["max_clear_curve"]) == String) || (typeof(math_obj["max_clear_curve"]) == SubString{String})
@@ -145,7 +145,7 @@ function _eng2math_protection!(data_math::Dict{String,<:Any}, data_eng::Dict{Str
                     "to" => "fuse.$(math_obj["index"])",
                     "unmap_function" => "_map_math2eng_protection!",
                     "apply_to_subnetworks" => true,
-                    )
+                )
                 )
             end
         end
@@ -157,12 +157,12 @@ end
 
 "field/values to passthrough from the ENGINEERING to MATHEMATICAL data models"
 const _pmp_eng2math_passthrough = Dict{String,Vector{String}}(
-        "generator" => String["zr", "zx", "gen_model", "xdp", "rp", "xdpp", "vnom_kv", "phases", "response", "element"],
-        "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming", "balanced", "vminpu", "transformer", "type", "pv_model", "phases", "response", "element", "fault_model", "i_nom"],
-        "voltage_source" => String["zr", "zx", "phases", "response", "element"],
-        "load" => String["vminpu", "vmaxpu", "response", "phases", "element"],
-        "transformer" => String["leadlag", "phases", "element"]
-    )
+    "generator" => String["zr", "zx", "gen_model", "xdp", "rp", "xdpp", "vnom_kv", "phases", "response", "element"],
+    "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming", "balanced", "vminpu", "transformer", "type", "pv_model", "phases", "response", "element", "fault_model", "i_nom"],
+    "voltage_source" => String["zr", "zx", "phases", "response", "element"],
+    "load" => String["vminpu", "vmaxpu", "response", "phases", "element"],
+    "transformer" => String["leadlag", "phases", "element"]
+)
 
 
 "custom version of `transform_data_model` from PowerModelsDistribution for easy model transformation"
@@ -171,11 +171,11 @@ transform_data_model(
     eng2math_extensions::Vector{<:Function}=Function[],
     make_pu_extensions::Vector{<:Function}=Function[],
     kwargs...) = _PMD.transform_data_model(
-        data;
-        eng2math_extensions=[_eng2math_fault!, _eng2math_protection!, eng2math_extensions...],
-        eng2math_passthrough=_pmp_eng2math_passthrough,
-        make_pu_extensions=[_rebase_pu_fault!, _rebase_pu_gen_dynamics!, make_pu_extensions...],
-        kwargs...)
+    data;
+    eng2math_extensions=[_eng2math_fault!, _eng2math_protection!, eng2math_extensions...],
+    eng2math_passthrough=_pmp_eng2math_passthrough,
+    make_pu_extensions=[_rebase_pu_fault!, _rebase_pu_gen_dynamics!, make_pu_extensions...],
+    kwargs...)
 
 
 "admittance model"
@@ -194,19 +194,19 @@ function transform_admittance_data_model(
     build_model::Bool=false,
     correct_network_data::Bool=true,
     kwargs...,
-    )::Dict{String,Any}
+)::Dict{String,Any}
 
     if data["method"] == "PM"
         # TODO work on transmission admittance model
     elseif data["method"] == "PMD"
         data_math = _map_eng2math_mc_admittance(
             data;
-            eng2math_extensions = [_eng2math_link_transformer, eng2math_extensions...],
+            eng2math_extensions=[_eng2math_link_transformer, eng2math_extensions...],
             # eng2math_extensions = [_eng2math_gen_model!], # TODO concat eng2math_extensions
-            eng2math_passthrough = eng2math_passthrough,
-            make_pu_extensions = make_pu_extensions,
-            global_keys = global_keys,
-            build_model = build_model,
+            eng2math_passthrough=eng2math_passthrough,
+            make_pu_extensions=make_pu_extensions,
+            global_keys=global_keys,
+            build_model=build_model,
             kwargs...
         )
 
@@ -231,7 +231,7 @@ function _map_eng2math_mc_admittance(
     global_keys::Set{String}=Set{String}(),
     build_model::Bool=false,
     kwargs...,
-    )::Dict{String,Any}
+)::Dict{String,Any}
 
     _data_eng = deepcopy(data_eng)
 
@@ -309,20 +309,20 @@ function populate_bus_voltages!(data::Dict{String,Any})
         f_bus = transformer["f_bus"]
         t_bus = transformer["t_bus"]
         if haskey(transformer, "tm_nom")
-            transformer["phases"] == 3 ? multi = 1/sqrt(3) : multi = 1
+            transformer["phases"] == 3 ? multi = 1 / sqrt(3) : multi = 1
             if !haskey(data["bus"][string(f_bus)], "vbase")
-                data["bus"][string(f_bus)]["vbase"] = transformer["tm_nom"][1]*multi
+                data["bus"][string(f_bus)]["vbase"] = transformer["tm_nom"][1] * multi
             end
             # Vector{Vector{Int}}
             if typeof(t_bus) == Vector{Int64}
                 for (indx, bus) in enumerate(t_bus)
                     if !haskey(data["bus"][string(bus)], "vbase")
-                        data["bus"][string(bus)]["vbase"] = transformer["tm_nom"][indx+1]*multi
+                        data["bus"][string(bus)]["vbase"] = transformer["tm_nom"][indx+1] * multi
                     end
                 end
             else
                 if !haskey(data["bus"][string(t_bus)], "vbase")
-                    data["bus"][string(t_bus)]["vbase"] = transformer["tm_nom"][2]*multi
+                    data["bus"][string(t_bus)]["vbase"] = transformer["tm_nom"][2] * multi
                 end
             end
         end
@@ -344,8 +344,8 @@ end
 
 function propagate_voltages!(data::Dict{String,Any})
     buses = collect(keys(data["bus"]))
-    for (i,bus) in data["bus"]
-        !haskey(bus, "vbase") ? filter!(n->n != string(i), buses) : nothing
+    for (i, bus) in data["bus"]
+        !haskey(bus, "vbase") ? filter!(n -> n != string(i), buses) : nothing
     end
 
     found = true
@@ -378,14 +378,14 @@ end
 
 function correct_grounds!(data::Dict{String,Any})
     for (i, transformer) in data["transformer"]
-        for (i,config) in enumerate(transformer["configuration"])
+        for (i, config) in enumerate(transformer["configuration"])
             if config == _PMD.WYE
                 buses = isa(transformer["dss"]["buses"], String) ? split(transformer["dss"]["buses"]) : transformer["dss"]["buses"]
                 if occursin(".1.2.3.0", buses[i])
                     if i == 2
-                        transformer["t_connections"] = [1,2,3,4]
-                        data["bus"][string(transformer["t_bus"])]["terminals"] = [1,2,3,4]
-                        data["bus"][string(transformer["t_bus"])]["grounded"] = Bool[0,0,0,1]
+                        transformer["t_connections"] = [1, 2, 3, 4]
+                        data["bus"][string(transformer["t_bus"])]["terminals"] = [1, 2, 3, 4]
+                        data["bus"][string(transformer["t_bus"])]["grounded"] = Bool[0, 0, 0, 1]
                     end
                 end
             end
