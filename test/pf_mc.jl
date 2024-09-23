@@ -1,37 +1,76 @@
-@testset "test pf" begin
-    ut_trans_2w_yy = parse_file("../test/data/dist/ut_trans_2w_yy.dss")
-    case3_unbalanced = parse_file("../test/data/dist/case3_unbalanced.dss")
-    case3_balanced_pv = parse_file("../test/data/dist/case3_balanced_pv.dss")
-    case3_balanced_multi_pv_grid_following = parse_file("../test/data/dist/case3_balanced_multi_pv_grid_following.dss")
-    case3_balanced_multi_pv_on_bus_grid_following = parse_file("../test/data/dist/case3_balanced_multi_pv_on_bus_grid_following.dss")
-
-    @testset "ivr pf ut_trans_2w_yy" begin
-        sol = solve_mc_pf(ut_trans_2w_yy, ipopt_solver; make_si=false)
-        @test isapprox.(sol["solution"]["bus"]["sourcebus"]["vr"][1], 1.0; atol=1e-4)
-        @test isapprox.(sol["solution"]["bus"]["3"]["vr"][1], 0.8745; atol=1e-4)
+@testset "power flow solver test" begin
+    @testset  "check mvasc1 mvasc3 defined source" begin 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example3) 
+        sol = PowerModelsProtection.compute_mc_pf(model)
+        @test sol["solver"]["it"] < 10
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 223.41) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][2], -120.1) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 223.41) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][3], 119.9) < .001
     end
-
-    @testset "ivr pf case3_unbalanced" begin
-        sol = solve_mc_pf(case3_unbalanced, ipopt_solver; make_si=false)
-        @test isapprox.(sol["solution"]["bus"]["sourcebus"]["vr"][1], .9959; atol=1e-4)
-        @test isapprox.(sol["solution"]["bus"]["loadbus"]["vr"][3], -0.4924; atol=1e-4)
+    @testset  "check isc3 isc1 defined source, and lag transformer delta high side" begin 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lag)  
+        sol = PowerModelsProtection.compute_mc_pf(model)
+        @test sol["solver"]["it"] < 10
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2129.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][1], -30.0) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 2105.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][2], -150.4) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 2084.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][3], 89.8) < .001
     end
-
-    @testset "ivr pf case3_balanced_pv" begin
-        sol = solve_mc_pf(case3_balanced_pv, ipopt_solver)
-        @test calculate_error_percentage(sol["solution"]["line"]["quad"]["cr_fr"][1], 89.674) < .05
-        @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cr_fr"][1], 36.637) < .05
+    @testset  "check r1 x1 r0 x0 defined source and lead transformer delat high side" begin 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lead)  
+        sol = PowerModelsProtection.compute_mc_pf(model)
+        @test sol["solver"]["it"] < 10
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2130.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][1], 29.9) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 2100.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][2], -90.3) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 2088.8) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][3], 149.9) < .001
     end
-
-    @testset "ivr pf case3_balanced_multi_pv_grid_following" begin
-        sol = solve_mc_pf(case3_balanced_multi_pv_grid_following, ipopt_solver)
-        @test calculate_error_percentage(sol["solution"]["line"]["quad"]["cr_fr"][1], 89.674) < .05
-        @test calculate_error_percentage(sol["solution"]["line"]["pv_line"]["cr_fr"][1], 36.637) < .05
-        @test calculate_error_percentage(sol["solution"]["line"]["pv2_line"]["cr_fr"][1], 36.637) < .05
+    @testset "check wye wye transformer and single phase wye loads" begin
+        model = PowerModelsProtection.instantiate_mc_admittance_model(wye_wye) 
+        sol = PowerModelsProtection.compute_mc_pf(model)
+        @test sol["solver"]["it"] < 10
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][1], 2023.6) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][2], 1993.1) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][2], -120.4) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["vm"][3], 1977.0) < .001
+        @test calculate_error_percentage(sol["bus"]["4"]["va"][3], 119.8) < .001
     end
-
-    @testset "ivr pf case3_balanced_multi_pv_on_bus_grid_following" begin
-        sol = solve_mc_pf(case3_balanced_multi_pv_on_bus_grid_following, ipopt_solver)
-        @test calculate_error_percentage(sol["solution"]["line"]["quad"]["cr_fr"][1], 90.855) < .05
+    @testset "check center tap transformer and single phase delta load" begin
+        model = PowerModelsProtection.instantiate_mc_admittance_model(simple_center_tap) 
+        sol = PowerModelsProtection.compute_mc_pf(model)
+        @test sol["solver"]["it"] < 10
+        @test calculate_error_percentage(sol["bus"]["3"]["vm"][1], 119.83) < .001
+        @test calculate_error_percentage(sol["bus"]["3"]["vm"][2], 119.84) < .001
+        @test calculate_error_percentage(sol["bus"]["3"]["va"][2], 179.9) < .001
+    end
+    @testset "check single phase delta PQ, Z, and I load based on PQ" begin
+        model = PowerModelsProtection.instantiate_mc_admittance_model(loads_example) 
+        sol = PowerModelsProtection.compute_mc_pf(model)
+        @test sol["solver"]["it"] < 10
+        @test calculate_error_percentage(sol["bus"]["3"]["vm"][1], 225.0) < .001
+        @test calculate_error_percentage(sol["bus"]["3"]["vm"][2], 224.8) < .001 # check
+        @test calculate_error_percentage(sol["bus"]["3"]["va"][2], -120.0) < .001
+        @test calculate_error_percentage(sol["bus"]["3"]["vm"][3], 225.69) < .001
+        @test calculate_error_percentage(sol["bus"]["3"]["va"][3], 119.9) < .001
+    end
+    @testset "check 3 phase delta PQ, Z, and I load based on PQ" begin
+        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_3p_load) 
+        sol = PowerModelsProtection.compute_mc_pf(model)
+        @test sol["solver"]["it"] < 10
+        @test calculate_error_percentage(sol["bus"]["3"]["vm"][1], 212.78) < .001
+        @test calculate_error_percentage(sol["bus"]["3"]["vm"][2], 229.55) < .001 
+        @test calculate_error_percentage(sol["bus"]["3"]["va"][2], -121.0) < .001
+        @test calculate_error_percentage(sol["bus"]["3"]["vm"][3], 230.59) < .001
+        @test calculate_error_percentage(sol["bus"]["3"]["va"][3], 121.4) < .001
     end
 end
+
+
+        
+    
+

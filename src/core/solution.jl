@@ -192,3 +192,274 @@ function _solution_protection!(ref::Dict{Symbol,Any},sol::Dict{String,<:Any})
         end
     end
 end
+
+
+function solution_mc_pf(v::Matrix{ComplexF64}, it::Int64, last_delta::Float64, i::Matrix{ComplexF64}, model::AdmittanceModel)
+    solution = Dict{String, Any}()
+    solution["bus"] = Dict{String, Any}()
+    for (indx,bus) in model.data["bus"]
+        solution["bus"][indx] = Dict{String, Any}(
+            "vm" => [0.0 for t in bus["terminals"]],
+            "va" => [0.0 for t in bus["terminals"]],
+            "name" => bus["source_id"],
+            "vbase" => bus["vbase"],
+            "im" => [0.0 for t in bus["terminals"]],
+            "ia" => [0.0 for t in bus["terminals"]],
+        )
+        for (j, grounded) in enumerate(bus["grounded"])
+            if grounded == 0
+                t = bus["terminals"][j]
+                solution["bus"][indx]["vm"][j] = abs(v[model.data["admittance_map"][(bus["index"], t)]])
+                solution["bus"][indx]["va"][j] = angle(v[model.data["admittance_map"][(bus["index"], t)]]) * 180/pi
+                solution["bus"][indx]["im"][j] = abs(i[model.data["admittance_map"][(bus["index"], t)]])
+                solution["bus"][indx]["ia"][j] = angle(i[model.data["admittance_map"][(bus["index"], t)]]) * 180/pi
+            end
+        end
+        solution["model"] = model
+        solution["solver"] = Dict{String,Any}(
+            "it" => it,
+            "delta" => last_delta,
+        )
+    end
+
+    return solution
+end
+
+
+
+function solution_mc_fs(data::Dict{String,Any})
+    buses = Dict{String,Any}()
+    for (name,indx) in data["bus_lookup"]
+        bus = data["bus"][string(indx)]
+        buses[name] = Dict{String, Any}(
+            "grounded" => bus["terminals"],
+            "3pg" => haskey(bus,"3pg") ? bus["3pg"] : nothing,
+            "ll" => haskey(bus,"ll") ? bus["ll"] : nothing,
+            "lg" => bus["lg"],
+        )
+    end
+    return buses
+end
+
+
+const A = inv([1 1 1; 1 exp(-1im*2/3*pi) exp(1im*2/3*pi); 1 exp(1im*2/3*pi) exp(-1im*2/3*pi)])
+
+function get_current_sequence(i::Vector{ComplexF64}, connections::Vector{Int})
+    i_abc = zeros(Complex{Float64}, 3)
+    for (_j,j) in enumerate(connections)
+        if j <= 3
+            i_abc[j,1] = i[_j,1]
+        end
+    end
+    return A*i_abc
+end
+
+
+function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real})
+    conductance = fault
+    susceptance = conductance .* 0.0
+
+    name = "$(bus["name"])_$fault_type"
+    connections = bus["terminals"]
+    n = length(connections)
+    v_bus = zeros(Complex{Float64},3)
+    for j = 1:3
+        v_bus[j,1] = v[data["admittance_map"][(bus["bus_i"],j)],1]
+    end
+    i = fault*v_bus
+    i012 = get_current_sequence(i,connections)
+    obj = Dict{String,Any}(
+            "fault" => Dict{String,Any}(
+            "susceptance (S)" => susceptance,
+            "conductance (S)" => conductance,
+            "connections" => connections,
+            "bus" => bus["name"],
+            "type" => fault_type,
+            "|I| (A)" => abs.(i),
+            "theta (deg)" => angle.(i).* pi/180,
+            "|I0| (A)" => abs(i012[1]),
+            "|I1| (A)" => abs(i012[2]),
+            "|I2| (A)" => abs(i012[3]),
+            "|V| (V)" => abs.(v_bus),
+            "phi (deg)" => angle.(v_bus).*pi/180,
+        )
+    )
+    line = Dict{String,Any}()
+    switch = Dict{String,Any}()
+    for (i,branch) in data["branch"]
+        branch_name = branch["name"]
+        n = length(branch["f_connections"])
+        v_f_bus = zeros(Complex{Float64}, n)
+        v_t_bus = zeros(Complex{Float64}, n)
+        f_bus = data["bus"][string(branch["f_bus"])]
+        t_bus = data["bus"][string(branch["t_bus"])]
+        y_line = branch["p_matrix"][1:n,n+1:2*n]
+        for (_j,j) in enumerate(branch["f_connections"])
+            if haskey(data["admittance_map"], (f_bus["bus_i"], j))
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+            end
+        end
+        for (_j,j) in enumerate(branch["t_connections"])
+            if haskey(data["admittance_map"], (t_bus["bus_i"], j))
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+            end
+        end
+        i_line = y_line * (v_f_bus - v_t_bus)
+        i012 = get_current_sequence(i_line,branch["f_connections"])
+        branch_obj = Dict{String,Any}(
+            "|I| (A)" => abs.(i_line),
+            "theta (deg)" => angle.(i_line).* pi/180,
+            "|I0| (A)" => abs(i012[1]),
+            "|I1| (A)" => abs(i012[2]),
+            "|I2| (A)" => abs(i012[3]),
+        )
+
+        if occursin("line.", branch["source_id"])
+            line[branch_name] = branch_obj
+        elseif occursin("switch", branch["source_id"])
+            switch[branch_name] = branch_obj
+        end
+    end
+    obj["switch"] = switch
+    obj["line"] = line
+    output[name] = obj
+end
+
+
+function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real}, indx::Tuple)
+    conductance = fault
+    susceptance = conductance .* 0.0
+    name = "$(bus["name"])_$(fault_type)_$(indx[1])_$(indx[2])"
+    connections = [bus["terminals"][indx[1]], bus["terminals"][indx[2]]]
+    n = length(connections)
+    v_bus = zeros(Complex{Float64},n)
+    for j =1:2
+        v_bus[j,1] = v[data["admittance_map"][(bus["bus_i"],connections[j])],1]
+    end
+    i = fault*v_bus
+    i012 = get_current_sequence(i,connections)
+    obj = Dict{String,Any}(
+            "fault" => Dict{String,Any}(
+            "susceptance (S)" => susceptance,
+            "conductance (S)" => conductance,
+            "connections" => connections,
+            "bus" => bus["name"],
+            "type" => fault_type,
+            "|I| (A)" => abs.(i),
+            "theta (deg)" => angle.(i).* pi/180,
+            "|I0| (A)" => abs(i012[1]),
+            "|I1| (A)" => abs(i012[2]),
+            "|I2| (A)" => abs(i012[3]),
+            "|V| (V)" => abs.(v_bus),
+            "phi (deg)" => angle.(v_bus).*pi/180,
+        )
+    )
+   
+    line = Dict{String,Any}()
+    switch = Dict{String,Any}()
+    for (i,branch) in data["branch"]
+        branch_name = branch["name"]
+        n = length(branch["f_connections"])
+        v_f_bus = zeros(Complex{Float64}, n)
+        v_t_bus = zeros(Complex{Float64}, n)
+        f_bus = data["bus"][string(branch["f_bus"])]
+        t_bus = data["bus"][string(branch["t_bus"])]
+        y_line = branch["p_matrix"][1:n,n+1:2*n]
+        for (_j,j) in enumerate(branch["f_connections"])
+            if haskey(data["admittance_map"], (f_bus["bus_i"], j))
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+            end
+        end
+        for (_j,j) in enumerate(branch["t_connections"])
+            if haskey(data["admittance_map"], (t_bus["bus_i"], j))
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+            end
+        end
+        i_line = y_line * (v_f_bus - v_t_bus)
+        i012 = get_current_sequence(i_line,branch["f_connections"])
+        branch_obj = Dict{String,Any}(
+            "|I| (A)" => abs.(i_line),
+            "theta (deg)" => angle.(i_line).* pi/180,
+            "|I0| (A)" => abs(i012[1]),
+            "|I1| (A)" => abs(i012[2]),
+            "|I2| (A)" => abs(i012[3]),
+        )
+
+        if occursin("line.", branch["source_id"])
+            line[branch_name] = branch_obj
+        elseif occursin("switch", branch["source_id"])
+            switch[branch_name] = branch_obj
+        end
+    end
+    obj["switch"] = switch
+    obj["line"] = line
+    output[name] = obj
+end
+
+
+
+function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real}, indx::Int)
+    conductance = fault
+    susceptance = conductance .* 0.0
+    name = "$(bus["name"])_$(fault_type)_$(indx)"
+    connections = [bus["terminals"][indx]]
+    v_bus = zeros(Complex{Float64},2)
+    v_bus[1,1] = v[data["admittance_map"][(bus["bus_i"],connections[1])],1]
+    i = fault*v_bus
+    i012 = get_current_sequence(i,connections)
+    obj = Dict{String,Any}(
+            "fault" => Dict{String,Any}(
+                "susceptance (S)" => susceptance,
+                "conductance (S)" => conductance,
+                "connections" => connections,
+                "bus" => bus["name"],
+                "type" => fault_type,
+                "|I| (A)" => abs.(i),
+                "theta (deg)" => angle.(i).* pi/180,
+                "|I0| (A)" => abs(i012[1]),
+                "|I1| (A)" => abs(i012[2]),
+                "|I2| (A)" => abs(i012[3]),
+                "|V| (V)" => abs.(v_bus),
+                "phi (deg)" => angle.(v_bus).*pi/180,
+            )
+        )
+    line = Dict{String,Any}()
+    switch = Dict{String,Any}()
+    for (i,branch) in data["branch"]
+        branch_name = branch["name"]
+        n = length(branch["f_connections"])
+        v_f_bus = zeros(Complex{Float64}, n)
+        v_t_bus = zeros(Complex{Float64}, n)
+        f_bus = data["bus"][string(branch["f_bus"])]
+        t_bus = data["bus"][string(branch["t_bus"])]
+        y_line = branch["p_matrix"][1:n,n+1:2*n]
+        for (_j,j) in enumerate(branch["f_connections"])
+            if haskey(data["admittance_map"], (f_bus["bus_i"], j))
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+            end
+        end
+        for (_j,j) in enumerate(branch["t_connections"])
+            if haskey(data["admittance_map"], (t_bus["bus_i"], j))
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+            end
+        end
+        i_line = y_line * (v_f_bus - v_t_bus)
+        i012 = get_current_sequence(i_line,branch["f_connections"])
+        branch_obj = Dict{String,Any}(
+            "|I| (A)" => abs.(i_line),
+            "theta (deg)" => angle.(i_line).* pi/180,
+            "|I0| (A)" => abs(i012[1]),
+            "|I1| (A)" => abs(i012[2]),
+            "|I2| (A)" => abs(i012[3]),
+        )
+
+        if occursin("line.", branch["source_id"])
+            line[branch_name] = branch_obj
+        elseif occursin("switch", branch["source_id"])
+            switch[branch_name] = branch_obj
+        end
+    end
+    obj["switch"] = switch
+    obj["line"] = line
+    output[name] = obj
+end

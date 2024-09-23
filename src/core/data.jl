@@ -463,3 +463,63 @@ function zero_gen_setpoints!(data::Dict{String,<:Any})
         end
     end
 end
+
+
+"""
+    function to calculate line parameters based of carson's equation 1st term only 
+"""
+function calc_line_paramters!(line::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    if length(line["rs"]) != length(line["f_connections"])^2
+        nothing
+    end
+end
+
+
+function add_pre_fault!(pre_v, model::AdmittanceModel)
+    add_pre_fault_bus_voltage!(pre_v, model)
+    add_pre_fault_gfli_current!(pre_v, model)
+end
+
+
+function add_pre_fault_bus_voltage!(pre_v, model::AdmittanceModel)
+    for (_, bus) in model.data["bus"]
+        _v = zeros(Complex{Float64}, 1, length(bus["terminals"]))
+        for (i, j) in enumerate(bus["terminals"])
+            if haskey(model.data["admittance_map"], (bus["bus_i"], j))
+                _v[1, i] = pre_v[model.data["admittance_map"][(bus["bus_i"], j)], 1]
+            end
+        end
+        bus["pre_fault"] = _v
+    end
+end
+
+function add_pre_fault_gfli_current!(pre_v, model::AdmittanceModel)
+    for (_, gen) in model.data["gen"]
+        if gen["element"] == SolarElement
+            transformer = model.data["transformer"][gen["transformer_id"]]
+            if gen["phases"] == 3
+                f_bus = transformer["f_bus"]
+                t_bus = transformer["t_bus"]
+                y = transformer["p_matrix"]
+                n = size(y)[1]
+                _v = zeros(Complex{Float64}, n, 1)
+                for (i, j) in enumerate(transformer["f_connections"])
+                    if haskey(model.data["admittance_map"], (f_bus, j)) 
+                        _v[i, 1] = pre_v[model.data["admittance_map"][(f_bus, j)], 1]
+                    else
+                        _v[i, 1] = 0.0 + 0.0im
+                    end
+                end
+                for (i, j) in enumerate(transformer["t_connections"])
+                    if haskey(model.data["admittance_map"], (t_bus, j))
+                        _v[i+length(transformer["t_connections"]), 1] = pre_v[model.data["admittance_map"][(t_bus, j)], 1]
+                    else
+                        _v[i+length(transformer["t_connections"]), 1] = 0.0 + 0.0im
+                    end
+                end
+                _i = y * _v
+                gen["pre_fault"] = _i
+            end
+        end
+    end
+end

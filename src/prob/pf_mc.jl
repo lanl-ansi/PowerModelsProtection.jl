@@ -40,7 +40,7 @@ function build_mc_pf(pm::_PMD.AbstractUnbalancedPowerModel)
     _PMD.variable_mc_branch_current(pm, bounded=false)
     _PMD.variable_mc_transformer_current(pm, bounded=false)
     _PMD.variable_mc_generator_current(pm, bounded=false)
-    _PMD.variable_mc_load_current(pm, bounded = false)
+    _PMD.variable_mc_load_current(pm, bounded=false)
 
     variable_mc_pq_inverter(pm)
     variable_mc_grid_formimg_inverter(pm)
@@ -134,7 +134,7 @@ function build_mc_dg_pf(pm::_PMD.AbstractUnbalancedPowerModel)
 
     _PMD.constraint_mc_model_voltage(pm)
 
-    for (i,bus) in _PMD.ref(pm, :ref_buses)
+    for (i, bus) in _PMD.ref(pm, :ref_buses)
         @assert bus["bus_type"] == 3
 
         _PMD.constraint_mc_theta_ref(pm, i)
@@ -151,13 +151,13 @@ function build_mc_dg_pf(pm::_PMD.AbstractUnbalancedPowerModel)
         _PMD.constraint_mc_load_power(pm, id)
     end
 
-    for (i,bus) in _PMD.ref(pm, :bus)
+    for (i, bus) in _PMD.ref(pm, :bus)
         _PMD.constraint_mc_current_balance(pm, i)
         # _PMD.constraint_mc_load_current_balance(pm, i)
 
 
         # PV Bus Constraints
-        if length(_PMD.ref(pm, :bus_gens, i)) > 0 && !(i in _PMD.ids(pm,:ref_buses))
+        if length(_PMD.ref(pm, :bus_gens, i)) > 0 && !(i in _PMD.ids(pm, :ref_buses))
             # this assumes inactive generators are filtered out of bus_gens
 
             for j in _PMD.ref(pm, :bus_gens, i)
@@ -186,3 +186,86 @@ function build_mc_dg_pf(pm::_PMD.AbstractUnbalancedPowerModel)
         _PMD.constraint_mc_transformer_power(pm, i)
     end
 end
+
+
+function compute_mc_pf(model::AdmittanceModel)
+    y = model.y
+    i = model.i
+    v = model.v
+    delta_i_control = model.delta_i_control
+    delta_i = model.delta_i
+    max_it = 2
+    it_pf = 0
+    _i = i + delta_i_control + delta_i
+    _v = deepcopy(v)
+    last_v = deepcopy(v)
+    while it_pf != max_it
+        _v = y \ _i
+        if maximum((abs.(_v - last_v))) < 0.0001
+            break
+        else
+            _delta_i_control = update_mc_delta_current_control_vector(model, _v)
+            it_control = 0
+            _i = i + _delta_i_control + delta_i
+            while it_control != max_it
+                __v = y \ _i
+                if maximum((abs.(__v - _v))) < 0.0001
+                    _v = __v
+                    break
+                else
+                    _delta_i_control = update_mc_delta_current_control_vector(model, __v)
+                    _i = i + _delta_i_control + delta_i
+                    _v = __v
+                    it_control += 1
+                end
+            end
+            delta_i = update_mc_delta_current_vector(model, _v)
+            _i = i + _delta_i_control + delta_i
+            last_v = _v
+            it_pf += 1
+        end
+    end
+    return solution_mc_pf(_v, it_pf, maximum((abs.(_v - last_v))), i + delta_i_control + delta_i, model)
+end
+
+
+function compute_mc_pf(y, model::AdmittanceModel)
+    y = _SP.sparse(y)
+    i = model.i
+    v = model.v
+    delta_i_control = model.delta_i_control
+    delta_i = model.delta_i
+    max_it = 10
+    it_pf = 0
+    _i = i + delta_i_control + delta_i
+    _v = deepcopy(v)
+    last_v = deepcopy(v)
+    while it_pf != max_it
+        _v = y \ _i
+        if maximum((abs.(_v - last_v))) < 0.0001
+            break
+        else
+            _delta_i_control = update_mc_delta_current_control_vector(model, _v)
+            it_control = 0
+            _i = i + _delta_i_control + delta_i
+            while it_control != max_it
+                __v = y \ _i
+                if maximum((abs.(__v - _v))) < 0.0001
+                    _v = __v
+                    break
+                else
+                    _delta_i_control = update_mc_delta_current_control_vector(model, __v)
+                    _i = i + _delta_i_control + delta_i
+                    _v = __v
+                    it_control += 1
+                end
+            end
+            delta_i = update_mc_delta_current_vector(model, _v)
+            _i = i + _delta_i_control + delta_i
+            last_v = _v
+            it_pf += 1
+        end
+    end
+    return _v
+end
+

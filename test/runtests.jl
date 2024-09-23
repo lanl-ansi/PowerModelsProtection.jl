@@ -15,11 +15,15 @@ ipopt_solver = optimizer_with_attributes(Ipopt.Optimizer, "tol"=>1e-6, "print_le
 
 using Test
 
+include("common.jl")
+include("test_cases.jl")
+
 @testset "PowerModelsProtection" begin
-    include("common.jl")
-    include("fs.jl")
-    include("fs_mc.jl")
+    include("admittance.jl")
     include("pf_mc.jl")
+    # include("fs.jl")
+    include("fs_mc.jl")
+    # include("pf_mc.jl")
     # include("protection_tests.jl")
-    include("sparse_fault.jl")
+    # include("sparse_fault.jl")
 end

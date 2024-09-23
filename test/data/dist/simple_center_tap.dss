@@ -1,0 +1,30 @@
+! **** Simplified PNNL Taxonomy Feeder - R1-12.47-3 ****
+clear
+
+Set Defaultbasefreq=60
+
+New Circuit.cktr112473
+~ basekv=12.47 pu=1.00 MVAsc3=200 MVAsc1=210 bus1=1
+New Linecode.3P_Code2 units=km nphases=3 rmatrix=(1e-01 0.0 0.0 | 0.0 1e-01 0.0 | 0.0 0.0 1e-01 ) xmatrix=(1e-01 0.0 0.0 | 0.0 1e-01 0.0 | 0.0 0.0 1e-01 )
+!Lines
+New Line.line1_1 Units=km Length=0.5 bus1=1.1.2.3 bus2=2.1.2.3 enabled=y phases=3 Linecode=3P_Code2
+
+!Transformers
+New Transformer.xfmr_1 phases=1 windings=3 wdg=1 bus=2.1 kv=7.2 kva=200.0 %r=0.6 wdg=2 bus=3.1.0 kv=0.12 kva=25.0 %r=1.2 wdg=3 bus=3.0.2 kv=0.12 kva=25.0 %r=1.2 XHL=2.04 XLT=1.36 XHT=2.04 %noloadloss=.2
+
+! 240V devices across terminals .1 to .2
+New Load.L1 bus1=3.1.2 model=1 kW=20 phases=2 kV=0.208 pf=1 
+
+set voltagebases=[12.47, 0.208] 
+calcvoltagebases
+Set Controlmode=OFF
+
+solve
+
+solve mode=faultstudy
+show f
+
+
+dump Transformer.xfmr_1 debug
+ 
+
