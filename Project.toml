@@ -19,9 +19,6 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
 Graphs = "1.4.1, 1.6, 1.7, 1.8, 1.9"
-
-[compat]
-Graphs = "1.4.1, 1.6"
 InfrastructureModels = "0.7.3"
 Ipopt = "0.9, 1.0.2"
 JuMP = "0.22, 0.23, 1"
