@@ -183,23 +183,23 @@ const _mc_admittance_asset_types = [
     "line", "voltage_source", "load", "transformer", "shunt", "solar", "generator"
 ]
 
-"custom version of 'transform_data_model' to build admittance model and deal with transformers" 
+"custom version of 'transform_data_model' to build admittance model and deal with transformers"
 function transform_admittance_data_model(
     data::Dict{String,<:Any};
     global_keys::Set{String}=Set{String}(),
     eng2math_passthrough::Dict{String,<:Vector{<:String}}=_pmp_eng2math_passthrough,
     eng2math_extensions::Vector{<:Function}=Function[],
     make_pu::Bool=true,
-    make_pu_extensions::Vector{<:Function}=Function[],  
-    build_model::Bool=false, 
+    make_pu_extensions::Vector{<:Function}=Function[],
+    build_model::Bool=false,
     correct_network_data::Bool=true,
     kwargs...,
     )::Dict{String,Any}
- 
+
     if data["method"] == "PM"
         # TODO work on transmission admittance model
     elseif data["method"] == "PMD"
-        data_math = _map_eng2math_mc_admittance( 
+        data_math = _map_eng2math_mc_admittance(
             data;
             eng2math_extensions = [_eng2math_link_transformer, eng2math_extensions...],
             # eng2math_extensions = [_eng2math_gen_model!], # TODO concat eng2math_extensions
@@ -228,8 +228,8 @@ function _map_eng2math_mc_admittance(
     eng2math_extensions::Vector{<:Function}=Function[],
     make_pu::Bool=true,
     make_pu_extentions::Vector{<:Function}=Function[],
-    global_keys::Set{String}=Set{String}(),  
-    build_model::Bool=false, 
+    global_keys::Set{String}=Set{String}(),
+    build_model::Bool=false,
     kwargs...,
     )::Dict{String,Any}
 
@@ -237,12 +237,12 @@ function _map_eng2math_mc_admittance(
 
     # any pre-processing of data here
 
-    # TODO kron 
+    # TODO kron
 
-    # TODO phase projection 
+    # TODO phase projection
 
     if ismultinetwork(data_eng)
-        #  TODO multi network 
+        #  TODO multi network
     else
         data_math = Dict{String,Any}(
             "name" => get(_data_eng, "name", ""),
@@ -256,7 +256,7 @@ function _map_eng2math_mc_admittance(
     end
 
     _map_eng2math_nw!(data_math, data_eng, eng2math_passthrough=eng2math_passthrough, eng2math_extensions=eng2math_extensions)
- 
+
     _apply_mc_admittance!(_map_eng2math_mc_admittance_nw!, data_math, _data_eng; eng2math_passthrough=eng2math_passthrough, eng2math_extensions=eng2math_extensions)
 
     # admittance_bus_order!(data_math)
@@ -270,7 +270,7 @@ end
 
 
 function _map_eng2math_mc_admittance_nw!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; eng2math_passthrough::Dict{String,<:Vector{<:String}}=Dict{String,Vector{String}}(), eng2math_extensions::Vector{<:Function}=Function[])
-    for type in _mc_admittance_asset_types # --> anything from missing from the model needed for the solve or admittance matrix maybe per unit to actual 
+    for type in _mc_admittance_asset_types # --> anything from missing from the model needed for the solve or admittance matrix maybe per unit to actual
         getfield(PowerModelsProtection, Symbol("_map_eng2math_mc_admittance_$(type)!"))(data_math, data_eng; pass_props=get(eng2math_passthrough, type, String[]))
     end
 end
@@ -282,16 +282,16 @@ function correct_network_data!(data::Dict{String,Any})
         _PMD.check_eng_data_model(data)
     elseif _PMD.ismath(data)
         nothing
-        # check_connectivity(data) not done here becuase checks are performed during admittance creation 
+        # check_connectivity(data) not done here becuase checks are performed during admittance creation
 
         # correct_branch_directions!(data) used to tell if parallel lines are in same direction
-        # check_branch_loops(data) ill add check in admit creation 
+        # check_branch_loops(data) ill add check in admit creation
 
         # correct_bus_types!(data) check for islands, slack and no slack and fixes. will need to add TODO
 
-        #  TODO propagate_network_topology!(data) need to add chck for it 
+        #  TODO propagate_network_topology!(data) need to add chck for it
 
-        #  no pu 
+        #  no pu
         # if make_pu
         #     make_per_unit!(data; make_pu_extensions=make_pu_extensions)
 
@@ -306,10 +306,10 @@ end
 
 function populate_bus_voltages!(data::Dict{String,Any})
     for (i, transformer) in data["transformer"]
-        f_bus = transformer["f_bus"] 
+        f_bus = transformer["f_bus"]
         t_bus = transformer["t_bus"]
         if haskey(transformer, "tm_nom")
-            transformer["phases"] == 3 ? multi = 1/sqrt(3) : multi = 1 
+            transformer["phases"] == 3 ? multi = 1/sqrt(3) : multi = 1
             if !haskey(data["bus"][string(f_bus)], "vbase")
                 data["bus"][string(f_bus)]["vbase"] = transformer["tm_nom"][1]*multi
             end
@@ -329,7 +329,7 @@ function populate_bus_voltages!(data::Dict{String,Any})
     end
 
     propagate_voltages!(data)
-    
+
     for (i, gen) in data["gen"]
         if !haskey(data["bus"][string(gen["gen_bus"])], "vbase")
             if gen["element"] == VoltageSourceElement
@@ -351,7 +351,7 @@ function propagate_voltages!(data::Dict{String,Any})
     found = true
     while found
         found = false
-        for (i, branch) in data["branch"] 
+        for (i, branch) in data["branch"]
             f_bus = string(branch["f_bus"])
             t_bus = string(branch["t_bus"])
             if f_bus in buses
@@ -380,7 +380,8 @@ function correct_grounds!(data::Dict{String,Any})
     for (i, transformer) in data["transformer"]
         for (i,config) in enumerate(transformer["configuration"])
             if config == _PMD.WYE
-                if occursin(".1.2.3.0", transformer["dss"]["buses"][i])
+                buses = isa(transformer["dss"]["buses"], String) ? split(transformer["dss"]["buses"]) : transformer["dss"]["buses"]
+                if occursin(".1.2.3.0", buses[i])
                     if i == 2
                         transformer["t_connections"] = [1,2,3,4]
                         data["bus"][string(transformer["t_bus"])]["terminals"] = [1,2,3,4]

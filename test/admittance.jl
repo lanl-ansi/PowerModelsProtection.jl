@@ -1,7 +1,7 @@
 @testset "Admittance test for components" begin
     @info "source checks"
-    @testset  "check mvasc1 mvasc3 defined source" begin 
-        model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example3) 
+    @testset  "check mvasc1 mvasc3 defined source" begin
+        model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example3)
         p_matrix = model.data["gen"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 1668079.689) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -6014804.171) < .001
@@ -12,8 +12,8 @@
         @test calculate_error_percentage(real(p_matrix[6,6]), 1668079.689) < .001
         @test calculate_error_percentage(imag(p_matrix[6,6]), -6014804.171) < .001
     end
-    @testset  "check isc3 isc1 defined source" begin 
-        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lag) 
+    @testset  "check isc3 isc1 defined source" begin
+        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lag)
         p_matrix = model.data["gen"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 420247.0941) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -1515337.661) < .001
@@ -24,8 +24,8 @@
         @test calculate_error_percentage(real(p_matrix[6,6]), 420247.0941) < .001
         @test calculate_error_percentage(imag(p_matrix[6,6]), -1515337.661) < .001
     end
-    @testset  "check r1 x1 r0 x0 defined source" begin 
-        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lead) 
+    @testset  "check r1 x1 r0 x0 defined source" begin
+        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lead)
         p_matrix = model.data["gen"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 492.6378751) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -2035.939789) < .001
@@ -38,7 +38,7 @@
     end
     @info "transformer checks"
     @testset "2w y-y transformer test" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(wye_wye) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(wye_wye)
         p_matrix = model.data["transformer"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 0.0350450455) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -0.05840841123) < .001
@@ -50,7 +50,7 @@
         @test calculate_error_percentage(imag(p_matrix[8,8]), -1.476234488) < .001
     end
     @testset "2w d-y lag high delta transformer test" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lag) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lag)
         p_matrix = model.data["transformer"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 0.02430724356) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -0.04051207398) < .001
@@ -64,7 +64,7 @@
         @test calculate_error_percentage(imag(p_matrix[8,8]), -1.388989033) < .001
     end
     @testset "2w d-y lead high delta transformer test" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lead) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_wye_lead)
         p_matrix = model.data["transformer"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 0.02430724356) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -0.04051207398) < .001
@@ -78,7 +78,7 @@
         @test calculate_error_percentage(imag(p_matrix[8,8]), -1.388989033) < .001
     end
     # @testset "2w d-y lag low delta transformer test" begin
-    #     model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example3_lag) 
+    #     model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example3_lag)
     #     p_matrix = model.data["transformer"]["1"]["p_matrix"]
     #     @test calculate_error_percentage(real(p_matrix[1,1]), 0.9191176471) < .001
     #     @test calculate_error_percentage(imag(p_matrix[1,1]), -1.531862797) < .001
@@ -92,7 +92,7 @@
     #     @test calculate_error_percentage(imag(p_matrix[8,8]), -0.06373319772) < .001
     # end
     @testset "center tap transformer test" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(simple_center_tap) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(simple_center_tap)
         p_matrix = model.data["transformer"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 0.1069198529) <.001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -0.1514697935) < .001
@@ -106,7 +106,7 @@
         @test calculate_error_percentage(imag(p_matrix[6,6]), -384.5472913) < .001
     end
     @testset "regulator transformer test" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(reg_case) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(reg_case)
         p_matrix = model.data["transformer"]["2"]["p_matrix"]
         @test real(p_matrix[1,1]) < .0000001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -2892.361111) < .001
@@ -119,7 +119,7 @@
     end
     @info "load checks"
     @testset "single phase load" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example3) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example3)
         p_matrix = model.data["load"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 0.1125) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -0.05625) < .001
@@ -127,7 +127,7 @@
         @test calculate_error_percentage(imag(p_matrix[1,2]), 0.05625) < .001
     end
     @testset "3 phase load" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example5) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(bus_example5)
         p_matrix = model.data["load"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 0.0006430830947) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -6.430830947E-005) < .001
@@ -137,7 +137,7 @@
         @test calculate_error_percentage(imag(p_matrix[2,2]), -6.430830947E-005) < .001
     end
     @testset "delta PQ, Z, and I load based on PQ" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(loads_example) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(loads_example)
         p_matrix = model.data["load"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 0.0375) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -0.01875) < .001
@@ -158,10 +158,10 @@
         @test calculate_error_percentage(real(p_matrix[1,2]), -0.05625) < .001
         @test calculate_error_percentage(imag(p_matrix[1,2]), 0.01875) < .001
         @test calculate_error_percentage(real(p_matrix[2,2]), 0.05625) < .001
-        @test calculate_error_percentage(imag(p_matrix[2,2]), -0.01875) < .001 
+        @test calculate_error_percentage(imag(p_matrix[2,2]), -0.01875) < .001
     end
     @testset "3 phase delta PQ, Z, and I load based on PQ" begin
-        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_3p_load) 
+        model = PowerModelsProtection.instantiate_mc_admittance_model(delta_3p_load)
         p_matrix = model.data["load"]["1"]["p_matrix"]
         @test calculate_error_percentage(real(p_matrix[1,1]), 1.666666667) < .001
         @test calculate_error_percentage(imag(p_matrix[1,1]), -1.25) < .001
@@ -182,6 +182,6 @@
         @test calculate_error_percentage(real(p_matrix[1,2]), -0.4166666667) < .001
         @test calculate_error_percentage(imag(p_matrix[1,2]), 0.625) < .001
         @test calculate_error_percentage(real(p_matrix[2,2]), 0.8333333333) < .001
-        @test calculate_error_percentage(imag(p_matrix[2,2]), -1.25) < .001 
+        @test calculate_error_percentage(imag(p_matrix[2,2]), -1.25) < .001
     end
 end

@@ -315,8 +315,8 @@ function _map_eng2math_mc_admittance_line!(data_math::Dict{String,<:Any}, data_e
     if haskey(data_math, "branch")
         for (name, branch) in data_math["branch"]
             z = branch["br_r"] + 1im .* branch["br_x"]
-            y_from = branch["g_fr"] + 1im .* branch["b_fr"] 
-            y_to = branch["g_to"] + 1im .* branch["b_to"] 
+            y_from = branch["g_fr"] + 1im .* branch["b_fr"]
+            y_to = branch["g_to"] + 1im .* branch["b_to"]
             z1 = inv(z) + y_from
             z2 = -inv(z)
             z3 = z2
@@ -330,7 +330,7 @@ end
 function _map_eng2math_mc_admittance_shunt!(data_math::Dict{String,<:Any}, data_eng::Dict{String,<:Any}; pass_props::Vector{String}=String[])
     if haskey(data_math, "shunt")
         for (name, shunt) in data_math["shunt"]
-            y = shunt["gs"] + 1im .* shunt["bs"] 
+            y = shunt["gs"] + 1im .* shunt["bs"]
             y1 = y
             y2 = -y
             y3 = y2
@@ -346,7 +346,7 @@ function _map_eng2math_mc_admittance_voltage_source!(data_math::Dict{String,<:An
         for (name, gen) in data_math["gen"]
             if occursin("voltage_source", gen["source_id"])
                 vsource = data_eng["voltage_source"][gen["dss"]["name"]]
-                z = vsource["rs"] + 1im .* vsource["xs"] 
+                z = vsource["rs"] + 1im .* vsource["xs"]
                 z1 = inv(z[1:3,1:3])
                 z2 = -inv(z[1:3,1:3])
                 gen["p_matrix"] = [z1 z2;z2 z1]
@@ -383,17 +383,17 @@ function _map_eng2math_mc_admittance_solar!(data_math::Dict{String,<:Any}, data_
     if haskey(data_math, "gen")
         for (name, gen) in data_math["gen"]
             if gen["element"] == SolarElement
-                n = length(gen["connections"]) 
+                n = length(gen["connections"])
                 y = zeros(Complex{Float64}, n, n)
                 if gen["configuration"] == _PMD.WYE
-                    for (i, connection) in enumerate(gen["connections"]) 
+                    for (i, connection) in enumerate(gen["connections"])
                         j = findall(x->x==4, gen["connections"])[1]
                         if connection != 4
                             if gen["grid_forming"]
                                 zs = .0001 + .0005im
                                 y[i,i] = 1/zs
                                 y[j,j] = y[i,i]
-                            else 
+                            else
                                 y[i,i] = 1/1e6im
                                 y[j,j] = y[i,i]
                             end
@@ -434,7 +434,7 @@ function _map_eng2math_mc_admittance_load!(data_math::Dict{String,<:Any}, data_e
                         length(load["pd"]) == n ? s = conj.(load["pd"][i] + 1im .* load["qd"][i]) : s = conj.(load["pd"][1] + 1im .* load["qd"][1])
                         for (j,_j) in enumerate(load["connections"])
                             if i != j
-                                _y = (s*data_math["settings"]["power_scale_factor"]) / (load["vnom_kv"]*data_math["settings"]["voltage_scale_factor"])^2 
+                                _y = (s*data_math["settings"]["power_scale_factor"]) / (load["vnom_kv"]*data_math["settings"]["voltage_scale_factor"])^2
                                 y[i,i] += _y
                                 y[i,j] -= _y
                             end
@@ -454,7 +454,7 @@ if haskey(data_math, "transformer")
             if typeof(transformer["t_bus"]) == Vector{Int}
                 _map_eng2math_mc_admittance_3w_transformer!(transformer, data_math, data_eng; pass_props=pass_props)
             else
-                _map_eng2math_mc_admittance_2w_transformer!(transformer, data_math, data_eng; pass_props=pass_props) 
+                _map_eng2math_mc_admittance_2w_transformer!(transformer, data_math, data_eng; pass_props=pass_props)
             end
         end
     end
@@ -469,7 +469,7 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
         (2,1) => [3,2],
         (2,2) => [7,4],
         (2,3) => [11,6]
-    )  
+    )
     if transformer["phases"] == 3
         z = sum(transformer["rw"]) + 1im .* transformer["xsc"][1]
         z_1volt= z * 3/transformer["sm_nom"][1]/1000
@@ -479,7 +479,7 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
         n = zeros(Float64, 12, 6)
         a = zeros(Int64,8,12)
         for w = 1:2
-            if transformer["configuration"][w] == _PMD.WYE 
+            if transformer["configuration"][w] == _PMD.WYE
                 w == 1 ? connections = transformer["f_connections"] : connections = transformer["t_connections"]
                 for (_,k) in enumerate(connections)
                     if haskey(lookup, (w,k))
@@ -527,9 +527,9 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
                             end
                         end
                     else
-                        if transformer["configuration"][1] == _PMD.DELTA 
+                        if transformer["configuration"][1] == _PMD.DELTA
                             a[5,4] = a[5,7] = a[6,8] = a[6,11] = a[7,12] = a[7,3] = 1
-                            # a[5,3] = a[5,12] = a[6,4] = a[6,7] = a[7,8] = a[7,11] = 1  
+                            # a[5,3] = a[5,12] = a[6,4] = a[6,7] = a[7,8] = a[7,11] = 1
                         end
                     end
                 end
@@ -584,7 +584,7 @@ function _map_eng2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:
         y_w = n*y1*transpose(n)
         p_matrix = a*y_w*transpose(a)
         transformer["p_matrix"] = p_matrix
-    end        
+    end
 end
 
 
@@ -603,7 +603,8 @@ function _map_eng2math_mc_admittance_3w_transformer!(transformer::Dict{String,<:
     z_12 = transformer["rw"][1] + transformer["rw"][2] + 1im * transformer["xsc"][1]
     z_13 = transformer["rw"][1] + transformer["rw"][3] + 1im * transformer["xsc"][2]
     z_23 = transformer["rw"][1] + 1im * transformer["xsc"][3]
-    if transformer["dss"]["phases"] == 3
+    phases = isa(transformer["dss"]["phases"], String) ? parse(Int, transformer["dss"]["phases"]) : transformer["dss"]["phases"]
+    if phases == 3
         z_1volt_base = 3/transformer["sm_nom"][1]/1000
         z_b = [
             z_12*z_1volt_base z_23*z_1volt_base 0 0 0 0;z_23*z_1volt_base z_13*z_1volt_base 0 0 0 0;
@@ -629,7 +630,7 @@ function _map_eng2math_mc_admittance_3w_transformer!(transformer::Dict{String,<:
                     # a[1,1] = a[2,5] = a[3,9] = a[4,2] = a[4,6] = a[4,10] = 1
                 elseif w == 2
                     a[5,3] = a[6,9] = a[7,15] = a[8,4] = a[8,10] = a[8,16] = 1
-                else 
+                else
                     a[9,5] = a[10,11] = a[11,17] = a[12,6] = a[12,12] = a[12,18] = 1
                 end
             elseif transformer["configuration"][w] == _PMD.DELTA
@@ -664,9 +665,9 @@ function _map_eng2math_mc_admittance_3w_transformer!(transformer::Dict{String,<:
             p_matrix[8,6] -= shunt
             p_matrix[8,7] -= shunt
             p_matrix[8,8] += 3*shunt
-            end
-            transformer["p_matrix"] = p_matrix
-        elseif transformer["dss"]["phases"] == 1
+        end
+        transformer["p_matrix"] = p_matrix
+    elseif phases == 1
         z_1volt_base = 1/transformer["sm_nom"][1]/1000
         z_b = [z_12*z_1volt_base z_23*z_1volt_base;z_23*z_1volt_base z_13*z_1volt_base]
         b = [1 1 ;-1 0;0 -1]

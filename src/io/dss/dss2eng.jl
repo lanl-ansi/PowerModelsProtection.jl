@@ -211,6 +211,7 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
                         generator["qg"] = fill(0.0, length(generator["pg"]))
                     end
                     if haskey(generator["dss"], "kv")
+
                         generator["vnom_kv"] = generator["dss"]["kv"] / sqrt(3)
                     end
                     generator["element"] = GeneratorElement
@@ -539,10 +540,10 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
         end
     end
 
+
     function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
         nothing
     end
-
 else
 
     "helper function to build extra dynamics information for pvsystem objects"
@@ -568,6 +569,32 @@ else
     end
 
 
+    "helper function to build extra dynamics information for load objects"
+    function _dss2eng_load_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+        if haskey(data_eng, "load")
+            for (id, load) in data_eng["load"]
+                dss_obj = data_dss["load"][id]
+                vminpu = dss_obj["vminpu"]
+                vmaxpu = dss_obj["vmaxpu"]
+                phases = dss_obj["phases"]
+                load["vminpu"] = vminpu
+                load["vmaxpu"] = vmaxpu
+                load["phases"] = phases
+                if load["model"] == _PMD.IMPEDANCE
+                    load["response"] = ConstantZ
+                elseif load["model"] == _PMD.POWER
+                    load["response"] = ConstantPQ
+                elseif load["model"] == _PMD.CURRENT
+                    load["response"] = ConstantI
+                elseif load["model"] == _PMD.ZIP
+                    load["response"] = ConstantZIP
+                end
+                load["element"] = LoadElement
+            end
+        end
+    end
+
+
     "helper function to build extra dynamics information for generator or vsource objects"
     function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
         if haskey(data_eng, "generator")
@@ -584,6 +611,45 @@ else
                         generator["rp"] = fill(rp, length(generator["connections"]))
                         generator["xdpp"] = fill(xdpp, length(generator["connections"]))
                     end
+                end
+            end
+        end
+    end
+
+
+    "helper function to fix voltage source objects"
+    function _dss2eng_voltage_source_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+        if haskey(data_eng, "voltage_source")
+            for (id, voltage_source) in data_eng["voltage_source"]
+                dss_obj = data_dss["vsource"][id]
+                phases = dss_obj["phases"]
+                voltage_source["phases"] = phases
+                voltage_source["element"] = VoltageSourceElement
+                r1 = dss_obj["r1"]
+                x1 = dss_obj["x1"]
+                r0 = dss_obj["r0"]
+                x0 = dss_obj["x0"]
+                zabc = _A * [r0+x0*1im 0 0; 0 r1+x1*1im 0; 0 0 r1+x1*1im] * inv(_A)
+                voltage_source["rs"] = real(zabc)
+                voltage_source["xs"] = imag(zabc)
+            end
+        end
+    end
+
+
+    "helper function to build extra dynamics information for transfomer objects"
+    function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+        if haskey(data_eng, "transformer")
+            for (id, transformer) in data_eng["transformer"]
+                dss_obj = data_dss["transformer"][id]
+                leadlag = dss_obj["leadlag"]
+                phases = dss_obj["phases"]
+                transformer["leadlag"] = leadlag
+                transformer["phases"] = phases
+                if length(transformer["connections"]) == 2
+                    transformer["element"] = Transformer2WElement
+                else
+                    nothing
                 end
             end
         end
@@ -791,5 +857,9 @@ else
                 end
             end
         end
+    end
+
+    function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+        nothing
     end
 end
