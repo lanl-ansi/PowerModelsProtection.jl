@@ -2,6 +2,7 @@
 
 ## staged
 
+- Fixed `_dss2eng_solar_dynamics!` and `_dss2eng_gen_dynamics!` for `OpenDssDataModel`, which were out of date
 - Fixed "vbase" not getting passed from ENG To MATH model if it already existed
 
 ## v0.7.0

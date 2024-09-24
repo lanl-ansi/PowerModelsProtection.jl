@@ -554,16 +554,37 @@ else
 
                 irradiance = dss_obj["irradiance"]
                 vminpu = dss_obj["vminpu"]
-                vminpu = dss_obj["vminpu"]
                 kva = dss_obj["kva"]
                 pmpp = dss_obj["pmpp"]
                 pf = dss_obj["pf"]
 
+                if abs(sum(solar["pg"]) + 1im * sum(solar["qg"])) > kva
+                    solar["pg"] = [kva / length(solar["pg"]) * pf for i in solar["pg"]]
+                    solar["qg"] = [kva / length(solar["qg"]) * sqrt(1 - pf^2) for i in solar["qg"]]
+                end
+                balanced = dss_obj["balanced"]
+                model = dss_obj["model"]
+                phases = dss_obj["phases"]
                 ncnd = length(solar["connections"]) >= 3 ? 3 : 1
                 solar["i_max"] = fill(1 / vminpu * kva / (ncnd / sqrt(3) * dss_obj["kv"]), ncnd)
+                solar["i_nom"] = kva / (ncnd / sqrt(3) * dss_obj["kv"])
                 solar["solar_max"] = irradiance * pmpp
                 solar["pf"] = pf
                 solar["kva"] = kva
+                solar["balanced"] = balanced
+                solar["vminpu"] = vminpu
+                solar["type"] = "solar"
+                solar["pv_model"] = model
+                solar["grid_forming"] = false
+                if model == 1
+                    solar["response"] = ConstantPAtPF
+                elseif model == 2
+                    solar["response"] = ConstantI
+                elseif model == 3
+                    solar["response"] = ConstantPQ
+                end
+                solar["phases"] = phases
+                solar["element"] = SolarElement
             end
         end
     end
@@ -599,18 +620,21 @@ else
     function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
         if haskey(data_eng, "generator")
             for (id, generator) in data_eng["generator"]
-                if haskey(generator["dss"], "model")
-                    if generator["dss"]["model"] == 3
-                        defaults = data_dss["generator"][id]
+                dss_obj = data_dss["generator"][id]
 
-                        zbase = defaults["kv"]^2 / defaults["kva"] * 1000
-                        xdp = defaults["xdp"] * zbase
-                        rp = xdp / defaults["xrdp"]
-                        xdpp = defaults["xdpp"] * zbase
-                        generator["xdp"] = fill(xdp, length(generator["connections"]))
-                        generator["rp"] = fill(rp, length(generator["connections"]))
-                        generator["xdpp"] = fill(xdpp, length(generator["connections"]))
-                    end
+                zbase = dss_obj["kv"]^2 / dss_obj["kva"] * 1000
+                xdp = dss_obj["xdp"] * zbase
+                rp = xdp / dss_obj["xrdp"]
+                xdpp = dss_obj["xdpp"] * zbase
+                generator["xdp"] = fill(xdp, length(generator["connections"]))
+                generator["rp"] = fill(rp, length(generator["connections"]))
+                generator["xdpp"] = fill(xdpp, length(generator["connections"]))
+                model = dss_obj["model"]
+                generator["gen_model"] = model
+                if model == 1
+                    generator["qg"] = fill(dss_obj["kvar"] / length(generator["pg"]), length(generator["pg"]))
+                    generator["vnom_kv"] = dss_obj["kv"] / sqrt(3)
+                    generator["element"] = GeneratorElement
                 end
             end
         end
@@ -629,9 +653,9 @@ else
                 x1 = dss_obj["x1"]
                 r0 = dss_obj["r0"]
                 x0 = dss_obj["x0"]
-                zabc = _A * [r0+x0*1im 0 0; 0 r1+x1*1im 0; 0 0 r1+x1*1im] * inv(_A)
-                voltage_source["rs"] = real(zabc)
-                voltage_source["xs"] = imag(zabc)
+                # zabc = _A * [r0+x0*1im 0 0 0; 0 r1+x1*1im 0 0; 0 0 r1+x1*1im 0; 0 0 0 0] * inv(_A)
+                # voltage_source["rs"] = real(zabc)
+                # voltage_source["xs"] = imag(zabc)
             end
         end
     end
