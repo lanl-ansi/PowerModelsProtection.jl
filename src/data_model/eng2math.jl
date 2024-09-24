@@ -161,7 +161,8 @@ const _pmp_eng2math_passthrough = Dict{String,Vector{String}}(
     "solar" => String["i_max", "solar_max", "kva", "pf", "grid_forming", "balanced", "vminpu", "transformer", "type", "pv_model", "phases", "response", "element", "fault_model", "i_nom"],
     "voltage_source" => String["zr", "zx", "phases", "response", "element"],
     "load" => String["vminpu", "vmaxpu", "response", "phases", "element"],
-    "transformer" => String["leadlag", "phases", "element"]
+    "transformer" => String["leadlag", "phases", "element"],
+    "bus" => String["vbase"]
 )
 
 

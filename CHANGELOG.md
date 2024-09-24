@@ -2,7 +2,7 @@
 
 ## staged
 
-- none
+- Fixed "vbase" not getting passed from ENG To MATH model if it already existed
 
 ## v0.7.0
 
