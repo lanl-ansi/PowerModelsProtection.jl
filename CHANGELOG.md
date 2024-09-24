@@ -2,6 +2,10 @@
 
 ## staged
 
+- none
+
+## v0.7.1
+
 - Added option to `save_output` in `solve_mc_fault_study`, so that output can be built without saving to file
 - Fixed types in function definition for `get_current_sequence` and `build_output_schema!`
 - Fixed `_dss2eng_solar_dynamics!` and `_dss2eng_gen_dynamics!` for `OpenDssDataModel`, which were out of date
