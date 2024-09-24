@@ -143,7 +143,7 @@ function build_mc_fault_study(pm::_PMD.AbstractUnbalancedPowerModel)
 end
 
 
-function solve_mc_fault_study(model::AdmittanceModel; build_output=false)
+function solve_mc_fault_study(model::AdmittanceModel; build_output=false, save_output=false)
     t = @elapsed begin
         output = Dict{String,Any}()
         fault_study = create_fault(model.data["bus"])
@@ -200,12 +200,16 @@ function solve_mc_fault_study(model::AdmittanceModel; build_output=false)
                 end
             end
         end
-        if build_output
+        if save_output
             json_data = JSON.json(output)
             open("$(model.data["name"]).json", "w") do f
                 JSON.print(f, output, 2)
             end
         end
     end
-    return solution_mc_fs(model.data)
+    if build_output
+        return output
+    else
+        return solution_mc_fs(model.data)
+    end
 end
