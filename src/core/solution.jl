@@ -244,7 +244,7 @@ end
 
 const A = inv([1 1 1; 1 exp(-1im*2/3*pi) exp(1im*2/3*pi); 1 exp(1im*2/3*pi) exp(-1im*2/3*pi)])
 
-function get_current_sequence(i::Vector{ComplexF64}, connections::Vector{Int})
+function get_current_sequence(i::Vector{<:Complex}, connections::Vector{Int})
     i_abc = zeros(Complex{Float64}, 3)
     for (_j,j) in enumerate(connections)
         if j <= 3
@@ -255,7 +255,7 @@ function get_current_sequence(i::Vector{ComplexF64}, connections::Vector{Int})
 end
 
 
-function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real})
+function build_output_schema!(output::Dict{String,Any}, v::Union{SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, Matrix}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real})
     conductance = fault
     susceptance = conductance .* 0.0
 
@@ -296,12 +296,12 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
         y_line = branch["p_matrix"][1:n,n+1:2*n]
         for (_j,j) in enumerate(branch["f_connections"])
             if haskey(data["admittance_map"], (f_bus["bus_i"], j))
-                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1]
             end
         end
         for (_j,j) in enumerate(branch["t_connections"])
             if haskey(data["admittance_map"], (t_bus["bus_i"], j))
-                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1]
             end
         end
         i_line = y_line * (v_f_bus - v_t_bus)
@@ -326,7 +326,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
 end
 
 
-function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real}, indx::Tuple)
+function build_output_schema!(output::Dict{String,Any}, v::Union{SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, Matrix}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real}, indx::Tuple)
     conductance = fault
     susceptance = conductance .* 0.0
     name = "$(bus["name"])_$(fault_type)_$(indx[1])_$(indx[2])"
@@ -354,7 +354,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
             "phi (deg)" => angle.(v_bus).*pi/180,
         )
     )
-   
+
     line = Dict{String,Any}()
     switch = Dict{String,Any}()
     for (i,branch) in data["branch"]
@@ -367,12 +367,12 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
         y_line = branch["p_matrix"][1:n,n+1:2*n]
         for (_j,j) in enumerate(branch["f_connections"])
             if haskey(data["admittance_map"], (f_bus["bus_i"], j))
-                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1]
             end
         end
         for (_j,j) in enumerate(branch["t_connections"])
             if haskey(data["admittance_map"], (t_bus["bus_i"], j))
-                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1]
             end
         end
         i_line = y_line * (v_f_bus - v_t_bus)
@@ -398,7 +398,7 @@ end
 
 
 
-function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real}, indx::Int)
+function build_output_schema!(output::Dict{String,Any}, v::Union{SparseArrays.SparseMatrixCSC{ComplexF64, Int64}, Matrix}, data::Dict{String,Any}, y::Matrix{ComplexF64}, bus::Dict{String,Any}, fault_type::String, fault::Matrix{Real}, indx::Int)
     conductance = fault
     susceptance = conductance .* 0.0
     name = "$(bus["name"])_$(fault_type)_$(indx)"
@@ -435,12 +435,12 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
         y_line = branch["p_matrix"][1:n,n+1:2*n]
         for (_j,j) in enumerate(branch["f_connections"])
             if haskey(data["admittance_map"], (f_bus["bus_i"], j))
-                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1]
             end
         end
         for (_j,j) in enumerate(branch["t_connections"])
             if haskey(data["admittance_map"], (t_bus["bus_i"], j))
-                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1]
             end
         end
         i_line = y_line * (v_f_bus - v_t_bus)

@@ -2,6 +2,7 @@
 
 ## staged
 
+- Fixed types in function definition for `get_current_sequence` and `build_output_schema!`
 - Fixed `_dss2eng_solar_dynamics!` and `_dss2eng_gen_dynamics!` for `OpenDssDataModel`, which were out of date
 - Fixed "vbase" not getting passed from ENG To MATH model if it already existed
 
