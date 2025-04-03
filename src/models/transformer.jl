@@ -11,11 +11,11 @@ function _calculate_z1z0_winding_matrix!(transformer::Dict{String,<:Any}, parame
     z0 = parameters["z0"]
     ratio_1 = parameters["x1/r1"]
     ratio_0 = parameters["x0/r0"]
-    x1 = sqrt((z1^2*ratio_1^2)/(1+ratio_1^2))
+    x1 = sqrt((z1^2)/(1+1/(ratio_1^2)))
     r1 = x1/ratio_1
-    x0 = sqrt((z0^2*ratio_0^2)/(1+ratio_0^2))
+    x0 = sqrt((z0^2)/(1+1/(ratio_0^2)))
     r0 = x0/ratio_0
-    z_pu = inv(_A)*[r0+x0*1im 0 0;0 r1+x1*1im 0;0 0 r1+x1*1im]
+    z_pu = inv(_A)*[r0+x0*1im 0 0;0 r1+x1*1im 0;0 0 r1+x1*1im]*_A
     lookup = Dict(
         (1, 1) => [1, 1],
         (1, 2) => [5, 3],
@@ -139,5 +139,76 @@ function _calculate_z1z0_winding_matrix!(transformer::Dict{String,<:Any}, parame
         y_w = n * y1 * transpose(n)
         p_matrix = a * y_w * transpose(a)
         transformer["p_matrix"] = p_matrix
+    end
+end
+
+
+function remove_y_matrix_transformer!(transformer, model)
+    transformer["p_matrix"] = -1*transformer["p_matrix"]
+    add_mc_2w_transformer_p_matrix!(transformer, model.data, model.y)
+    delete!(transformer, "p_matrix")
+end
+
+
+function add_y_matrix_transformer!(transformer, model)
+    add_mc_2w_transformer_p_matrix!(transformer, model.data, model.y)
+end
+
+
+function add_mc_transformer_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Matrix{ComplexF64})
+    for (indx, transformer) in data["transformer"]
+        if typeof(transformer["t_bus"]) == Vector{Int}
+            add_mc_3w_transformer_p_matrix!(transformer, data, admit_matrix)
+        else
+            add_mc_2w_transformer_p_matrix!(transformer, data, admit_matrix)
+        end
+    end
+end
+
+
+function add_mc_2w_transformer_p_matrix!(transformer::Dict{String,<:Any}, data::Dict{String,<:Any}, admit_matrix::Matrix{ComplexF64})
+    f_bus = transformer["f_bus"]
+    for (_i, i) in enumerate(transformer["f_connections"])
+        if haskey(data["admittance_map"], (f_bus, i))
+            for (_j, j) in enumerate(transformer["f_connections"])
+                if haskey(data["admittance_map"], (f_bus, j))
+                    admit_matrix[data["admittance_map"][(f_bus, i)], data["admittance_map"][(f_bus, j)]] += transformer["p_matrix"][_i,_j]
+                end
+            end
+            t_bus = transformer["t_bus"]
+            for (_j, j) in enumerate(transformer["t_connections"])
+                if haskey(data["admittance_map"], (t_bus, j))
+                    if transformer["phases"] == 3
+                        admit_matrix[data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)]] += transformer["p_matrix"][_i,_j+4]
+                    elseif transformer["phases"] == 1
+                        admit_matrix[data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)]] += transformer["p_matrix"][_i,_j+2]
+                    end
+                end
+            end
+        end
+    end
+    t_bus = transformer["t_bus"]
+    for (_i, i) in enumerate(transformer["t_connections"])
+        if haskey(data["admittance_map"], (t_bus, i))
+            for (_j, j) in enumerate(transformer["t_connections"])
+                if haskey(data["admittance_map"], (t_bus, j))
+                    if transformer["phases"] == 3
+                        admit_matrix[data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)]] += transformer["p_matrix"][_i+4,_j+4]
+                    elseif transformer["phases"] == 1
+                        admit_matrix[data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)]] += transformer["p_matrix"][_i+2,_j+2]
+                    end
+                end
+            end
+            f_bus = transformer["f_bus"]
+            for (_j, j) in enumerate(transformer["f_connections"])
+                if haskey(data["admittance_map"], (f_bus, j))
+                    if transformer["phases"] == 3
+                        admit_matrix[data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)]] += transformer["p_matrix"][_i+4,_j]
+                    elseif transformer["phases"] == 1
+                        admit_matrix[data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)]] += transformer["p_matrix"][_i+2,_j]
+                    end
+                end
+            end
+        end
     end
 end

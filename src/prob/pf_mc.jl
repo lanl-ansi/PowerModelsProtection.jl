@@ -249,7 +249,7 @@ function compute_mc_pf(model::AdmittanceModel, y; return_solution=true)
     while it_control != max_it
         _v = y \ _i
         a = maximum((abs.(_v-last_v)))
-        if maximum((abs.(_v-last_v))) < .1
+        if maximum((abs.(_v-last_v))) < .01
             break
         else
             delta_i = update_mc_delta_current_vector(model, _v)
@@ -257,7 +257,7 @@ function compute_mc_pf(model::AdmittanceModel, y; return_solution=true)
             _i += delta_i
             while it_pf != max_it
                 __v = y \ _i
-                if maximum((abs.(__v-_v))) < .1
+                if maximum((abs.(__v-_v))) < .01
                     _v = __v
                     break
                 else

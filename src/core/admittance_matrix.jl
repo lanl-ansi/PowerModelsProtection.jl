@@ -967,35 +967,24 @@ function calc_mc_delta_current_gfli!(gen, delta_i, v, data)
                 elseif gen["fault_model"]["priority"] == "reactive"
                     if !(haskey(gen, "i_inj"))
                         gen["i_inj"] = [0; 0; 0]
-                        gen["current"] = [0; 0; 0]
-                        gen["current_seq"] = [0.0+0.0im; 0.0+0.0im; 0.0+0.0im]
-                        gen["angle_seq"] = [0.0; 0.0; 0.0]
-                        gen["i+_sum"] = 0.0
-                        gen["i-_sum"] = 0.0
-                        gen["last_ir1"] = 0.0
-                        gen["set_a"] = 0.0
-                        gen["set_2"] = 0.0
-                        gen["old_v"] = 0.0
-                        gen["old_a"] = 0.0
-                        gen["inj"] = false
+                        gen["|i_1|"] = 0
+                        gen["/_i_1"] = 0
+                        gen["|i_2|"] = 0
+                        gen["/_i_2"] = 0
                     end
                     ipq = conj(s[1]/abs(v_012[2]))
-                    # i_pos = ipq
-                    i_neg = 0.0
                     delta_v1 = 0.0
                     if abs(v_012[2]) < (1-gen["fault_model"]["ir1_dead_band"]) * bus["vbase"] * data["settings"]["voltage_scale_factor"] || abs(v_012[2]) > (1+gen["fault_model"]["ir1_dead_band"]) * bus["vbase"] * data["settings"]["voltage_scale_factor"] 
                         delta_v1 = abs(v_012[2])/(bus["vbase"] * data["settings"]["voltage_scale_factor"]) - 1
-                        ir1 = gen["fault_model"]["delta_ir1"] * delta_v1 * gen["i_nom"][1]
-                        abs(ir1) > gen["i_nom"][1] ? ir1 = sign(ir1)*gen["i_max"][1] : nothing
-                        ipq = conj(s[1]/((1-gen["fault_model"]["ir1_dead_band"]*0.0) * bus["vbase"] * data["settings"]["voltage_scale_factor"]))
-                        ir1 = 0.0 + ir1*1im
+                        ir1 = gen["fault_model"]["delta_ir1"] * delta_v1 * gen["i_max"][1]
                     else
                         ir1 = 0.0
                     end   
                     delta_v2 = 0.0         
                     if abs(v_012[3]) > gen["fault_model"]["ir2_dead_band"] * bus["vbase"] * data["settings"]["voltage_scale_factor"]
                         delta_v2 = abs(v_012[3])/(bus["vbase"] * data["settings"]["voltage_scale_factor"])
-                        ir2 = gen["fault_model"]["delta_ir2"] * delta_v2 * gen["i_nom"][1]*1im
+                        ir2 = gen["fault_model"]["delta_ir2"] * delta_v2 * gen["i_max"][1]
+                        println(ir2)
                     else
                         ir2 = 0.0
                     end
@@ -1003,33 +992,21 @@ function calc_mc_delta_current_gfli!(gen, delta_i, v, data)
                     ir1 = ir1/m
                     ir2 = ir2/m
                     i_012 = [0; ir1; ir2]
-                    ir1_a = 0.0
-                    ir2_a = 0.0
-                    if maximum(abs.(gen["current_seq"])) > .1
-                        ir1_a = -(angle(gen["current_seq"][2]) - angle(v_012[2]) + pi/2)*.5
-                        ir2_a = -(angle(gen["current_seq"][3]) - angle(v_012[3]) - pi/2)*.5
+                    gen["|i_1|"] += (ir1 - gen["|i_1|"])*.5
+                    gen["|i_2|"] += (ir2 - gen["|i_2|"])*.5
+                    if angle(v_012[2]) + angle(ir1*1im) < -2*pi/3
+                        gen["/_i_1"] += (-2*pi/3 - gen["/_i_1"])*.5  
                     else
-                        if abs(ir1) > .1 || abs(ir2) > .1
-                            ir1_a = angle(v_012[2])
-                            ir2_a = angle(v_012[3])
-                        end
+                        gen["/_i_1"] += (angle(v_012[2]) + angle(ir1*1im) - gen["/_i_1"])*.5
                     end
-                    if gen["angle_seq"][2] + ir1_a < -pi/6
-                        gen["angle_seq"][2] = -pi/6
-                    else
-                        gen["angle_seq"][2] += ir1_a
-                    end
-
-                    if gen["angle_seq"][3] + ir2_a < pi/6
-                        gen["angle_seq"][3] = pi/6
-                    else
-                        gen["angle_seq"][3] += ir2_a
-                    end      
-                    i_inj = _A * [0; i_012[2]*exp(1im*(gen["angle_seq"][2])) ; i_012[3]*exp(1im*gen["angle_seq"][3])] .- gen["i_inj"]
-                    gen["i_inj"] += i_inj
-                    gen["current_seq"] = [0; i_012[2]*exp(1im*(gen["angle_seq"][2])) ; i_012[3]*exp(1im*gen["angle_seq"][3])]
-                    gen["i+"] = abs(i_012[2])
-                    gen["i-"] = abs(i_012[3])
+                    gen["/_i_2"] += (angle(v_012[3]) + angle(ir2*1im) - gen["/_i_2"])*.5
+                    i_seq = [0; abs(gen["|i_1|"])*exp(1im*gen["/_i_1"]);abs(gen["|i_2|"])*exp(1im*gen["/_i_2"])]
+                    i_inj = _A * i_seq - gen["i_inj"]
+                    gen["i_inj"] = _A * i_seq
+                    gen["i+"] = abs(i_seq[2])
+                    gen["i-"] = abs(i_seq[3])
+                    gen["i+_a"] = angle(i_seq[2])*180/pi
+                    gen["i-_a"] = angle(i_seq[3])*180/pi
                     gen["v+"] = abs(v_012[2])
                     gen["v-"] = abs(v_012[3])
                     gen["v+_a"] = angle(v_012[2])*180/pi

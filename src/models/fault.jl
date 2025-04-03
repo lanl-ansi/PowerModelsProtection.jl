@@ -69,7 +69,7 @@ function build_mc_llg_gf(model::AdmittanceModel, terminals; phase_resistance=.01
 end
 
 
-function build_mc_lg_gf(model::AdmittanceModel, terminals; ground_resistance=.001)
+function build_mc_lg_gf(model::AdmittanceModel, terminals; ground_resistance=.01)
     Gf = zeros(Real, 3, 3)
     gf = 1 / ground_resistance
     for i in terminals
