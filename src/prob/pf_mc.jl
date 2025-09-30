@@ -200,6 +200,7 @@ function compute_mc_pf(model::AdmittanceModel; return_solution=true)
     _v = deepcopy(model.v)
     last_v = deepcopy(model.v)
     while it_control != max_it
+        println(it_control)
         _v = y \ _i
         a = maximum((abs.(_v-last_v)))
         if maximum((abs.(_v-last_v))) < .0001
@@ -249,7 +250,7 @@ function compute_mc_pf(model::AdmittanceModel, y; return_solution=true)
     while it_control != max_it
         _v = y \ _i
         a = maximum((abs.(_v-last_v)))
-        if maximum((abs.(_v-last_v))) < .01
+        if maximum((abs.(_v-last_v))) < 0.1 && it_control > 2
             break
         else
             delta_i = update_mc_delta_current_vector(model, _v)
@@ -257,7 +258,7 @@ function compute_mc_pf(model::AdmittanceModel, y; return_solution=true)
             _i += delta_i
             while it_pf != max_it
                 __v = y \ _i
-                if maximum((abs.(__v-_v))) < .01
+                if maximum((abs.(__v-_v))) < 0.1
                     _v = __v
                     break
                 else
@@ -269,13 +270,15 @@ function compute_mc_pf(model::AdmittanceModel, y; return_solution=true)
             end
             delta_i_control, y = update_mc_delta_current_control_vector(model, _v, y)
             _i += delta_i_control
+            # println(maximum(abs.(_i)))
             append!(it_current, it_pf)
             last_v = _v
             it_control += 1
         end
     end
+    println(it_control)
     if return_solution 
-        return solution_mc_pf(_v, it_control, it_current, maximum((abs.(_v-last_v))), i + delta_i_control + delta_i, model)
+        return solution_mc_pf(_v, it_control, it_current, maximum((abs.(_v-last_v))), i + delta_i_control + delta_i, model), _v
     else
         return _v, y, i, delta_i_control, delta_i, model
     end

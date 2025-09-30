@@ -194,7 +194,7 @@ function transform_admittance_data_model(
     build_model::Bool=false,
     correct_network_data::Bool=true,
     kwargs...,
-)::Dict{String,Any}
+    )::Dict{String,Any}
 
     if data["method"] == "PM"
         # TODO work on transmission admittance model
@@ -233,7 +233,7 @@ function _map_eng2math_mc_admittance(
     global_keys::Set{String}=Set{String}(),
     build_model::Bool=false,
     kwargs...,
-)::Dict{String,Any}
+    )::Dict{String,Any}
 
     _data_eng = deepcopy(data_eng)
 

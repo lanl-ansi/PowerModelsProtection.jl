@@ -316,3 +316,8 @@ function _bisection(I1, t1, I2, t2)
     a = t2 * (I2^b - 1)
     return a, b
 end
+
+
+function _apply_mc_admittance!(func!::Function, data1::Dict{String,<:Any}, data2::Dict{String,<:Any}; kwargs...)
+    func!(data1, data2; kwargs...)
+end

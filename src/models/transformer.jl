@@ -212,3 +212,180 @@ function add_mc_2w_transformer_p_matrix!(transformer::Dict{String,<:Any}, data::
         end
     end
 end
+
+
+function _map_ravens2math_mc_admittance_transformer!(data_math::Dict{String,<:Any}; pass_props::Vector{String}=String[])
+    if haskey(data_math, "transformer")
+        for (name, transformer) in data_math["transformer"]
+            if typeof(transformer["t_bus"]) == Vector{Int}
+                _map_ravens2math_mc_admittance_3w_transformer!(transformer, data_math; pass_props=pass_props)
+            else
+                _map_ravens2math_mc_admittance_2w_transformer!(transformer, data_math; pass_props=pass_props)
+            end
+        end
+    end
+end
+
+
+function _map_ravens2math_mc_admittance_2w_transformer!(transformer::Dict{String,<:Any}, data_math::Dict{String,<:Any}; pass_props::Vector{String}=String[])
+    lookup = Dict(
+        (1, 1) => [1, 1],
+        (1, 2) => [5, 3],
+        (1, 3) => [9, 5],
+        (2, 1) => [3, 2],
+        (2, 2) => [7, 4],
+        (2, 3) => [11, 6]
+    )
+    zbase = (transformer["tm_nom"] .* data_math["settings"]["voltage_scale_factor"]).^2 ./ (transformer["sm_ub"] .* data_math["settings"]["power_scale_factor"])
+    if transformer["phases"] == 3
+        z = sum(transformer["r_s"]./zbase) + 1im .* transformer["x_sc"][1]./zbase[1]
+        z_1volt = z * 3 / (transformer["sm_ub"][1] * data_math["settings"]["power_scale_factor"])
+        z_b = [z_1volt 0 0; 0 z_1volt 0; 0 0 z_1volt]
+        b = [1 0 0; -1 0 0; 0 1 0; 0 -1 0; 0 0 1; 0 0 -1]
+        y1 = b * inv(z_b) * transpose(b)
+        n = zeros(Float64, 12, 6)
+        a = zeros(Int64, 8, 12)
+        # println(transformer["tm_nom"])
+        for w = 1:2
+            if transformer["configuration"][w] == _PMD.WYE
+                w == 1 ? connections = transformer["f_connections"] : connections = transformer["t_connections"]
+                for (p, k) in enumerate(connections)
+                    if haskey(lookup, (w, k))
+                        i = lookup[(w, k)][1]
+                        j = lookup[(w, k)][2]
+                        n[i, j] = 1 / (transformer["tm_nom"][w] / sqrt(3) * data_math["settings"]["voltage_scale_factor"] * transformer["tm_set"][w][p])
+                        n[i+1, j] = -n[i, j]
+                    end
+                end
+                if w == 1
+                    a[1, 1] = a[2, 5] = a[3, 9] = a[4, 2] = a[4, 6] = a[4, 10] = 1
+                else
+                    a[5, 3] = a[6, 7] = a[7, 11] = a[8, 4] = a[8, 8] = a[8, 12] = 1
+                end
+            elseif transformer["configuration"][w] == _PMD.DELTA
+                w == 1 ? connections = transformer["f_connections"] : connections = transformer["t_connections"]
+                for (p, k) in enumerate(connections)
+                    if haskey(lookup, (w, k))
+                        i = lookup[(w, k)][1]
+                        j = lookup[(w, k)][2]
+                        # n[i, j] = 1 / (transformer["tm_nom"][w] * sqrt(3) * data_math["settings"]["voltage_scale_factor"] * transformer["tm_set"][w][p])
+                        n[i, j] = 1 / (transformer["tm_nom"][w] / sqrt(3) * data_math["settings"]["voltage_scale_factor"] * transformer["tm_set"][w][p])
+                        n[i+1, j] = -n[i, j]
+                    end
+                end
+                if transformer["configuration"][1] == _PMD.DELTA && transformer["configuration"][2] == _PMD.DELTA
+                    if w == 1
+                        a[1, 1] = a[1, 10] = a[2, 2] = a[2, 5] = a[3, 6] = a[3, 9] = 1
+                        # a[1,2] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
+                    else
+                        a[5, 3] = a[5, 12] = a[6, 4] = a[6, 7] = a[7, 8] = a[7, 11] = 1
+                    end
+                else
+                    if w == 1
+                        if transformer["leadlag"] == "lead"
+                            if transformer["tm_nom"][1] > transformer["tm_nom"][2]
+                                a[1, 1] = a[1, 10] = a[2, 2] = a[2, 5] = a[3, 6] = a[3, 9] = 1
+                            else
+                                a[1, 1] = a[1, 6] = a[2, 5] = a[2, 10] = a[3, 9] = a[3, 2] = 1
+                            end
+                        else
+                            if transformer["tm_nom"][1] > transformer["tm_nom"][2]
+                                a[1, 1] = a[1, 6] = a[2, 5] = a[2, 10] = a[3, 9] = a[3, 2] = 1
+                            else
+                                a[1,1] = a[1,10] = a[2,2] = a[2,5] = a[3,6] = a[3,9] = 1
+                                # a[1,1] = a[1,6] = a[2,5] = a[2,10] = a[3,9] = a[3,2] = 1
+                                # a[1,1] = a[1,6] = a[2,] = a[2,9] = a[3,10] = a[3,1] = 1
+                            end
+                        end
+                    else
+                        if transformer["configuration"][2] == _PMD.DELTA
+
+                            # a[5, 4] = a[5, 7] = a[6, 8] = a[6, 11] = a[7, 12] = a[7, 3] = 1
+                            a[5,3] = a[5,12] = a[6,4] = a[6,7] = a[7,8] = a[7,11] = 1
+                        end
+                    end
+                end
+            end
+        end
+        y_w = n * y1 * transpose(n)
+        p_matrix = a * y_w * transpose(a)
+        # ybase = (transformer["sm_ub"][1] / 3) / (transformer["tm_nom"][2] * transformer["tm_set"][2][1] / sqrt(3))^2 / 1000
+        ybase = (transformer["sm_ub"][1]) / (transformer["tm_nom"][2] * transformer["tm_set"][2][1] * data_math["settings"]["voltage_scale_factor"] )^2 
+        shunt = (transformer["g_sh"] + 1im * transformer["b_sh"]) #* ybase
+        p_matrix[5, 5] += shunt
+        p_matrix[5, 8] -= shunt
+        p_matrix[6, 6] += shunt
+        p_matrix[6, 8] -= shunt
+        p_matrix[7, 7] += shunt
+        p_matrix[7, 8] -= shunt
+        p_matrix[8, 5] -= shunt
+        p_matrix[8, 6] -= shunt
+        p_matrix[8, 7] -= shunt
+        p_matrix[8, 8] += 3 * shunt
+        a = deepcopy(p_matrix)
+        z_float = 1e-6 * 1im
+        for i = 1:size(p_matrix)[1]
+            p_matrix[i,i] += z_float*1im
+        end
+        transformer["p_matrix"] = p_matrix
+        transformer["p_matrix"] = p_matrix
+    elseif transformer["phases"] == 1
+        # println(transformer["tm_nom"])
+        z = sum(transformer["r_s"]./zbase) + 1im .* transformer["x_sc"][1]./zbase[1]
+        z_1volt = z * 1 / (transformer["sm_ub"][1] * data_math["settings"]["power_scale_factor"])
+        b = [1; -1]
+        y1 = b * 1 / z_1volt * transpose(b)
+        n = zeros(Float64, 4, 2)
+        a = zeros(Int64, 4, 4)
+        for w = 1:2
+            if transformer["configuration"][w] == _PMD.WYE
+                i = lookup[(w, 1)][1]
+                j = lookup[(w, 1)][2]
+                n[i, j] = 1 / (transformer["tm_nom"][w] * data_math["settings"]["voltage_scale_factor"] * transformer["tm_set"][w][1])
+                n[i+1, j] = -n[i, j]
+                if w == 1
+                    a[1, 1] = a[2, 2] = 1
+                else
+                    a[3, 3] = a[4, 4] = 1
+                end
+            end
+        end
+        y_w = n * y1 * transpose(n)
+        p_matrix = a * y_w * transpose(a)
+        for i = 1:size(p_matrix)[1]
+            p_matrix[i,i] += 1e-6 * 1im
+        end
+        transformer["p_matrix"] = p_matrix
+        transformer["p_matrix"] = p_matrix
+    elseif transformer["phases"] == 2
+        z = sum(transformer["r_s"]./zbase) + 1im .* transformer["x_sc"][1]./zbase[1]
+        z_1volt = z * 1 / (transformer["sm_ub"][1] * data_math["settings"]["power_scale_factor"])
+        b = [1; -1]
+        y1 = b * 1 / z_1volt * transpose(b)
+        n = zeros(Float64, 4, 2)
+        a = zeros(Int64, 4, 4)
+        for w = 1:2
+            if transformer["configuration"][w] == _PMD.WYE
+                i = lookup[(w, 1)][1]
+                j = lookup[(w, 1)][2]
+                n[i, j] = 1 / (transformer["tm_nom"][w] /sqrt(3) * data_math["settings"]["voltage_scale_factor"] * transformer["tm_set"][w][1])
+                n[i+1, j] = -n[i, j]
+                if w == 1
+                    a[1, 1] = a[2, 2] = 1
+                else
+                    a[3, 3] = a[4, 4] = 1
+                end
+            end
+        end
+        y_w = n * y1 * transpose(n)
+        p_matrix = a * y_w * transpose(a)
+        for i = 1:size(p_matrix)[1]
+            p_matrix[i,i] += 1e-6 * 1im
+        end
+        ybase = (transformer["sm_ub"][1] / 3) / (transformer["tm_nom"][2] * transformer["tm_set"][2][1] / sqrt(3))^2 / 1000
+        shunt = (transformer["g_sh"] + 1im * transformer["b_sh"]) * ybase
+        p_matrix[3, 3] += shunt
+        p_matrix[4, 4] -= shunt
+        transformer["p_matrix"] = p_matrix
+    end
+end

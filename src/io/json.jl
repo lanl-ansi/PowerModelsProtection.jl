@@ -18,6 +18,6 @@ Parser for data from PowerModelsProtection. Corrects enums and matrices saved as
 """
 function parse_json(file::String)
     open(file, "r") do io
-        parse_json(io)
+        _PMD.parse_json(io)
     end
 end

@@ -49,6 +49,8 @@ function parse_file(
             method=method,
             kwargs...
         )
+    elseif filetype == "json"
+        pm_data = parse_json(file)
     end
 
     return pm_data

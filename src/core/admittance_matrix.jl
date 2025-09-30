@@ -2,11 +2,20 @@
 function build_mc_admittance_matrix(data::Dict{String,<:Any}; loading=loading, )
     add_mc_admittance_map!(data)
     admit_matrix = Dict{Tuple,Complex{Float64}}()
-    add_mc_generator_p_matrix!(data, admit_matrix)
     add_mc_branch_p_matrix!(data, admit_matrix)
+    # println("Y matrix (@branches) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
+    add_mc_switch_p_matrix!(data, admit_matrix)
+    # println("Y matrix (@switches) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
+    add_mc_generator_p_matrix!(data, admit_matrix)
+    # println("Y matrix (@generators) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
     add_mc_transformer_p_matrix!(data, admit_matrix)
+    # println("Y matrix (@transformers) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
+    add_mc_storage_p_matrix!(data, admit_matrix)
+    # println("Y matrix (@storage) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
     loading ? add_mc_load_p_matrix!(data, admit_matrix) : nothing
+    # println("Y matrix (@loads) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
     add_mc_shunt_p_matrix!(data, admit_matrix)
+    # println("Y matrix (@shunts) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
     # --> need to finish other devices
     return _convert_sparse_matrix(admit_matrix)
 end
@@ -49,6 +58,22 @@ function  add_mc_generator_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dic
 end
 
 
+function  add_mc_storage_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
+    for (_, gen) in data["storage"]
+        bus = gen["storage_bus"]
+        for (_i, i) in enumerate(gen["connections"])
+            if haskey(data["admittance_map"], (bus, i))
+                for (_j, j) in enumerate(gen["connections"])
+                    if haskey(data["admittance_map"], (bus, j))
+                        haskey(admit_matrix, (data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])) ? admit_matrix[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] += gen["p_matrix"][_i,_j] : admit_matrix[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] = gen["p_matrix"][_i,_j]
+                    end
+                end
+            end
+        end
+    end
+end
+
+
 function add_mc_voltage_source_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}}, gen::Dict{String,<:Any})
     bus = gen["gen_bus"]
     for (_i, i) in enumerate(gen["connections"])
@@ -61,7 +86,6 @@ function add_mc_voltage_source_p_matrix!(data::Dict{String,<:Any}, admit_matrix:
         end
     end
 end
-
 
 
 function add_mc_branch_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
@@ -102,9 +126,46 @@ function add_mc_branch_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tu
 end
 
 
+function add_mc_switch_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
+    for (indx, switch) in data["switch"]
+        f_bus = switch["f_bus"]
+        for (_i, i) in enumerate(switch["f_connections"])
+            if haskey(data["admittance_map"], (f_bus, i))
+                for (_j, j) in enumerate(switch["f_connections"])
+                    if haskey(data["admittance_map"], (f_bus, j))
+                        haskey(admit_matrix, (data["admittance_map"][(f_bus, i)], data["admittance_map"][(f_bus, j)])) ? admit_matrix[(data["admittance_map"][(f_bus, i)], data["admittance_map"][(f_bus, j)])] += switch["p_matrix"][_i,_j] : admit_matrix[(data["admittance_map"][(f_bus, i)], data["admittance_map"][(f_bus, j)])] = switch["p_matrix"][_i,_j]
+                    end
+                end
+                t_bus = switch["t_bus"]
+                for (_j, j) in enumerate(switch["t_connections"])
+                    if haskey(data["admittance_map"], (t_bus, j))
+                        haskey(admit_matrix, (data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])) ? admit_matrix[(data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])] += switch["p_matrix"][_i,_j+length(switch["t_connections"])] : admit_matrix[(data["admittance_map"][(f_bus, i)], data["admittance_map"][(t_bus, j)])] = switch["p_matrix"][_i,_j+length(switch["t_connections"])]
+                    end
+                end
+            end
+        end
+        t_bus = switch["t_bus"]
+        for (_i, i) in enumerate(switch["t_connections"])
+            if haskey(data["admittance_map"], (t_bus, i))
+                for (_j, j) in enumerate(switch["t_connections"])
+                    if haskey(data["admittance_map"], (t_bus, j))
+                        haskey(admit_matrix, (data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])) ? admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])] += switch["p_matrix"][_i+length(switch["t_connections"]),_j+length(switch["t_connections"])] : admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(t_bus, j)])] = switch["p_matrix"][_i+length(switch["t_connections"]),_j+length(switch["t_connections"])]
+                    end
+                end
+                f_bus = switch["f_bus"]
+                for (_j, j) in enumerate(switch["f_connections"])
+                    if haskey(data["admittance_map"], (f_bus, j))
+                        haskey(admit_matrix, (data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])) ? admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])] += switch["p_matrix"][_i+length(switch["f_connections"]),_j] : admit_matrix[(data["admittance_map"][(t_bus, i)], data["admittance_map"][(f_bus, j)])] = switch["p_matrix"][_i+length(switch["f_connections"]),_j]
+                    end
+                end
+            end
+        end
+    end
+end
+
 function add_mc_transformer_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
     for (indx, transformer) in data["transformer"]
-if typeof(transformer["t_bus"]) == Vector{Int}
+        if typeof(transformer["t_bus"]) == Vector{Int}
             add_mc_3w_transformer_p_matrix!(transformer, data, admit_matrix)
         else
             add_mc_2w_transformer_p_matrix!(transformer, data, admit_matrix)
@@ -257,19 +318,25 @@ end
 function build_mc_voltage_vector(data::Dict{String,<:Any})
     v = zeros(Complex{Float64}, length(keys(data["admittance_type"])), 1)
     for (indx, bus) in data["bus"]
-        if haskey(bus, "vm")
-            for (_j, j) in enumerate(bus["terminals"])
-                if haskey(data["admittance_map"], (bus["bus_i"], j))
-                    v[data["admittance_map"][(bus["bus_i"], j)],1] = bus["vm"][_j] * data["settings"]["voltage_scale_factor"] * exp(1im*bus["va"][_j]*pi/180)
+        # if indx == "156"
+        #     println(bus)
+        #     println(ooooo)
+        # else
+            length(bus["terminals"]) == 3 ? m = 1/sqrt(3) : m = 1
+            if haskey(bus, "vm")
+                for (_j, j) in enumerate(bus["terminals"])
+                    if haskey(data["admittance_map"], (bus["bus_i"], j))
+                        v[data["admittance_map"][(bus["bus_i"], j)],1] = bus["vm"][_j] * data["settings"]["voltage_scale_factor"] * exp(1im*bus["va"][_j]*pi/180)
+                    end
+                end
+            else
+                for (_j, j) in enumerate(bus["terminals"])
+                    if haskey(data["admittance_map"], (bus["bus_i"], j))
+                        v[data["admittance_map"][(bus["bus_i"], j)],1] = bus["vbase"] * data["settings"]["voltage_scale_factor"] * m * exp(1im*-2/3*pi*(j-1))
+                    end
                 end
             end
-        else
-            for (_j, j) in enumerate(bus["terminals"])
-                if haskey(data["admittance_map"], (bus["bus_i"], j))
-                    v[data["admittance_map"][(bus["bus_i"], j)],1] = bus["vbase"] * data["settings"]["voltage_scale_factor"] * exp(1im*-2/3*pi*(j-1))
-                end
-            end
-        end
+        # end
     end
     return v
 end
@@ -282,7 +349,7 @@ function build_mc_current_vector(data::Dict{String,<:Any}, v::Matrix{ComplexF64}
     i = zeros(Complex{Float64}, length(keys(data["admittance_type"])), 1)
     # TODO look at models for gen and how they are defined
     for (_, gen) in data["gen"]
-        if gen["element"] == SolarElement
+        if gen["model_type"] == "pv_systems"
             if gen["gen_status"] == 1 && gen["grid_forming"]
                 bus = data["bus"][string(gen["gen_bus"])]
                 n = 3 #TODO fix when 4 is included
@@ -305,7 +372,7 @@ function build_mc_current_vector(data::Dict{String,<:Any}, v::Matrix{ComplexF64}
                     end
                 end
             end
-        elseif gen["element"] == VoltageSourceElement
+        elseif gen["model_type"] == "energy_source"
             if gen["gen_status"] == 1
                 bus = data["bus"][string(gen["gen_bus"])]
                 n = 3 #TODO fix when 4 is included
@@ -330,27 +397,68 @@ function build_mc_current_vector(data::Dict{String,<:Any}, v::Matrix{ComplexF64}
             end
         end
     end
+    for (_, gen) in data["storage"]
+        if gen["grid_forming"] 
+            bus = data["bus"][string(gen["storage_bus"])]
+            # n = 3 #TODO fix when 4 is included
+            # p_matrix = zeros(Complex{Float64}, n, n)
+            # _v = zeros(Complex{Float64}, n, 1)
+            # for i in gen["connections"]
+            #     if i != 4
+            #         _v[i,1] = bus["vm"][i] * data["settings"]["voltage_scale_factor"] * exp(1im * bus["va"][i] * pi/180)
+            #         for j in gen["connections"]
+            #             if j != 4
+            #                 p_matrix[i,j] = gen["p_matrix"][i,j]
+            #             end
+            #         end
+            #     end
+            # end
+            # i_update = p_matrix * _v
+            # for (_j, j) in enumerate(gen["connections"])
+            #     if (gen["storage_bus"], j) in keys(data["admittance_map"])
+            #         i[data["admittance_map"][(gen["storage_bus"], j)],1] = i_update[_j,1]
+            #     end
+            # end
+            # gen["i"] = i_update
+            # end
+            # i_update = gen["i_rated"] .* [exp(0im); exp(-120im*pi/180); exp(120im*pi/180)]
+            i_update = gen["i_inj"] #.* [exp(0im); exp(-120im*pi/180); exp(120im*pi/180)]
+            # println("MMMMMMMMMMMMMMMMMMMMMMMM")
+            # println(abs.(i_update))
+            gen["i"] = deepcopy(i_update)
+            for (_j, j) in enumerate(gen["connections"])
+                if (gen["storage_bus"], j) in keys(data["admittance_map"])
+                    i[data["admittance_map"][(gen["storage_bus"], j)],1] = i_update[_j,1]
+                end
+            end
+        end
+    end
     return i
 end
 
 
 " defines i based on setting reg points vs setting current based on voltage"
-function build_mc_delta_current_control_vector(data, v)
+function build_mc_delta_current_control_vector(data, v, y)
     (n, m) = size(v)
     delta_i = zeros(Complex{Float64}, n, 1)
-    build_mc_delta_current_control_inverter!(delta_i, v, data)
+    build_mc_delta_current_control_inverter!(delta_i, v, data, y)
     return _SP.sparse(delta_i)
 end
 
 
-function build_mc_delta_current_control_inverter!(delta_i, v, data)
+function build_mc_delta_current_control_inverter!(delta_i, v, data, y)
     for (_, gen) in data["gen"]
-        if gen["element"] == SolarElement
+        if gen["model_type"] == "pv_systems"
             if gen["grid_forming"]
                 calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
             else
                 calc_mc_delta_current_gfli!(gen, delta_i, v, data)
             end
+        end
+    end
+    for (_, storage) in data["storage"]
+        if storage["grid_forming"]
+            calc_mc_start_current_gfmi!(storage, delta_i, v, data, y)
         end
     end
 end
@@ -381,7 +489,7 @@ function update_mc_delta_current_control_vector(model, v, y)
     (n, m) = size(v)
     delta_i = zeros(Complex{Float64}, n, 1)
     # update_mc_delta_current_gfmi_control!(delta_i, v, model.data)
-    update_mc_delta_current_inverter!(delta_i, v, model.data)
+    update_mc_delta_current_inverter!(delta_i, v, model.data, y)
     y = update_mc_delta_current_transformer!(v, y, model.data)
     return delta_i, y
 end
@@ -908,6 +1016,7 @@ end
 
 
 function build_mc_delta_current_inverter!(delta_i, v, data)
+    println(ooo)
     for (_, gen) in data["gen"]
         if gen["element"] == SolarElement
             if gen["grid_forming"]
@@ -917,14 +1026,21 @@ function build_mc_delta_current_inverter!(delta_i, v, data)
             end
         end
     end
+    for (__, storage) in data["storage"]
+        jllk
+        if storage["grid_forming"]
+            calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
+        end
+    end
 end
 
 
 function calc_mc_delta_current_gfli!(gen, delta_i, v, data)
     if gen["response"] == ConstantPAtPF
         bus = data["bus"]["$(gen["gen_bus"])"]
-        pg = gen["pg"]
-        haskey(gen, "qg") ? qg = gen["qg"] : qg = gen["pg"].*0.0
+        pg = gen["pmax"]
+        haskey(gen, "i+") ? nothing : gen["i+"] = 0.0 
+        haskey(gen, "qg") ? qg = gen["qmax"] : qg = gen["pmax"].*0.0
         s = (pg .+ 1im .* qg) .* data["settings"]["power_scale_factor"]
         v_solar = zeros(Complex{Float64}, length(s), 1)
         v0 = zeros(Complex{Float64}, length(s), 1)
@@ -1019,65 +1135,585 @@ function calc_mc_delta_current_gfli!(gen, delta_i, v, data)
                 end
             end
         else
-            v_012 = inv(_A) * v_solar
-            if abs(conj(s[1]/v_012[2])) > gen["i_max"][1]
-                i_1 = gen["i_max"][1] * exp(1im*angle(conj(s[1]/v_012[2])))
-                gen["i+"] = gen["i_max"][1] * exp(1im*angle(conj(s[1]/v_012[2]))) - gen["i+"]
-            else
-                i_1 = conj(s[1]/v_012[2]) - gen["i+"]
-                gen["i+"] = conj(s[1]/v_012[2])
-            end
-            i_inj = _A * [0.0; i_1; 0.0]
-            for (_j, j) in enumerate(gen["connections"]) 
-                if j != 4
-                    delta_i[data["admittance_map"][(bus["bus_i"], j)], 1] += i_inj[j]
+            if length(v_solar) == 3
+                v_012 = inv(_A) * v_solar
+                if abs(conj(s[1]/v_012[2])) > gen["i_max"][1]
+                    i_1 = gen["i_max"][1]# * exp(1im*angle(conj(s[1]/v_012[2])))
+                    gen["i+"] = gen["i_max"][1] * exp(1im*angle(conj(s[1]/v_012[2])))# - gen["i+"]
+                else
+                    i_1 = conj(s[1]/v_012[2])# - gen["i+"]
+                    gen["i+"] = conj(s[1]/v_012[2])
                 end
+                i_inj = _A * [0.0; i_1 - gen["i_inj"]; 0.0] 
+                gen["i_inj"] += i_1 - gen["i_inj"]
+                for (_j, j) in enumerate(gen["connections"]) 
+                    if j != 4
+                        delta_i[data["admittance_map"][(bus["bus_i"], j)], 1] += i_inj[j]
+                    end
+                end
+                # println(abs.(i_inj))
+            elseif length(v_solar) == 1
+                if abs(conj(s[1]/v_solar[1])) > gen["i_max"][1]
+                    i_inj = gen["i_max"][1] * exp(1im*angle(conj(s[1]/v_solar[1]))) - gen["i_inj"]
+                    gen["i_inj"] += i_inj
+                    gen["i+"] = gen["i_max"][1] * exp(1im*angle(conj(s[1]/v_solar[1]))) - gen["i+"]
+                else
+                    i_inj = conj(s[1]/v_solar[1]) - gen["i_inj"]
+                    gen["i_inj"] += i_inj
+                    gen["i+"] = conj(s[1]/v_solar[1])
+                end
+                # gen["i_inj"] = _A * i_seq
+                delta_i[data["admittance_map"][(bus["bus_i"], gen["connections"][1])], 1] += i_inj
+            else
+                println(poppopo)
             end
         end
     end
 end
 
 
-function calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
-    bus = gen["gen_bus"]
-    pg = gen["pg"]
-    haskey(gen, "qg") ? qg = gen["qg"] : qg = gen["pg"].*0.0
-    s = (pg .+ 1im .* qg) .* data["settings"]["power_scale_factor"]
-    if gen["configuration"] == _PMD.WYE
-        if gen["balanced"]
-            v_solar = zeros(Complex{Float64}, length(s), 1)
-            for (_j, j) in enumerate(gen["connections"])
-                if haskey(data["admittance_map"], (bus, j))
-                    v_solar[_j, 1] = v[data["admittance_map"][(bus, j)], 1]
-                end
-            end
-            s_seq = s[1]
-            v_seq = inv(_A)*v_solar
-            i_seq = conj(s_seq/v_seq[2])
-            if abs(i_seq) <= gen["i_max"][1]
-                i_inj = _A*[0;i_seq;0]
-            else
-                i_inj = _A*[0;gen["i_max"][1]*exp(1im*angle(i_seq));0]
-            end
-            for (_j, j) in enumerate(gen["connections"])
-                if j != 4
-                    delta_i[data["admittance_map"][(bus, j)], 1] += i_inj[j]
-                end
-            end
-        else
-            k = findall(x->x==4, gen["connections"])[1]
-            for (_j, j) in enumerate(gen["connections"])
-                if j != 4
-                    i_inj = conj(s[_j]/v[data["admittance_map"][(bus, j)], 1])
-                    if abs(i_inj) < gen["i_max"][_j]
-                        delta_i[data["admittance_map"][(bus, j)], 1] += i_inj * exp(-1im*angle(i_inj))
-                    else
-                        delta_i[data["admittance_map"][(bus, j)], 1] += gen["i_max"][_j] * exp(-1im*angle(i_inj))
-                    end
-                end
-            end
-        end
+function calc_mc_delta_current_gfmi!(gen, delta_i, v, data, y)
+    if !(haskey(gen, "|i_1|"))
+        gen["i_inj"] = [0; 0; 0]
+        gen["|i_1|"] = 0
+        gen["/_i_1"] = 0
+        gen["|i_2|"] = 0
+        gen["/_i_2"] = 0
     end
+    bus = data["bus"]["$(gen["storage_bus"])"]
+    println(bus)
+    _v = zeros(Complex{Float64}, 3, 1)
+    indx = 1
+    for (_j, j) in enumerate(gen["connections"])
+        if haskey(data["admittance_map"], (bus["bus_i"], j))
+            _v[indx, 1] = v[data["admittance_map"][(bus["bus_i"], j)], 1]
+        end
+        indx += 1
+    end
+    println(abs.(_v))
+    v_012 = inv(_A) * _v
+    # ir1 = 0.0
+    # println(abs.(v_012))
+    # if abs(v_012[2]) < 630/sqrt(3.0) * .9 || abs(v_012[2]) > 630/sqrt(3.0) * 1.1
+    #     delta_v1 = abs(v_012[2])/(630/sqrt(3.0)) - 1
+    #     ir1 = 2 * delta_v1 * gen["i_max"]
+    #     # println("ddd ", delta_v1)
+    # end
+    # ir2 = 0.0
+    # pppppp
+    # if abs(v_012[3]) > 630/sqrt(3.0) * .1
+    #     delta_v2 = abs(v_012[3])/(630/sqrt(3.0))
+    #     ir2 = 2 * delta_v2 * gen["i_max"]
+    #     println(ir2)
+    #     pppp
+    # end
+    ir1 = 0.0
+    if abs(v_012[2]) < 14399.115999955 * .9 || abs(v_012[2]) > 14399.115999955 * 1.1
+        delta_v1 = abs(v_012[2])/(14399.115999955) - 1
+        ir1 = 2 * delta_v1 * gen["i_max"]
+        # println("ddd ", delta_v1)
+    end
+    ir2 = 0.0
+    println(abs(v_012[3]))
+    
+    if abs(v_012[3]) > 14399.115999955 * .1
+        delta_v2 = abs(v_012[3])/(14399.115999955)
+        ir2 = 2 * delta_v2 * gen["i_max"]
+    end
+    if ir2 > gen["i_max"] * .4
+        ir2 = gen["i_max"] * .4
+    end
+    m = max(1, (abs(ir1) + abs(ir2))/(gen["i_max"]))
+    ir1 = ir1/m
+    ir2 = ir2/m  
+    # println("ir1 ", ir1)  
+    # println("ir2 ", ir2) 
+    # println("_v:", " ", abs.(_v))
+    i_012 = [0; ir1; ir2]
+    gain = 1.0
+    gen["|i_1|"] += (ir1 - gen["|i_1|"])*gain
+    gen["|i_2|"] += (ir2 - gen["|i_2|"])*gain
+    if angle(v_012[2]) + angle(ir1*1im) < -2*pi/3
+        gen["/_i_1"] += (-2*pi/3 - gen["/_i_1"])*gain
+    else
+        gen["/_i_1"] += (angle(v_012[2]) + angle(ir1*1im) - gen["/_i_1"])*gain
+    end
+    gen["/_i_2"] += (angle(v_012[3]) + angle(ir2*1im) - gen["/_i_2"])*gain
+    i_seq = [0; abs(gen["|i_1|"])*exp(1im*gen["/_i_1"]);abs(gen["|i_2|"])*exp(1im*gen["/_i_2"])]
+    i_inj = _A * i_seq - gen["i_inj"]
+    gen["i_inj"] = _A * i_seq
+    gen["i+"] = abs(i_seq[2])
+    gen["i-"] = abs(i_seq[3])
+    gen["i+_a"] = angle(i_seq[2])*180/pi
+    gen["i-_a"] = angle(i_seq[3])*180/pi
+    gen["v+"] = abs(v_012[2])
+    gen["v-"] = abs(v_012[3])
+    gen["v+_a"] = angle(v_012[2])*180/pi
+    gen["v-_a"] = angle(v_012[3])*180/pi
+    for (_j, j) in enumerate(gen["connections"]) 
+        if j != 4
+            delta_i[data["admittance_map"][(bus["bus_i"], j)], 1] += i_inj[j] 
+         end
+    end
+    
+    #     (1-gen["fault_model"]["ir1_dead_band"]) * bus["vbase"] * data["settings"]["voltage_scale_factor"] || abs(v_012[2]) > (1+gen["fault_model"]["ir1_dead_band"]) * bus["vbase"] * data["settings"]["voltage_scale_factor"] 
+    #                     delta_v1 = abs(v_012[2])/(bus["vbase"] * data["settings"]["voltage_scale_factor"]) - 1
+    #                     ir1 = gen["fault_model"]["delta_ir1"] * delta_v1 * gen["i_max"][1]
+    #                 else
+    #                     ir1 = 0.0
+    #                 end   
+    # if !(haskey(gen, "i_inj"))
+    #                     gen["i_inj"] = [0; 0; 0]
+    #                     gen["|i_1|"] = 0
+    #                     gen["/_i_1"] = 0
+    #                     gen["|i_2|"] = 0
+    #                     gen["/_i_2"] = 0
+    #                 end
+    #                 ipq = conj(s[1]/abs(v_012[2]))
+    #                 delta_v1 = 0.0
+    #                 if abs(v_012[2]) < (1-gen["fault_model"]["ir1_dead_band"]) * bus["vbase"] * data["settings"]["voltage_scale_factor"] || abs(v_012[2]) > (1+gen["fault_model"]["ir1_dead_band"]) * bus["vbase"] * data["settings"]["voltage_scale_factor"] 
+    #                     delta_v1 = abs(v_012[2])/(bus["vbase"] * data["settings"]["voltage_scale_factor"]) - 1
+    #                     ir1 = gen["fault_model"]["delta_ir1"] * delta_v1 * gen["i_max"][1]
+    #                 else
+    #                     ir1 = 0.0
+    #                 end   
+    #                 delta_v2 = 0.0         
+    #                 if abs(v_012[3]) > gen["fault_model"]["ir2_dead_band"] * bus["vbase"] * data["settings"]["voltage_scale_factor"]
+    #                     delta_v2 = abs(v_012[3])/(bus["vbase"] * data["settings"]["voltage_scale_factor"])
+    #                     ir2 = gen["fault_model"]["delta_ir2"] * delta_v2 * gen["i_max"][1]
+    #                     println(ir2)
+    #                 else
+    #                     ir2 = 0.0
+    #                 end
+    #                 m = max(1, (abs(ir1) + abs(ir2))/(gen["i_max"][1]))
+    #                 ir1 = ir1/m
+    #                 ir2 = ir2/m
+    #                 i_012 = [0; ir1; ir2]
+    #                 gen["|i_1|"] += (ir1 - gen["|i_1|"])*.5
+    #                 gen["|i_2|"] += (ir2 - gen["|i_2|"])*.5
+    #                 if angle(v_012[2]) + angle(ir1*1im) < -2*pi/3
+    #                     gen["/_i_1"] += (-2*pi/3 - gen["/_i_1"])*.5  
+    #                 else
+    #                     gen["/_i_1"] += (angle(v_012[2]) + angle(ir1*1im) - gen["/_i_1"])*.5
+    #                 end
+    #                 gen["/_i_2"] += (angle(v_012[3]) + angle(ir2*1im) - gen["/_i_2"])*.5
+    #                 i_seq = [0; abs(gen["|i_1|"])*exp(1im*gen["/_i_1"]);abs(gen["|i_2|"])*exp(1im*gen["/_i_2"])]
+    #                 i_inj = _A * i_seq - gen["i_inj"]
+    #                 gen["i_inj"] = _A * i_seq
+    #                 gen["i+"] = abs(i_seq[2])
+    #                 gen["i-"] = abs(i_seq[3])
+    #                 gen["i+_a"] = angle(i_seq[2])*180/pi
+    #                 gen["i-_a"] = angle(i_seq[3])*180/pi
+    #                 gen["v+"] = abs(v_012[2])
+    #                 gen["v-"] = abs(v_012[3])
+    #                 gen["v+_a"] = angle(v_012[2])*180/pi
+    #                 gen["v-_a"] = angle(v_012[3])*180/pi
+    #                 for (_j, j) in enumerate(gen["connections"]) 
+    #                     if j != 4
+    #                         delta_i[data["admittance_map"][(bus["bus_i"], j)], 1] += i_inj[j] 
+    #                     end
+    #                 end
+
+    # # f_bus = data["bus"]["$(gen["transformer"]["f_bus"])"]
+    # t_bus = data["bus"]["$(gen["storage_bus"])"]
+    # # p_matrix = gen["transformer"]["p_matrix"]
+    # # _v = zeros(Complex{Float64}, size(p_matrix)[1], 1)
+    # _v = zeros(Complex{Float64}, 3, 1)
+    # indx = 1
+    # # for (_j, j) in enumerate(gen["transformer"]["f_connections"])
+    # #     if haskey(data["admittance_map"], (f_bus["bus_i"], j))
+    # #         _v[indx, 1] = v[data["admittance_map"][(f_bus["bus_i"], j)], 1]
+    # #     end
+    # #     indx += 1
+    # # end
+    # # indx += 1
+    # for (_j, j) in enumerate(gen["connections"])
+    #     if haskey(data["admittance_map"], (t_bus["bus_i"], j))
+    #         _v[indx, 1] = v[data["admittance_map"][(t_bus["bus_i"], j)], 1]
+    #     end
+    #     indx += 1
+    # end
+    # _i = p_matrix * _v
+    # i_012 = inv(_A) * _i[1:3,1]
+    # m = max(1, (abs(i_012[2]) + abs(i_012[3]))/(gen["i_max"][1]))
+    # i_012[2] = i_012[2]/m
+    # i_012[3] = i_012[3]/m
+    # i_abc = _A * i_012
+    # z = _v[1:3,1] ./ i_abc   
+    # i_adjust = zeros(Complex{Float64}, 3, 1)
+    # for i = 1:3
+    #     j = i + 4
+    #     i_adjust[i] = (630/sqrt(3) .* exp((1-i*1)*120im*pi/180)) / z[j]
+    # end
+    # i_012 = inv(_A) * i_adjust
+    # m = max(1, (abs(i_012[2]) + abs(i_012[3]))/(gen["i_max"][1]))
+    # i_012[2] = i_012[2]/m
+    # i_012[3] = i_012[3]/m
+    # i_adjust = _A * i_012
+    # println(i_adjust[1]*z[5])
+    # println("I_adjust:", " ", abs.(i_adjust))
+    # println("I_adjust:", " ", angle.(i_adjust).*180/pi)
+    # println("_i:", " ", abs.(_i))
+    # println("_v:", " ", abs.(_v))
+    # println("i_012:", " ", abs.(i_012))
+    # println("z; ", z)
+    # println("gen ", " ", abs.(gen["i"]))
+    # i_inj = (i_adjust .- gen["i"]) 
+    # println("i_inj:", " ", abs.(i_inj))
+    # println("i_inj:", " ", angle.(i_inj).*180/pi)
+    # gen["i"] += i_inj
+    # println("gen ", " ", abs.(gen["i"]))
+    # for (_j, j) in enumerate(gen["connections"]) 
+    #     if j != 4
+    #         delta_i[data["admittance_map"][(gen["storage_bus"], j)], 1] += i_inj[j]
+    #     end
+    # end
+    # println("____________________________________________")
+    # z = zero(Complex{Float64}, 3, 1)
+    # indx = 1
+    # for j = 5:7
+    #     z[indx] = _v[j] / 
+
+    # println(abs.(_v))
+    # println(abs.(p_matrix * _v))
+    # phjkjyh
+    # bus = data["bus"]["$(gen["storage_bus"])"]
+    # f_bus = data["bus"]["$(gen["transformer"]["f_bus"])"]
+    # t_bus = data["bus"]["$(gen["storage_bus"])"]
+    # p_matrix = gen["transformer"]["p_matrix"]
+
+    # haskey(gen, "i+") ? nothing : gen["i+"] = 0.0 
+    # haskey(gen, "i-") ? nothing : gen["i-"] = 0.0 
+    # haskey(gen, "y") ? nothing : gen["y"] = gen["p_matrix"][1:3,1:3]
+    # _v = zeros(Complex{Float64}, size(p_matrix)[1], 1)
+    # indx = 1
+    # for (_j, j) in enumerate(gen["transformer"]["f_connections"])
+    #     if haskey(data["admittance_map"], (bus["bus_i"], j))
+    #         _v[indx, 1] = v[data["admittance_map"][(bus["bus_i"], j)], 1]
+    #         indx += 1
+    #     end
+    # end
+    # for (_j, j) in enumerate(gen["connections"])
+    #     if haskey(data["admittance_map"], (bus["bus_i"], j))
+    #         _v[indx, 1] = v[data["admittance_map"][(bus["bus_i"], j)], 1]
+    #         indx += 1
+    #     end
+    # end
+    # println(_v)
+    # println(ooo)
+    # p_matrix = zeros(Complex{Float64}, 3, 3)  
+    # for i in gen["connections"]
+    #     if i != 4
+    #         for j in gen["connections"]
+    #             if j != 4
+    #                 p_matrix[i,j] = gen["p_matrix"][i,j]
+    #             end
+    #         end
+    #     end
+    # end
+    # bus = data["bus"]["$(gen["storage_bus"])"]
+    # _v = zeros(Complex{Float64}, size(p_matrix)[1], 1)
+    # for (_j, j) in enumerate(gen["connections"])
+    #     if haskey(data["admittance_map"], (bus["bus_i"], j))
+    #         _v[_j, 1] = v[data["admittance_map"][(bus["bus_i"], j)], 1]
+    #     end
+    # end
+    # i_update = p_matrix * _v
+    # # i_sys = gen["i"] .- i_update
+    # i_sys = _i[5:7]
+    # i_012 = inv(_A) * i_sys
+    # m = max(1, (abs(i_012[2]) + abs(i_012[3]))/(gen["i_max"][1]))
+    # i_012[2] = i_012[2]/m
+    # i_012[3] = i_012[3]/m
+    # i_abc = _A * i_012
+    # # println("I_012:", " ", abs.(i_012))
+    # i_s = gen["i"] .- i_abc
+    # _y = deepcopy(gen["y"])
+    # for k = 1:3
+    #     _y[k,k] = i_s[k]/_v[k]
+    # end
+    # y_update = _y .- gen["y"]
+    # println("gen", " ", gen["y"])
+    # println("new ", " ", _y)
+    # println("y update: ", " ", abs.(y_update))
+    # gen["y"] = _y
+    # gen["p_matrix"][1:3,1:3] = _y
+    # for (_i, i) in enumerate(gen["connections"])
+    #     if haskey(data["admittance_map"], (bus, i))
+    #         for (_j, j) in enumerate(gen["connections"])
+    #             if haskey(data["admittance_map"], (bus, j))
+    #                 haskey(admit_matrix, (data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])) ? y[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] += y_update[_i,_j] : println(oooo)
+    #             end
+    #         end
+    #     end
+    # end
+    # # z_012=[1e6im 0+0im 0+0im;0+0im 1e6im 0+0im;0+0im 0+0im 1e6im]
+    #         z =  A^-1*z_012*A
+    #         z1 = inv(z[1:3, 1:3])
+    #         z2 = -inv(z[1:3, 1:3])
+    #         gen["p_matrix"] = [z1 z2; z2 z1]
+    # i_update = p_matrix * v_solar
+    # println(abs.(i_update))
+    # i_sys = gen["i"] .- i_update
+    # println(abs.(gen["i"]))
+    # println(abs.(i_sys))
+    # println(ooo)
+    # i_012 = inv(_A) * i_sys
+    # println("**********************************")
+    # println(abs.(i_012))
+    # println(angle.(i_012) .* 180/pi)
+    # i_012[1] = 0+0im
+    # # if abs(i_012[3]) > gen["i_max"][1]*.4
+    # #     i_012[3] = gen["i_max"][1]*.4 * exp(angle(i_012[3])*1im)
+    # # end
+    # m = max(1, (abs(i_012[2]) + abs(i_012[3]))/(gen["i_max"][1]))
+    # i_012[2] = i_012[2]/m
+    # i_012[3] = i_012[3]/m
+    # i_abc = _A * i_012
+    # println(abs.(i_012))
+    # println(angle.(i_012) .* 180/pi)
+    # println(abs.(i_abc))
+    
+    # i_s = gen["i"] .- i_abc
+    # y = deepcopy(gen["y"])
+    # for k = 1:3
+    #     y[k,k] = i_s[k]/v_solar[k]
+    # end
+    # y_update = y .- gen["y"]
+    # gen["y"] = y
+    # gen["p_matrix"][1:3,1:3] = y
+    # for (_i, i) in enumerate(gen["connections"])
+    #     if haskey(data["admittance_map"], (bus, i))
+    #         for (_j, j) in enumerate(gen["connections"])
+    #             if haskey(data["admittance_map"], (bus, j))
+    #                 haskey(admit_matrix, (data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])) ? admit_matrix[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] += y_update[_i,_j] : nothing
+    #             end
+    #         end
+    #     end
+    # end
+    # # println(y)
+    # # println(gen["y"])
+    # # println(abs.(y_update))
+    # # pklhjlih
+    # # println(abs.(i_sys))
+    # # println(abs.(i_abc))
+    # # println(abs.(i_012))
+    # # println(abs.(gen["i"] .- i_update))
+    # println("____________________")
+
+    
+# function  add_mc_storage_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
+#     for (_, gen) in data["storage"]
+#         bus = gen["storage_bus"]
+#         for (_i, i) in enumerate(gen["connections"])
+#             if haskey(data["admittance_map"], (bus, i))
+#                 for (_j, j) in enumerate(gen["connections"])
+#                     if haskey(data["admittance_map"], (bus, j))
+#                         haskey(admit_matrix, (data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])) ? admit_matrix[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] += gen["p_matrix"][_i,_j] : admit_matrix[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] = gen["p_matrix"][_i,_j]
+#                     end
+#                 end
+#             end
+#         end
+#     end
+# end
+    # println(gen)
+    # println(ooioioi)
+    
+    
+    # println(abs.(v_solar))
+    # println(ooo)
+    # bus = gen["gen_bus"]
+    # pg = gen["pg"]
+    # haskey(gen, "qg") ? qg = gen["qg"] : qg = gen["pg"].*0.0
+    # s = (pg .+ 1im .* qg) .* data["settings"]["power_scale_factor"]
+    # if gen["configuration"] == _PMD.WYE
+    #     if gen["balanced"]
+    #         v_solar = zeros(Complex{Float64}, length(s), 1)
+    #         for (_j, j) in enumerate(gen["connections"])
+    #             if haskey(data["admittance_map"], (bus, j))
+    #                 v_solar[_j, 1] = v[data["admittance_map"][(bus, j)], 1]
+    #             end
+    #         end
+    #         s_seq = s[1]
+    #         v_seq = inv(_A)*v_solar
+    #         i_seq = conj(s_seq/v_seq[2])
+    #         if abs(i_seq) <= gen["i_max"][1]
+    #             i_inj = _A*[0;i_seq;0]
+    #         else
+    #             i_inj = _A*[0;gen["i_max"][1]*exp(1im*angle(i_seq));0]
+    #         end
+    #         for (_j, j) in enumerate(gen["connections"])
+    #             if j != 4
+    #                 delta_i[data["admittance_map"][(bus, j)], 1] += i_inj[j]
+    #             end
+    #         end
+    #     else
+    #         k = findall(x->x==4, gen["connections"])[1]
+    #         for (_j, j) in enumerate(gen["connections"])
+    #             if j != 4
+    #                 i_inj = conj(s[_j]/v[data["admittance_map"][(bus, j)], 1])
+    #                 if abs(i_inj) < gen["i_max"][_j]
+    #                     delta_i[data["admittance_map"][(bus, j)], 1] += i_inj * exp(-1im*angle(i_inj))
+    #                 else
+    #                     delta_i[data["admittance_map"][(bus, j)], 1] += gen["i_max"][_j] * exp(-1im*angle(i_inj))
+    #                 end
+    #             end
+    #         end
+    #     end
+    # end
+end
+
+
+function calc_mc_start_current_gfmi!(gen, delta_i, v, data, y)
+    # f_bus = data["bus"]["$(gen["transformer"]["f_bus"])"]
+    t_bus = data["bus"]["$(gen["storage_bus"])"]
+    # p_matrix = gen["transformer"]["p_matrix"]
+    # haskey(gen, "i+") ? nothing : gen["i+"] = 0.0 
+    # haskey(gen, "i-") ? nothing : gen["i-"] = 0.0 
+    # haskey(gen, "y") ? nothing : gen["y"] = gen["p_matrix"][1:3,1:3]
+    _v = zeros(Complex{Float64}, 3, 1)
+    indx = 1
+    # for (_j, j) in enumerate(gen["transformer"]["f_connections"])
+    #     if haskey(data["admittance_map"], (f_bus["bus_i"], j))
+    #         _v[indx, 1] = v[data["admittance_map"][(f_bus["bus_i"], j)], 1]
+    #     end
+    #     indx += 1
+    # end
+    for (_j, j) in enumerate(gen["connections"])
+        if haskey(data["admittance_map"], (t_bus["bus_i"], j))
+            _v[indx, 1] = v[data["admittance_map"][(t_bus["bus_i"], j)], 1]
+        end
+        indx += 1
+    end
+    # println(abs.(_v))
+    # println(abs.(p_matrix*_v))
+    # println(gen["i"])
+    # println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+#     println(ooo)
+#     p_matrix = zeros(Complex{Float64}, 3, 3)  
+#     for i in gen["connections"]
+#         if i != 4
+#             for j in gen["connections"]
+#                 if j != 4
+#                     p_matrix[i,j] = gen["p_matrix"][i,j]
+#                 end
+#             end
+#         end
+#     end
+#     # z_012=[1e6im 0+0im 0+0im;0+0im 1e6im 0+0im;0+0im 0+0im 1e6im]
+#             z =  A^-1*z_012*A
+#             z1 = inv(z[1:3, 1:3])
+#             z2 = -inv(z[1:3, 1:3])
+#             gen["p_matrix"] = [z1 z2; z2 z1]
+#     i_update = p_matrix * v_solar
+#     println(abs.(i_update))
+#     i_sys = gen["i"] .- i_update
+#     println(abs.(gen["i"]))
+#     println(abs.(i_sys))
+#     println(ooo)
+#     i_012 = inv(_A) * i_sys
+#     println("**********************************")
+#     println(abs.(i_012))
+#     println(angle.(i_012) .* 180/pi)
+#     i_012[1] = 0+0im
+#     # if abs(i_012[3]) > gen["i_max"][1]*.4
+#     #     i_012[3] = gen["i_max"][1]*.4 * exp(angle(i_012[3])*1im)
+#     # end
+#     m = max(1, (abs(i_012[2]) + abs(i_012[3]))/(gen["i_max"][1]))
+#     i_012[2] = i_012[2]/m
+#     i_012[3] = i_012[3]/m
+#     i_abc = _A * i_012
+#     println(abs.(i_012))
+#     println(angle.(i_012) .* 180/pi)
+#     println(abs.(i_abc))
+    
+#     i_s = gen["i"] .- i_abc
+#     y = deepcopy(gen["y"])
+#     for k = 1:3
+#         y[k,k] = i_s[k]/v_solar[k]
+#     end
+#     y_update = y .- gen["y"]
+#     gen["y"] = y
+#     gen["p_matrix"][1:3,1:3] = y
+#     for (_i, i) in enumerate(gen["connections"])
+#         if haskey(data["admittance_map"], (bus, i))
+#             for (_j, j) in enumerate(gen["connections"])
+#                 if haskey(data["admittance_map"], (bus, j))
+#                     haskey(admit_matrix, (data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])) ? admit_matrix[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] += y_update[_i,_j] : nothing
+#                 end
+#             end
+#         end
+#     end
+#     # println(y)
+#     # println(gen["y"])
+#     # println(abs.(y_update))
+#     # pklhjlih
+#     # println(abs.(i_sys))
+#     # println(abs.(i_abc))
+#     # println(abs.(i_012))
+#     # println(abs.(gen["i"] .- i_update))
+#     println("____________________")
+
+    
+# # function  add_mc_storage_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
+# #     for (_, gen) in data["storage"]
+# #         bus = gen["storage_bus"]
+# #         for (_i, i) in enumerate(gen["connections"])
+# #             if haskey(data["admittance_map"], (bus, i))
+# #                 for (_j, j) in enumerate(gen["connections"])
+# #                     if haskey(data["admittance_map"], (bus, j))
+# #                         haskey(admit_matrix, (data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])) ? admit_matrix[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] += gen["p_matrix"][_i,_j] : admit_matrix[(data["admittance_map"][(bus, i)], data["admittance_map"][(bus, j)])] = gen["p_matrix"][_i,_j]
+# #                     end
+# #                 end
+# #             end
+# #         end
+# #     end
+# # end
+#     # println(gen)
+#     # println(ooioioi)
+    
+    
+#     # println(abs.(v_solar))
+#     # println(ooo)
+#     # bus = gen["gen_bus"]
+#     # pg = gen["pg"]
+#     # haskey(gen, "qg") ? qg = gen["qg"] : qg = gen["pg"].*0.0
+#     # s = (pg .+ 1im .* qg) .* data["settings"]["power_scale_factor"]
+#     # if gen["configuration"] == _PMD.WYE
+#     #     if gen["balanced"]
+#     #         v_solar = zeros(Complex{Float64}, length(s), 1)
+#     #         for (_j, j) in enumerate(gen["connections"])
+#     #             if haskey(data["admittance_map"], (bus, j))
+#     #                 v_solar[_j, 1] = v[data["admittance_map"][(bus, j)], 1]
+#     #             end
+#     #         end
+#     #         s_seq = s[1]
+#     #         v_seq = inv(_A)*v_solar
+#     #         i_seq = conj(s_seq/v_seq[2])
+#     #         if abs(i_seq) <= gen["i_max"][1]
+#     #             i_inj = _A*[0;i_seq;0]
+#     #         else
+#     #             i_inj = _A*[0;gen["i_max"][1]*exp(1im*angle(i_seq));0]
+#     #         end
+#     #         for (_j, j) in enumerate(gen["connections"])
+#     #             if j != 4
+#     #                 delta_i[data["admittance_map"][(bus, j)], 1] += i_inj[j]
+#     #             end
+#     #         end
+#     #     else
+#     #         k = findall(x->x==4, gen["connections"])[1]
+#     #         for (_j, j) in enumerate(gen["connections"])
+#     #             if j != 4
+#     #                 i_inj = conj(s[_j]/v[data["admittance_map"][(bus, j)], 1])
+#     #                 if abs(i_inj) < gen["i_max"][_j]
+#     #                     delta_i[data["admittance_map"][(bus, j)], 1] += i_inj * exp(-1im*angle(i_inj))
+#     #                 else
+#     #                     delta_i[data["admittance_map"][(bus, j)], 1] += gen["i_max"][_j] * exp(-1im*angle(i_inj))
+#     #                 end
+#     #             end
+#     #         end
+    #     end
+    # end
 end
 
 
@@ -1118,14 +1754,19 @@ function update_mc_delta_current_load!(delta_i, v, data)
 end
 
 
-function update_mc_delta_current_inverter!(delta_i, v, data)
+function update_mc_delta_current_inverter!(delta_i, v, data, y)
     for (_, gen) in data["gen"]
-        if gen["element"] == SolarElement
+        if gen["model_type"] == "pv_systems"
             if gen["grid_forming"]
-                calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
+                # calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
             else
                 calc_mc_delta_current_gfli!(gen, delta_i, v, data)
             end
+        end
+    end
+    for (_,gen) in data["storage"]
+        if gen["grid_forming"]
+            calc_mc_delta_current_gfmi!(gen, delta_i, v, data, y)
         end
     end
 end
