@@ -62,8 +62,20 @@ const pmp_ravens_asset_types = String[
 ]
 
 const pmp_dss_asset_types = [
-    _pmp_dss_edge_elements..., _dss_edge_elements..., _pmp_dss_node_elements..., _dss_node_elements...
+    "bus", _pmp_dss_edge_elements..., _dss_edge_elements..., _pmp_dss_node_elements..., _dss_node_elements...
 ]
+
+
+
+const pmp_dss_connection_node_elements = String[
+    "voltage_source", "load", "shunt", "solar", "storage", 
+]
+
+
+const pmp_dss_connection_edge_elements = String[
+    "transformer", "switch", "branch"
+]
+
 
 "admittance model"
 const _mc_admittance_asset_types = String[

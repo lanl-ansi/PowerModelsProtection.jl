@@ -25,13 +25,11 @@ function transform_data_model_mc_ravens(
         ravens2math_passthrough=ravens2math_passthrough,
         global_keys=global_keys,
     )
-    println(keys(data_math))
-    correct_network_data && _PMD.correct_network_data!(data_math; make_pu=make_pu, make_pu_extensions=make_pu_extensions)
-    println(keys(data_math))
 
+    correct_network_data && correct_network_data!(data_math; make_pu=make_pu, make_pu_extensions=make_pu_extensions)
+    data_math["m"] = data["m"]
     _apply_ravens_mc_admittance!(_map_ravens2math_mc_admittance_nw!, data_math, ravens2math_passthrough=ravens2math_passthrough, ravens2math_extensions=ravens2math_extensions)
-    println(keys(data_math))
-  
+
     return data_math
 
 end
@@ -44,7 +42,7 @@ end
 
 function _map_ravens2math_mc_admittance_nw!(data_math::Dict{String,<:Any}; ravens2math_passthrough::Dict{String,<:Vector{<:String}}=Dict{String,Vector{String}}(), ravens2math_extensions::Vector{<:Function}=Function[])
     for type in _mc_admittance_asset_types # --> anything from missing from the model needed for the solve or admittance matrix maybe per unit to actual
-        getfield(PowerModelsProtection, Symbol("_map_ravens2math_mc_admittance_$(type)!"))(data_math; pass_props=get(ravens2math_passthrough, type, String[]))
+        getfield(PowerModelsProtection, Symbol("_map_mc_admittance_$(type)!"))(data_math; pass_props=get(ravens2math_passthrough, type, String[]))
     end
 end
 
@@ -95,7 +93,7 @@ function _map_ravens2math_mc_admittance(
     data_math["controls"] = Dict{String, Any}()
 
     _PMD.apply_pmd!(_map_ravens2math_nw!, data_math, _data_ravens; ravens2math_passthrough=ravens2math_passthrough, ravens2math_extensions=ravens2math_extensions)
-
+    
     return data_math
 end
 
@@ -122,11 +120,12 @@ function _map_ravens2math_nw!(data_math::Dict{String,<:Any}, data_ravens::Dict{S
     for ravens2math_func! in ravens2math_extensions
         ravens2math_func!(data_math, data_ravens)
     end
-
+    
     _PMD.find_conductor_ids!(data_math)
     _pmp_map_conductor_ids!(data_math)
     _PMD._map_settings_vbases_default!(data_math)
-    println(keys(data_math))
+    populate_bus_voltages!(data_math)
+    fix_voltages!(data_math)
 
 end
 
@@ -259,7 +258,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                 # reactance
                 x_sc[wdg_endNumber] = get(xfmr_mesh_impedance, "TransformerMeshImpedance.x",
                                         get(xfmr_star_impedance, "TransformerStarImpedance.x", 0.0))
-        
+                
                 # admittance
                 transf_core_impedance = get(wdgs[wdg_endNumber], "TransformerEnd.CoreAdmittance", Dict())
                 g_sh[wdg_id] =  get(transf_core_impedance, "TransformerCoreAdmittance.g", 0.0)
@@ -330,13 +329,17 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                 end
 
             end
-
+        
             # data is measured externally, but we now refer it to the internal side - some values are referred to wdg 1
             ratios = vnom/voltage_scale_factor
+
             x_sc = (x_sc./ratios[1]^2)
             r_s = r_s./ratios.^2
             g_sh = g_sh[1]*ratios[1]^2
             b_sh = b_sh[1]*ratios[1]^2
+
+            rw = r_s .* ratios.^2 ./ zbase
+            xsc = [(x_sc[1] * ratios[1]^2)/zbase[1]/100]
 
             # convert x_sc from list of upper triangle elements to an explicit dict
             y_sh = g_sh + im*b_sh
@@ -376,10 +379,35 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                 "status"        => status,
                 "index"         => length(data_math["transformer"])+1,
                 "r_s"           => r_s,
+                "rw"            => rw,
                 "x_sc"          => x_sc,
+                "xsc"           => xsc,
                 "g_sh"          => g_sh,
                 "b_sh"          => b_sh,
             )
+
+            4 in transformer_2wa_obj["f_connections"] ? transformer_2wa_obj["phases"] = length(transformer_2wa_obj["f_connections"]) - 1 : transformer_2wa_obj["phases"] = length(transformer_2wa_obj["f_connections"])
+            
+            transformer_2wa_obj["vm_nom"] = [[zeros(1, length(transformer_2wa_obj["f_connections"]))] [zeros(1, length(transformer_2wa_obj["f_connections"]))]]
+            if transformer_2wa_obj["phases"] == 1
+                transformer_2wa_obj["vm_nom"][1][1] = transformer_2wa_obj["tm_nom"][1]
+                transformer_2wa_obj["vm_nom"][2][1] = transformer_2wa_obj["tm_nom"][2]
+            else
+                for (i, _i) in enumerate(transformer_2wa_obj["f_connections"])
+                    if _i != 4
+                        transformer_2wa_obj["vm_nom"][1][i] = transformer_2wa_obj["tm_nom"][1]/sqrt(3)
+                    end
+                end
+                for (i, _i) in enumerate(transformer_2wa_obj["t_connections"])
+                    if _i != 4
+                        transformer_2wa_obj["vm_nom"][2][i] = transformer_2wa_obj["tm_nom"][2]/sqrt(3)
+                    end
+                end
+            end
+
+            !(haskey(transformer_2wa_obj, "sm_nom")) ? transformer_2wa_obj["sm_nom"] = transformer_2wa_obj["sm_ub"] : nothing
+
+            transformer_2wa_obj["leadLag"] = "lag"
 
             transformer_2wa_obj["tm_lb"] = tm_lb
             transformer_2wa_obj["tm_ub"] = tm_ub
@@ -622,7 +650,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                     end
 
                 end
-                
+        
                 ### --- Consistency checks across tanks ---
                 # check that nodes are the same after first tank iter
                 if tank_id != 1
@@ -666,7 +694,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
             x_sc = [x_sc[1][1]]       # get x_sc wrt to wdg 1
             g_sh = g_sh[1]        # wrt to wdg 1
             b_sh = b_sh[1]        # wrt to wdg 1
-        
+         
             # convert x_sc from list of upper triangle elements to an explicit dict
             y_sh = g_sh + im*b_sh
             z_sc = Dict([(key, im*x_sc[i]) for (i,key) in enumerate([(i,j) for i in 1:nrw for j in i+1:nrw])])
@@ -692,6 +720,9 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                 end
             end
 
+            rw = r_s.*ratios.^2 ./ zbase
+            xsc = x_sc*ratios[1]^2 /zbase[1]
+
             transformer_2wa_obj = Dict{String,Any}(
                 "name"          => "transformer.$name",
                 "source_id"     => "transformer.PowerTransformer.$name",
@@ -709,10 +740,35 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                 "status"        => status,
                 "index"         => length(data_math["transformer"])+1,
                 "r_s"           => r_s,
+                "rw"            => rw,
                 "x_sc"          => x_sc,
+                "xsc"           => xsc,
                 "g_sh"          => g_sh,
                 "b_sh"          => b_sh,
             )
+            
+            4 in transformer_2wa_obj["f_connections"] ? transformer_2wa_obj["phases"] = length(transformer_2wa_obj["f_connections"]) - 1 : transformer_2wa_obj["phases"] = length(transformer_2wa_obj["f_connections"])
+
+            transformer_2wa_obj["vm_nom"] = [[zeros(1, length(transformer_2wa_obj["f_connections"]))] [zeros(1, length(transformer_2wa_obj["f_connections"]))]]
+            if transformer_2wa_obj["phases"] == 1
+                transformer_2wa_obj["vm_nom"][1][1] = transformer_2wa_obj["tm_nom"][1]
+                transformer_2wa_obj["vm_nom"][2][1] = transformer_2wa_obj["tm_nom"][2]
+            else
+                for (i, _i) in enumerate(transformer_2wa_obj["f_connections"])
+                    if _i != 4
+                        transformer_2wa_obj["vm_nom"][1][i] = transformer_2wa_obj["tm_nom"][1]/sqrt(3)
+                    end
+                end
+                for (i, _i) in enumerate(transformer_2wa_obj["t_connections"])
+                    if _i != 4
+                        transformer_2wa_obj["vm_nom"][2][i] = transformer_2wa_obj["tm_nom"][2]/sqrt(3)
+                    end
+                end
+            end
+
+            !(haskey(transformer_2wa_obj, "sm_nom")) ? transformer_2wa_obj["sm_nom"] = transformer_2wa_obj["sm_ub"] : nothing
+            # TODO fix phasing 
+            transformer_2wa_obj["leadLag"] = "lag"
 
             # RatioTapChanger
             transformer_2wa_obj["tm_lb"] = tm_lb
@@ -822,14 +878,35 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
         # Control mode and source ID
         math_obj["control_mode"] = Int(get(ravens_obj, "EnergySource.connectionKind", _PMD.ISOCHRONOUS))
         math_obj["source_id"] = "EnergySource.$name"
-        math_obj["model_type"] = "energy_source"
+        math_obj["admit_model"] = VoltageSource
         
         # Add generator cost model
         _PMD._add_gen_cost_model!(math_obj, ravens_obj)
 
+        a = 1*exp(120im*pi/180)
+        A = [1 1 1;1 a a^2;1 a^2 a]
+        r1 = get(ravens_obj, "EnergySource.r", zeros(1, 1))
+        x1 = get(ravens_obj, "EnergySource.x", zeros(1, 1))
+        r0 = get(ravens_obj, "EnergySource.r0", zeros(1, 1))
+        x0 = get(ravens_obj, "EnergySource.x0", zeros(1, 1))
+        rs = zeros(nconductors, nconductors)
+        xs = zeros(nconductors, nconductors)
+        if r0 == 0 && x0 == 0
+            for n in 1:nconductors
+                rs[n,n] = r1
+                xs[n,n] = x1
+            end
+        else
+            z_012 = zeros(Complex{Float64}, nconductors, nconductors)
+            z_012[1,1] = r0 + x0 * 1im
+            z_012[2,2] = z_012[3,3] = r1 + x1 * 1im
+            z_abc = inv(_A) * z_012 * _A
+            rs = real.(z_abc)
+            xs = imag.(z_abc)
+        end
 
-        math_obj["rs"] = fill(get(ravens_obj, "EnergySource.r", zeros(1, 1)), nconductors, nconductors)
-        math_obj["xs"] = fill(get(ravens_obj, "EnergySource.x", zeros(1, 1)), nconductors, nconductors)
+        math_obj["rs"] = rs
+        math_obj["xs"] = xs
 
         # Check for impedance and adjust bus type if necessary
         map_to = "gen.$(math_obj["index"])"
@@ -842,6 +919,8 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
         data_math["bus"]["$gen_bus"]["vm"] = fill(ravens_obj["EnergySource.voltageMagnitude"] / voltage_scale_factor_sqrt3, nphases)
         data_math["bus"]["$gen_bus"]["va"] = rad2deg.(_PMD._wrap_to_pi.([-2 * π / nphases * (i - 1) + get(ravens_obj, "EnergySource.voltageAngle", 0.0) for i in 1:nphases]))
         data_math["bus"]["$gen_bus"]["bus_type"] = _PMD._compute_bus_type(bus_conn["bus_type"], math_obj["gen_status"], math_obj["control_mode"])
+
+        4 in math_obj["connections"] ? math_obj["phases"] = length(math_obj["connections"]) - 1 : math_obj["phases"] = length(math_obj["connections"])
 
         data_math["gen"]["$(math_obj["index"])"] = math_obj
         push!(data_math["map"], Dict{String,Any}(
@@ -856,6 +935,18 @@ end
 "straight call to pmd"
 function _map_ravens2math_pmp_energy_consumer!(data_math::Dict{String,<:Any}, data_ravens::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
     _PMD._map_ravens2math_energy_consumer!(data_math, data_ravens; pass_props,)
+    for (i, load) in data_math["load"]
+        if !(haskey(load, "vlowpu"))
+            load["vlowpu"] =  .50
+        end
+        if !(haskey(load, "vmaxpu"))
+            load["vmaxpu"] =  1.05
+        end
+        load["i_last"] = zeros(Complex{Float64}, 1, length(load["connections"]))
+        if load["model"] == _PMD.POWER
+            load["response"] = ConstantPQ
+        end
+    end
 end
 
 
@@ -873,13 +964,53 @@ end
 
 "straight call to pmd"
 function _map_ravens2math_pmp_power_electronics!(data_math::Dict{String,<:Any}, data_ravens::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
+    println(data_math["storage"])
     _PMD._map_ravens2math_power_electronics!(data_math, data_ravens; pass_props,)
     for (name, gen) in data_math["gen"]
         if occursin("PhotoVoltaicUnit", gen["source_id"])
-            gen["model_type"] = "pv_systems"
+            gen["grid_forming"] = false
+            sum(gen["pg"]) == 0.0 ? gen["pg"] = gen["pmax"] : nothing 
+            gen["admit_model"] = PVSystem
+            4 in gen["connections"] ? gen["phases"] = length(gen["connections"]) - 1 : gen["phases"] = length(gen["connections"])
+            gen["balanced"] = "true"
+            gen["vminpu"] = 1/1.5
+            irated = abs(gen["pmax"][1] + 1im * gen["qmax"][1]) * data_math["settings"]["power_scale_factor"] / (gen["vg"][1] * data_math["settings"]["voltage_scale_factor"])
+            gen["imax"] = irated * 1/gen["vminpu"]
+            gen["i_last"] = zeros(Complex{Float64}, gen["phases"], 1)    
         end
     end
+    for (name, storage) in data_math["storage"]
+        storage["grid_forming"] = true
+        storage["admit_model"] = StorageElement
+        4 in storage["connections"] ? gen["phases"] = length(storage["connections"]) - 1 : storage["phases"] = length(storage["connections"])
+        bus = storage["storage_bus"]
+        storage_bus = deepcopy(data_math["bus"]["$(bus)"])
+        bus_indx = length(data_math["bus"])+1
+        switch_indx = length(data_math["switch"])+1
+        storage_bus["index"] = bus_indx
+        storage_bus["bus_i"] = bus_indx
+        storage_bus["name"] = storage["name"] * "_virtual"
+        storage["switch"] = switch_indx
+        data_math["bus"]["$(bus_indx)"] = storage_bus
+        switch = Dict{String, Any}(
+            "f_connections" => storage["connections"], 
+            "state" => 1, 
+            "rate_b" => fill(Inf, length(storage["connections"])), 
+            "name" => "$(storage["name"])_switch", 
+            "status" => 1, 
+            "rate_c" => fill(Inf, length(storage["connections"])), 
+            "c_rating_b" => fill(Inf, length(storage["connections"])),
+            "source_id" => "Switch.$(storage["name"])",
+            "t_connections" => storage["connections"], 
+            "f_bus" => bus_indx,
+            "sm_ub" => fill(1.5e7, length(storage["connections"])),
+            "current_rating" => fill(1e6, length(storage["connections"])), 
+            "dispatchable" => 1, 
+            "t_bus" => bus, 
+            "index" => switch_indx, 
+            "c_rating_c" => fill(Inf, length(storage["connections"])),
+        )
+        data_math["switch"]["$(switch_indx)"] = switch
+        storage["storage_bus"] = bus_indx
+    end
 end
-
-
-

@@ -10,7 +10,7 @@ function _map_conductor_ids!(data_math::Dict{String,<:Any})
     data_math["conductor_ids"] = Vector{Int}([cnd_map[c] for c in data_math["conductor_ids"]])
 
     # TODO make more robus with f_connections and t_connections as vectors
-    for type in ["branch", "switch", "transformer"]
+    for type in pmp_dss_connection_edge_elements
         if haskey(data_math, type)
             for (_, obj) in data_math[type]
                 obj["f_connections"] = Vector{Int}([cnd_map[c] for c in obj["f_connections"]])
@@ -27,7 +27,7 @@ function _map_conductor_ids!(data_math::Dict{String,<:Any})
         end
     end
 
-    for type in ["load", "shunt", "gen", "storage"]
+    for type in pmp_dss_connection_node_elements
         if haskey(data_math, type)
             for (_, obj) in data_math[type]
                 obj["connections"] = Vector{Int}([cnd_map[c] for c in obj["connections"]])
@@ -118,18 +118,6 @@ function _pmp_map_conductor_ids!(data_math::Dict{String,<:Any})
         end
     end
 
-    for type in ["transformer"]
-        if haskey(data_math, type)
-            for (_,obj) in data_math[type]
-                if length(obj["f_connections"]) == 3 || length(obj["f_connections"]) == 2
-                    obj["phases"] = 3
-                else
-                    obj["phases"] = 1
-                end
-            end
-        end
-    end
-
     for type in ["load", "shunt", "gen", "storage"]
         if haskey(data_math, type)
             for (_,obj) in data_math[type]
@@ -156,7 +144,9 @@ function build_graph(data, componenet_list)
     g = Graphs.SimpleGraph(indx)
     for (i, component) in enumerate(componenet_list)
         for (i, edge) in data[component]
-            if haskey(edge, "status")
+            if haskey(edge, "state")
+                edge["state"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
+            elseif haskey(edge, "status")
                 edge["status"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
             elseif haskey(edge, "br_status")
                 edge["br_status"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
@@ -175,44 +165,39 @@ end
 function add_voltages_through_graph!(data)
     g, nodes, reverse_nodes = build_graph(data, ["branch", "switch"])
     connections = Graphs.connected_components(g)
-    vbase = Dict{Int, Any}()
+    vnom = Dict{Int, Any}()
+    # fix delta to phase voltage
     for (i, transformer) in data["transformer"]
         for (j, connection) in enumerate(connections)
             if nodes["$(transformer["f_bus"])"] in connection
-                if j in keys(vbase)
-                    if vbase[j]["phases"] == transformer["phases"]
-                        if vbase[j]["voltage"] != transformer["tm_nom"][1]
-                            vbase[j]["voltage"] = max(vbase[j]["voltage"], transformer["tm_nom"][1])
-                        end
-                    else
-                        if vbase[j]["phases"] <= transformer["phases"]
-                            vbase[j]["voltage"] = transformer["tm_nom"][1]
-                            vbase[j]["phases"] = transformer["phases"]
+                if j in keys(vnom)
+                    for (_c, c) in enumerate(transformer["f_connections"])
+                        if c in keys(vnom[j])
+                            vnom[j][c] = max(vnom[j][c], transformer["vm_nom"][1][_c])
+                        else
+                            vnom[j][c] = transformer["vm_nom"][1][_c]
                         end
                     end
                 else
-                    vbase[j] = Dict{String, Any}(
-                        "voltage" => transformer["tm_nom"][1],
-                        "phases" => transformer["phases"]
-                    )
+                    vnom[j] = Dict{Int, Any}()
+                    for (_c, c) in enumerate(transformer["f_connections"])
+                        vnom[j][c] = transformer["vm_nom"][1][_c]
+                    end
                 end
             elseif nodes["$(transformer["t_bus"])"] in connection
-                if j in keys(vbase)
-                    if vbase[j]["phases"] == transformer["phases"]
-                        if vbase[j]["voltage"] != transformer["tm_nom"][2]
-                            vbase[j]["voltage"] = max(vbase[j]["voltage"], transformer["tm_nom"][2])
-                        end
-                    else
-                        if vbase[j]["phases"] <= transformer["phases"]
-                            vbase[j]["voltage"] = transformer["tm_nom"][2]
-                            vbase[j]["phases"] = transformer["phases"]
+                if j in keys(vnom)
+                    for (_c, c) in enumerate(transformer["t_connections"])
+                        if c in keys(vnom[j])
+                            vnom[j][c] = max(vnom[j][c], transformer["vm_nom"][2][_c])
+                        else
+                            vnom[j][c] = transformer["vm_nom"][2][_c]
                         end
                     end
                 else
-                    vbase[j] = Dict{String, Any}(
-                        "voltage" => transformer["tm_nom"][2],
-                        "phases" => transformer["phases"]
-                    )
+                    vnom[j] = Dict{Int, Any}()
+                    for (_c, c) in enumerate(transformer["t_connections"])
+                        vnom[j][c] = transformer["vm_nom"][2][_c]
+                    end
                 end
             end
         end
@@ -220,38 +205,59 @@ function add_voltages_through_graph!(data)
     for (i, gen) in data["gen"]
         for (j, connection) in enumerate(connections)
             if nodes["$(gen["gen_bus"])"] in connection
-                if j in keys(vbase)
-                    if vbase[j]["phases"] == length(gen["vg"])
-                        if length(gen["vg"]) == 3
-                            if vbase[j]["voltage"] != gen["vg"][1] * sqrt(3)
-                                vbase[j]["voltage"] = max(vbase[j]["voltage"], gen["vg"][1] * sqrt(3))
-                            end
-                        else
-                            if vbase[j]["voltage"] != gen["vg"][1]
-                                vbase[j]["voltage"] = max(vbase[j]["voltage"], gen["vg"][1])
-                            end
-                        end
-                    else
-                        if vbase[j]["phases"] <= length(gen["vg"])
-                            vbase[j]["voltage"] = length(gen["vg"]) == 3 ? gen["vg"][1]*sqrt(3) : gen["vg"]
-                            vbase[j]["phases"] = length(gen["vg"])
+                if j in keys(vnom)
+                    # fix
+                    for (_c, c) in enumerate(gen["connections"])
+                        if vnom[j][c] != gen["vg"][_c]
+                            vnom[j][c] = gen["vg"][_c]
                         end
                     end
                 else
-                    vbase[j] = Dict{String, Any}(
-                        "voltage" => length(gen["vg"]) == 3 ? gen["vg"][1]*sqrt(3) : gen["vg"],
-                        "phases" => length(gen["vg"])
-                    )
+                    vnom[j] = Dict{Int, Any}()
+                    for (_c, c) in enumerate(gen["connections"])
+                        vnom[j][c] = gen["vg"][_c]
+                    end
                 end
             end
         end
     end
     for (j, connection) in enumerate(connections)
         for node in connection
-            data["bus"][reverse_nodes[node]]["vbase"] = vbase[j]["voltage"]
+            bus = data["bus"][reverse_nodes[node]]
+            bus["phases"] = length(filter(x -> x != 4, bus["terminals"]))
+            bus["vnom_kv"] = fill(0.0, length(bus["terminals"]))
+            for (_c, c) in enumerate(bus["terminals"])
+                bus["vnom_kv"][_c] = vnom[j][c]
+            end
         end
     end
-    
+end
+
+
+function populate_bus_voltages!(data::Dict{String,Any})
+    add_voltages_through_graph!(data)
+end
+
+
+function fix_voltages!(data::Dict{String,Any})
+    for (i, load) in data["load"]
+        bus = data["bus"]["$(load["load_bus"])"]
+        #TODO check for wye
+        if load["vnom_kv"] isa Vector
+            #TODO
+        else
+            vnom_kv = deepcopy(load["vnom_kv"])
+            load["vnom_kv"] = Vector{Float64}(undef, length(load["connections"]))
+            for (c, connection) in enumerate(load["connections"])
+                indx = findfirst(==(connection), bus["terminals"])
+                if isapprox(vnom_kv/sqrt(3), bus["vnom_kv"][indx]; rtol = 0.05)
+                    load["vnom_kv"][c] = bus["vnom_kv"][indx]
+                else
+                    load["vnom_kv"][c] = bus["vnom_kv"][indx]
+                end
+            end
+        end
+    end
 end
 
 
@@ -266,14 +272,16 @@ function add_solar_imax!(data, multiplier)
 end
 
 
-function ckeck_connectivity(data)
+function check_graph_connectivity(data)
     g, nodes, reverse_nodes = build_graph(data, ["branch", "switch", "transformer"])
     connections = Graphs.connected_components(g)
-    if length(connections) > 1
-        println("network contains disconnected componets")
-    else
-        println("network is connected")
-    end
+    # println("Number of graphs $(length(connections))")
+    # for (i, connection) in enumerate(connections) 
+    #     println("Numbers of Nodes: $(length(connection)) in Graph: $(i)")
+    # # else
+    # #     println("network is connected")
+    # end
+    return g
 end
 
 
