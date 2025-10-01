@@ -1,7 +1,7 @@
 
 
-const _a = exp(2im / 3 * pi)
-const _A = [1 1 1; 1 _a^2 _a; 1 _a _a^2]
+# const _a = exp(2im / 3 * pi)
+# const _A = [1 1 1; 1 _a^2 _a; 1 _a _a^2]
 
 function transform_data_model_mc_ravens(
     data::Dict{String,<:Any};
@@ -95,7 +95,7 @@ function _map_ravens2math_mc_admittance(
     data_math["controls"] = Dict{String, Any}()
 
     _PMD.apply_pmd!(_map_ravens2math_nw!, data_math, _data_ravens; ravens2math_passthrough=ravens2math_passthrough, ravens2math_extensions=ravens2math_extensions)
-    
+
     return data_math
 end
 
@@ -122,7 +122,7 @@ function _map_ravens2math_nw!(data_math::Dict{String,<:Any}, data_ravens::Dict{S
     for ravens2math_func! in ravens2math_extensions
         ravens2math_func!(data_math, data_ravens)
     end
-    
+
     _PMD.find_conductor_ids!(data_math)
     _pmp_map_conductor_ids!(data_math)
     _PMD._map_settings_vbases_default!(data_math)
@@ -156,9 +156,9 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
         ))
 
         to_map = data_math["map"][end]["to"]
-        
+
         if haskey(ravens_obj, "PowerTransformer.PowerTransformerEnd")
-            
+
             # Get nrw: number of windings
             wdgs = ravens_obj["PowerTransformer.PowerTransformerEnd"]
             nrw = length(wdgs)
@@ -260,7 +260,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                 # reactance
                 x_sc[wdg_endNumber] = get(xfmr_mesh_impedance, "TransformerMeshImpedance.x",
                                         get(xfmr_star_impedance, "TransformerStarImpedance.x", 0.0))
-                
+
                 # admittance
                 transf_core_impedance = get(wdgs[wdg_endNumber], "TransformerEnd.CoreAdmittance", Dict())
                 g_sh[wdg_id] =  get(transf_core_impedance, "TransformerCoreAdmittance.g", 0.0)
@@ -331,7 +331,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                 end
 
             end
-        
+
             # data is measured externally, but we now refer it to the internal side - some values are referred to wdg 1
             ratios = vnom/voltage_scale_factor
 
@@ -358,7 +358,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
             status = status == true ? 1 : 0
 
             tm_nom = [wdgs_confs[wdg_id] == _PMD.DELTA ? vnom[wdg_id]/voltage_scale_factor : vnom[wdg_id]/voltage_scale_factor for wdg_id in 1:nrw]
-    
+
             wdg_term = ravens_obj["ConductingEquipment.Terminals"][1]
             f_node_wdgterm = _PMD._extract_name(wdg_term["Terminal.ConnectivityNode"])
             wdg_term = ravens_obj["ConductingEquipment.Terminals"][2]
@@ -389,7 +389,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
             )
 
             4 in transformer_2wa_obj["f_connections"] ? transformer_2wa_obj["phases"] = length(transformer_2wa_obj["f_connections"]) - 1 : transformer_2wa_obj["phases"] = length(transformer_2wa_obj["f_connections"])
-            
+
             transformer_2wa_obj["vm_nom"] = [[zeros(1, length(transformer_2wa_obj["f_connections"]))] [zeros(1, length(transformer_2wa_obj["f_connections"]))]]
             if transformer_2wa_obj["phases"] == 1
                 transformer_2wa_obj["vm_nom"][1][1] = transformer_2wa_obj["tm_nom"][1]
@@ -417,7 +417,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
 
             data_math["transformer"]["$(transformer_2wa_obj["index"])"] = transformer_2wa_obj
 
-                # Add Regulator Controls 
+                # Add Regulator Controls
             data_math["transformer"]["$(transformer_2wa_obj["index"])"]["controls"] = reg_obj
 
                 # TODO: Center-Tapped Transformers (3 Windings)
@@ -520,10 +520,10 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
 
                     # transformer tank end info.
                     transf_end_info = tank_asset_data["PowerTransformerInfo.TransformerTankInfos"][tank_asset_name]["TransformerTankInfo.TransformerEndInfos"]
-                    vnom[wdg_endNumber] = transf_end_info[wdg_endNumber]["TransformerEndInfo.ratedU"] 
+                    vnom[wdg_endNumber] = transf_end_info[wdg_endNumber]["TransformerEndInfo.ratedU"]
                     snom_wdg = transf_end_info[wdg_endNumber]["TransformerEndInfo.ratedS"]
                     zbase[wdg_endNumber] = (vnom[wdg_endNumber]^2) / snom_wdg
-        
+
 
                     # Compute voltage ratios
                     ratios[wdg_endNumber] = vnom[wdg_endNumber]/voltage_scale_factor
@@ -553,10 +553,10 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                     end
 
                     # RS and XSC computation based on ratios
-                    
+
                     r_s[wdg_endNumber][tank_id] = r_s[wdg_endNumber][tank_id]/ratios[wdg_endNumber]^2
                     x_sc[wdg_endNumber][tank_id] = (x_sc[wdg_endNumber][tank_id]/ratios[1]^2)   # w.r.t wdg1
-                    
+
                     # b_sh and g_sh are always w.r.t wdg #1
                     if wdg_endNumber == 1
                         transf_end_noloadtest = get(transf_end_info[wdg_endNumber], "TransformerEndInfo.EnergisedEndNoLoadTests", [Dict()])
@@ -652,7 +652,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                     end
 
                 end
-        
+
                 ### --- Consistency checks across tanks ---
                 # check that nodes are the same after first tank iter
                 if tank_id != 1
@@ -691,12 +691,12 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
             end
 
             # wdg i, tank 1  - assumes tank 1 always exists
-            r_s = [r_s[i][1] for i in 1:nrw] 
+            r_s = [r_s[i][1] for i in 1:nrw]
             x_sc = [x_sc[i][1] for i in 1:nrw] # sum the x_sc for all tanks per wdg
             x_sc = [x_sc[1][1]]       # get x_sc wrt to wdg 1
             g_sh = g_sh[1]        # wrt to wdg 1
             b_sh = b_sh[1]        # wrt to wdg 1
-         
+
             # convert x_sc from list of upper triangle elements to an explicit dict
             y_sh = g_sh + im*b_sh
             z_sc = Dict([(key, im*x_sc[i]) for (i,key) in enumerate([(i,j) for i in 1:nrw for j in i+1:nrw])])
@@ -748,7 +748,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
                 "g_sh"          => g_sh,
                 "b_sh"          => b_sh,
             )
-            
+
             4 in transformer_2wa_obj["f_connections"] ? transformer_2wa_obj["phases"] = length(transformer_2wa_obj["f_connections"]) - 1 : transformer_2wa_obj["phases"] = length(transformer_2wa_obj["f_connections"])
 
             transformer_2wa_obj["vm_nom"] = [[zeros(1, length(transformer_2wa_obj["f_connections"]))] [zeros(1, length(transformer_2wa_obj["f_connections"]))]]
@@ -769,7 +769,7 @@ function _map_ravens2math_pmp_power_transformer!(data_math::Dict{String,<:Any}, 
             end
 
             !(haskey(transformer_2wa_obj, "sm_nom")) ? transformer_2wa_obj["sm_nom"] = transformer_2wa_obj["sm_ub"] : nothing
-            # TODO fix phasing 
+            # TODO fix phasing
             transformer_2wa_obj["leadLag"] = "lag"
 
             # RatioTapChanger
@@ -881,7 +881,7 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
         math_obj["control_mode"] = Int(get(ravens_obj, "EnergySource.connectionKind", _PMD.ISOCHRONOUS))
         math_obj["source_id"] = "EnergySource.$name"
         math_obj["admit_model"] = VoltageSource
-        
+
         # Add generator cost model
         _PMD._add_gen_cost_model!(math_obj, ravens_obj)
 
@@ -971,14 +971,14 @@ function _map_ravens2math_pmp_power_electronics!(data_math::Dict{String,<:Any}, 
     for (name, gen) in data_math["gen"]
         if occursin("PhotoVoltaicUnit", gen["source_id"])
             gen["grid_forming"] = false
-            sum(gen["pg"]) == 0.0 ? gen["pg"] = gen["pmax"] : nothing 
+            sum(gen["pg"]) == 0.0 ? gen["pg"] = gen["pmax"] : nothing
             gen["admit_model"] = PVSystem
             4 in gen["connections"] ? gen["phases"] = length(gen["connections"]) - 1 : gen["phases"] = length(gen["connections"])
             gen["balanced"] = "true"
             gen["vminpu"] = 1/1.5
             irated = abs(gen["pmax"][1] + 1im * gen["qmax"][1]) * data_math["settings"]["power_scale_factor"] / (gen["vg"][1] * data_math["settings"]["voltage_scale_factor"])
             gen["imax"] = irated * 1/gen["vminpu"]
-            gen["i_last"] = zeros(Complex{Float64}, gen["phases"], 1)    
+            gen["i_last"] = zeros(Complex{Float64}, gen["phases"], 1)
         end
     end
     for (name, storage) in data_math["storage"]
@@ -995,21 +995,21 @@ function _map_ravens2math_pmp_power_electronics!(data_math::Dict{String,<:Any}, 
         storage["switch"] = switch_indx
         data_math["bus"]["$(bus_indx)"] = storage_bus
         switch = Dict{String, Any}(
-            "f_connections" => storage["connections"], 
-            "state" => 1, 
-            "rate_b" => fill(Inf, length(storage["connections"])), 
-            "name" => "$(storage["name"])_switch", 
-            "status" => 1, 
-            "rate_c" => fill(Inf, length(storage["connections"])), 
+            "f_connections" => storage["connections"],
+            "state" => 1,
+            "rate_b" => fill(Inf, length(storage["connections"])),
+            "name" => "$(storage["name"])_switch",
+            "status" => 1,
+            "rate_c" => fill(Inf, length(storage["connections"])),
             "c_rating_b" => fill(Inf, length(storage["connections"])),
             "source_id" => "Switch.$(storage["name"])",
-            "t_connections" => storage["connections"], 
+            "t_connections" => storage["connections"],
             "f_bus" => bus_indx,
             "sm_ub" => fill(1.5e7, length(storage["connections"])),
-            "current_rating" => fill(1e6, length(storage["connections"])), 
-            "dispatchable" => 1, 
-            "t_bus" => bus, 
-            "index" => switch_indx, 
+            "current_rating" => fill(1e6, length(storage["connections"])),
+            "dispatchable" => 1,
+            "t_bus" => bus,
+            "index" => switch_indx,
             "c_rating_c" => fill(Inf, length(storage["connections"])),
         )
         data_math["switch"]["$(switch_indx)"] = switch

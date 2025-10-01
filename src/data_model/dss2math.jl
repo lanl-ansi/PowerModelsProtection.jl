@@ -53,11 +53,11 @@ function transform_data_model_mc_dss(
         global_keys=global_keys,
     )
 
-        correct_network_data && correct_network_data!(data_math)
+        correct_network_data && correct_network_data_dss!(data_math)
 
         correct_grounds!(data_math)
 
-        populate_bus_voltages!(data_math)
+        populate_bus_voltages_dss!(data_math)
 
         add_mc_last_current_keys!(data_math)
 
@@ -318,7 +318,7 @@ function _map_dss2math_pmp_transformer!(data_math::Dict{String,<:Any}, data_dss:
             end
 
             data_math["transformer"]["$(transformer_obj["index"])"] = transformer_obj
-   
+
             if haskey(eng_obj,"controls") #&& !all(data_math["transformer"]["$(transformer_2wa_obj["index"])"]["tm_fix"])
                 reg_obj = Dict{String,Any}(
                     "vreg" => eng_obj["controls"]["vreg"],
@@ -443,11 +443,11 @@ function transform_data_model_mc_(
             kwargs...
         )
 
-        correct_network_data && correct_network_data!(data_math)
+        correct_network_data && correct_network_data_dss!(data_math)
 
         correct_grounds!(data_math)
 
-        populate_bus_voltages!(data_math)
+        populate_bus_voltages_dss!(data_math)
 
         add_mc_last_current_keys!(data_math)
 
@@ -484,11 +484,11 @@ function transform_admittance_data_model(
             kwargs...
         )
 
-        correct_network_data && correct_network_data!(data_math)
+        correct_network_data && correct_network_data_dss!(data_math)
 
         correct_grounds!(data_math)
 
-        populate_bus_voltages!(data_math)
+        populate_bus_voltages_dss!(data_math)
 
         add_mc_last_current_keys!(data_math)
 
@@ -531,7 +531,7 @@ function _map_eng2math_mc_admittance(
         )
     end
     data_math["controls"] = Dict{String, Any}()
-    
+
     _map_eng2math_nw!(data_math, data_eng, eng2math_passthrough=eng2math_passthrough, eng2math_extensions=eng2math_extensions)
 
     _apply_mc_admittance!(_map_eng2math_mc_admittance_nw!, data_math, _data_eng; eng2math_passthrough=eng2math_passthrough, eng2math_extensions=eng2math_extensions)
@@ -554,7 +554,7 @@ end
 
 
 # "mod with out per unit corrections see: common.jl in io PowerModelsDistribution"
-function correct_network_data!(data::Dict{String,Any})
+function correct_network_data_dss!(data::Dict{String,Any})
     if _PMD.iseng(data)
         _PMD.check_eng_data_model(data)
     elseif _PMD.ismath(data)
@@ -581,7 +581,7 @@ function correct_network_data!(data::Dict{String,Any})
     end
 end
 
-function populate_bus_voltages!(data::Dict{String,Any})
+function populate_bus_voltages_dss!(data::Dict{String,Any})
     for (i, transformer) in data["transformer"]
         f_bus = transformer["f_bus"]
         t_bus = transformer["t_bus"]

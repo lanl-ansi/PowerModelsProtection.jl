@@ -79,7 +79,7 @@ function calculate_currents(gen, v, data)
     n = size(y)[1]
     _v = zeros(Complex{Float64}, n, 1)
     for (i, j) in enumerate(transformer["f_connections"])
-        if haskey(data["admittance_map"], (f_bus, j)) 
+        if haskey(data["admittance_map"], (f_bus, j))
             _v[i, 1] = v[data["admittance_map"][(f_bus, j)], 1]
         else
              _v[i, 1] = 0.0 + 0.0im
@@ -92,8 +92,8 @@ function calculate_currents(gen, v, data)
             _v[i+length(transformer["t_connections"]), 1] = 0.0 + 0.0im
         end
     end
-    _i = y * _v 
-    i_012 = inv(PowerModelsProtection._A)*_i[1:3,1] 
+    _i = y * _v
+    i_012 = inv(PowerModelsProtection._A)*_i[1:3,1]
     v_012 = inv(PowerModelsProtection._A)*_v[1:3,1]
     return _i[1:3,1], i_012, _v[1:3,1], v_012
 end
@@ -168,7 +168,16 @@ function add_voltages_through_graph!(data)
     vnom = Dict{Int, Any}()
     # fix delta to phase voltage
     for (i, transformer) in data["transformer"]
+        # @info "ENTREEEEEE"
         for (j, connection) in enumerate(connections)
+
+            # if nodes["$(transformer["f_bus"])"] == 1660
+            #     @info "FBUS: $(nodes["$(transformer["f_bus"])"])"
+            # end
+            # if nodes["$(transformer["t_bus"])"] == 1660
+            #     @info "TBUS: $(nodes["$(transformer["t_bus"])"])"
+            # end
+
             if nodes["$(transformer["f_bus"])"] in connection
                 if j in keys(vnom)
                     for (_c, c) in enumerate(transformer["f_connections"])
@@ -234,7 +243,7 @@ function add_voltages_through_graph!(data)
 end
 
 
-function populate_bus_voltages!(data::Dict{String,Any})
+function populate_bus_voltages!(data)
     add_voltages_through_graph!(data)
 end
 
@@ -276,7 +285,7 @@ function check_graph_connectivity(data)
     g, nodes, reverse_nodes = build_graph(data, ["branch", "switch", "transformer"])
     connections = Graphs.connected_components(g)
     # println("Number of graphs $(length(connections))")
-    # for (i, connection) in enumerate(connections) 
+    # for (i, connection) in enumerate(connections)
     #     println("Numbers of Nodes: $(length(connection)) in Graph: $(i)")
     # # else
     # #     println("network is connected")
@@ -311,7 +320,7 @@ function remove_based_transformer_graph(data)
     end
     component_types = ["load", "gen"]
     for componet_type in component_types
-        for (i, component) in data[componet_type] 
+        for (i, component) in data[componet_type]
             bus = component["$(componet_type)_bus"]
             if !(nodes["$(bus)"] in network)
                 delete!(new_data[componet_type], i)
@@ -373,7 +382,7 @@ function remove_delta_transformer_graph(data)
     end
     component_types = ["load", "gen"]
     for componet_type in component_types
-        for (i, component) in data[componet_type] 
+        for (i, component) in data[componet_type]
             bus = component["$(componet_type)_bus"]
             if !(nodes["$(bus)"] in network)
                 delete!(new_data[componet_type], i)
@@ -438,7 +447,7 @@ function remove_inactive_transformer_graph(data)
     end
     component_types = ["load", "gen"]
     for componet_type in component_types
-        for (i, component) in data[componet_type] 
+        for (i, component) in data[componet_type]
             bus = component["$(componet_type)_bus"]
             if !(nodes["$(bus)"] in network)
                 delete!(new_data[componet_type], i)

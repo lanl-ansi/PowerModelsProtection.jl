@@ -1,6 +1,6 @@
 
-const _a = exp(2im / 3 * pi)
-const _A = [1 1 1; 1 _a^2 _a; 1 _a _a^2]
+# const _a = exp(2im / 3 * pi)
+# const _A = [1 1 1; 1 _a^2 _a; 1 _a _a^2]
 
 # need for future methods T&D need to define types
 function instantiate_mc_model(
