@@ -202,7 +202,7 @@ function solution_mc_pf(v::Matrix{ComplexF64}, it::Int64, it_current, last_delta
             "vm" => [0.0 for t in bus["terminals"]],
             "va" => [0.0 for t in bus["terminals"]],
             "name" => bus["source_id"],
-            "vbase" => bus["vbase"],
+            "vbase" => bus["vnom_kv"],
         )
         for (j, grounded) in enumerate(bus["grounded"])
             if grounded == 0
