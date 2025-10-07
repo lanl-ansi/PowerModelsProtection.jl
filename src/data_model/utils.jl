@@ -227,7 +227,11 @@ function add_voltages_through_graph!(data)
             bus["phases"] = length(filter(x -> x != 4, bus["terminals"]))
             bus["vnom_kv"] = fill(0.0, length(bus["terminals"]))
             for (_c, c) in enumerate(bus["terminals"])
-                bus["vnom_kv"][_c] = vnom[j][c]
+                try
+                    bus["vnom_kv"][_c] = vnom[j][c]
+                catch
+                    bus["vnom_kv"][_c] = 0.0
+                end
             end
         end
     end
