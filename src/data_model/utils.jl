@@ -148,6 +148,7 @@ function build_graph(data, componenet_list)
                 edge["state"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
             elseif haskey(edge, "status")
                 edge["status"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
+
             elseif haskey(edge, "br_status")
                 edge["br_status"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
             else
@@ -168,16 +169,7 @@ function add_voltages_through_graph!(data)
     vnom = Dict{Int, Any}()
     # fix delta to phase voltage
     for (i, transformer) in data["transformer"]
-        # @info "ENTREEEEEE"
         for (j, connection) in enumerate(connections)
-
-            # if nodes["$(transformer["f_bus"])"] == 1660
-            #     @info "FBUS: $(nodes["$(transformer["f_bus"])"])"
-            # end
-            # if nodes["$(transformer["t_bus"])"] == 1660
-            #     @info "TBUS: $(nodes["$(transformer["t_bus"])"])"
-            # end
-
             if nodes["$(transformer["f_bus"])"] in connection
                 if j in keys(vnom)
                     for (_c, c) in enumerate(transformer["f_connections"])
@@ -236,14 +228,18 @@ function add_voltages_through_graph!(data)
             bus["phases"] = length(filter(x -> x != 4, bus["terminals"]))
             bus["vnom_kv"] = fill(0.0, length(bus["terminals"]))
             for (_c, c) in enumerate(bus["terminals"])
-                bus["vnom_kv"][_c] = vnom[j][c]
+                try
+                    bus["vnom_kv"][_c] = vnom[j][c]
+                catch
+                    bus["vnom_kv"][_c] = 0.0
+                end
             end
         end
     end
 end
 
 
-function populate_bus_voltages!(data)
+function populate_bus_voltages!(data::Dict{String,Any})
     add_voltages_through_graph!(data)
 end
 
@@ -476,4 +472,27 @@ function storage_add_transformer_model!(data)
             end
         end
     end
+end
+
+
+function get_source_graph!(data, source_name)
+    g, nodes, reverse_nodes = build_graph(data, ["branch", "switch", "transformer"])
+    connections = Graphs.connected_components(g)
+    indx = 0
+    for (i, bus) in data["bus"]
+        if bus["name"] == "BattT1"
+            indx = i
+        end
+    end
+    c = 0
+    for (i, connection) in enumerate(connections)
+        if nodes[indx] in connection
+            c = i
+        end
+    end
+    buses = []
+    for node in connections[c]
+        push!(buses, reverse_nodes[node])
+    end
+    data["microgrid_buses"] = buses
 end

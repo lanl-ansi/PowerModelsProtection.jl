@@ -204,11 +204,23 @@ function solution_mc_pf(v::Matrix{ComplexF64}, it::Int64, it_current, last_delta
             "name" => bus["source_id"],
             "vbase" => bus["vnom_kv"],
         )
-        for (j, grounded) in enumerate(bus["grounded"])
-            if grounded == 0
-                t = bus["terminals"][j]
-                solution["bus"][indx]["vm"][j] = abs(v[model.data["admittance_map"][(bus["index"], t)]])
-                solution["bus"][indx]["va"][j] = angle(v[model.data["admittance_map"][(bus["index"], t)]]) * 180/pi
+        if haskey(model.data, "microgrid_buses")
+            if indx in model.data["microgrid_buses"]
+                for (j, grounded) in enumerate(bus["grounded"])
+                    if grounded == 0
+                        t = bus["terminals"][j]
+                        solution["bus"][indx]["vm"][j] = abs(v[model.data["admittance_map"][(bus["index"], t)]])
+                        solution["bus"][indx]["va"][j] = angle(v[model.data["admittance_map"][(bus["index"], t)]]) * 180/pi
+                    end
+                end
+            end
+        else
+            for (j, grounded) in enumerate(bus["grounded"])
+                if grounded == 0
+                    t = bus["terminals"][j]
+                    solution["bus"][indx]["vm"][j] = abs(v[model.data["admittance_map"][(bus["index"], t)]])
+                    solution["bus"][indx]["va"][j] = angle(v[model.data["admittance_map"][(bus["index"], t)]]) * 180/pi
+                end
             end
         end
     end
@@ -246,23 +258,45 @@ function solution_mc_pf_branches!(solution, v, data)
     for (indx,branch) in data["branch"]
         f_bus = branch["f_bus"]
         t_bus = branch["t_bus"]
-        _y = branch["p_matrix"]
-        v_size = size(_y)[1]
-        v_t = zeros(Complex{Float64}, v_size, 1)
-        indx = 1
-        for (_i, i) in enumerate(branch["f_connections"])
-            if haskey(data["admittance_map"], (f_bus, i))
-                v_t[indx,1] = v[data["admittance_map"][(f_bus, i)], 1]
+        if haskey(data, "microgrid_buses")
+            if "$(f_bus)" in data["microgrid_buses"] && "$(t_bus)" in data["microgrid_buses"]
+                _y = branch["p_matrix"]
+                v_size = size(_y)[1]
+                v_t = zeros(Complex{Float64}, v_size, 1)
+                indx = 1
+                for (_i, i) in enumerate(branch["f_connections"])
+                    if haskey(data["admittance_map"], (f_bus, i))
+                        v_t[indx,1] = v[data["admittance_map"][(f_bus, i)], 1]
+                    end
+                    indx += 1
+                end
+                for (_i, i) in enumerate(branch["t_connections"])
+                    if haskey(data["admittance_map"], (t_bus, i))
+                        v_t[indx,1] = v[data["admittance_map"][(t_bus, i)], 1]
+                    end
+                    indx += 1
+                end
+                branch["i"] = _y*v_t
             end
-            indx += 1
-        end
-        for (_i, i) in enumerate(branch["t_connections"])
-            if haskey(data["admittance_map"], (t_bus, i))
-                v_t[indx,1] = v[data["admittance_map"][(t_bus, i)], 1]
+        else
+            _y = branch["p_matrix"]
+            v_size = size(_y)[1]
+            v_t = zeros(Complex{Float64}, v_size, 1)
+            indx = 1
+            for (_i, i) in enumerate(branch["f_connections"])
+                if haskey(data["admittance_map"], (f_bus, i))
+                    v_t[indx,1] = v[data["admittance_map"][(f_bus, i)], 1]
+                end
+                indx += 1
             end
-            indx += 1
+            for (_i, i) in enumerate(branch["t_connections"])
+                if haskey(data["admittance_map"], (t_bus, i))
+                    v_t[indx,1] = v[data["admittance_map"][(t_bus, i)], 1]
+                end
+                indx += 1
+            end
+            branch["i"] = _y*v_t
         end
-        branch["i"] = _y*v_t
     end
 end
 
@@ -390,12 +424,12 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
         y_line = branch["p_matrix"][1:n,n+1:2*n]
         for (_j,j) in enumerate(branch["f_connections"])
             if haskey(data["admittance_map"], (f_bus["bus_i"], j))
-                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1]
             end
         end
         for (_j,j) in enumerate(branch["t_connections"])
             if haskey(data["admittance_map"], (t_bus["bus_i"], j))
-                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1]
             end
         end
         i_line = y_line * (v_f_bus - v_t_bus)
@@ -448,7 +482,7 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
             "phi (deg)" => angle.(v_bus).*pi/180,
         )
     )
-   
+
     line = Dict{String,Any}()
     switch = Dict{String,Any}()
     for (i,branch) in data["branch"]
@@ -461,12 +495,12 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
         y_line = branch["p_matrix"][1:n,n+1:2*n]
         for (_j,j) in enumerate(branch["f_connections"])
             if haskey(data["admittance_map"], (f_bus["bus_i"], j))
-                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1]
             end
         end
         for (_j,j) in enumerate(branch["t_connections"])
             if haskey(data["admittance_map"], (t_bus["bus_i"], j))
-                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1]
             end
         end
         i_line = y_line * (v_f_bus - v_t_bus)
@@ -529,12 +563,12 @@ function build_output_schema!(output::Dict{String,Any}, v::SparseArrays.SparseMa
         y_line = branch["p_matrix"][1:n,n+1:2*n]
         for (_j,j) in enumerate(branch["f_connections"])
             if haskey(data["admittance_map"], (f_bus["bus_i"], j))
-                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1] 
+                v_f_bus[_j,1] = v[data["admittance_map"][(f_bus["bus_i"], j)],1]
             end
         end
         for (_j,j) in enumerate(branch["t_connections"])
             if haskey(data["admittance_map"], (t_bus["bus_i"], j))
-                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1] 
+                v_t_bus[_j,1] = v[data["admittance_map"][(t_bus["bus_i"], j)],1]
             end
         end
         i_line = y_line * (v_f_bus - v_t_bus)
