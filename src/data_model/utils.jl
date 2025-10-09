@@ -148,6 +148,7 @@ function build_graph(data, componenet_list)
                 edge["state"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
             elseif haskey(edge, "status")
                 edge["status"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
+                
             elseif haskey(edge, "br_status")
                 edge["br_status"] == 1 ? Graphs.add_edge!(g, nodes["$(edge["f_bus"])"], nodes["$(edge["t_bus"])"]) : nothing
             else
@@ -471,4 +472,27 @@ function storage_add_transformer_model!(data)
             end
         end
     end
+end
+
+
+function get_source_graph!(data, source_name)
+    g, nodes, reverse_nodes = build_graph(data, ["branch", "switch", "transformer"])
+    connections = Graphs.connected_components(g)
+    indx = 0
+    for (i, bus) in data["bus"]
+        if bus["name"] == "BattT1"
+            indx = i
+        end
+    end
+    c = 0
+    for (i, connection) in enumerate(connections)
+        if nodes[indx] in connection
+            c = i
+        end
+    end
+    buses = []
+    for node in connections[c]
+        push!(buses, reverse_nodes[node])
+    end
+    data["microgrid_buses"] = buses
 end

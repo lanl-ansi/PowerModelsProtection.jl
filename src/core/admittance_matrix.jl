@@ -18,18 +18,34 @@ function add_mc_admittance_map!(data_math::Dict{String,<:Any})
     admittance_type = Dict{Int,Any}()
     indx = 1
 # TODO determine if bus is inactive
-    for (_, bus) in data_math["bus"]
-        id = bus["index"]
-        for (i, t) in enumerate(bus["terminals"])
-            if bus["bus_type"] != 4
-                if !(bus["grounded"][i])
-                    admittance_map[(id, t)] = indx
-                    admittance_type[indx] = bus["bus_type"]
-                    indx += 1
+    if haskey(data_math, "microgrid_buses")
+        for idx in data_math["microgrid_buses"]
+            bus = data_math["bus"][idx]
+            id = bus["index"]
+            if bus["bus_type"] != 4 
+                for (i, t) in enumerate(bus["terminals"])
+                    if !(bus["grounded"][i])
+                        admittance_map[(id, t)] = indx
+                        admittance_type[indx] = bus["bus_type"]
+                        indx += 1
+                    end
                 end
             end
         end
-    end
+    else
+        for (_, bus) in data_math["bus"]
+            id = bus["index"]
+            if bus["bus_type"] != 4 
+                for (i, t) in enumerate(bus["terminals"])
+                        if !(bus["grounded"][i])
+                            admittance_map[(id, t)] = indx
+                            admittance_type[indx] = bus["bus_type"]
+                            indx += 1
+                        end
+                    end
+                end
+            end
+        end
     data_math["admittance_map"] = admittance_map
     data_math["admittance_type"] = admittance_type
 end
