@@ -966,7 +966,6 @@ end
 
 "straight call to pmd"
 function _map_ravens2math_pmp_power_electronics!(data_math::Dict{String,<:Any}, data_ravens::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
-    println(data_math["storage"])
     _PMD._map_ravens2math_power_electronics!(data_math, data_ravens; pass_props,)
     for (name, gen) in data_math["gen"]
         if occursin("PhotoVoltaicUnit", gen["source_id"])
