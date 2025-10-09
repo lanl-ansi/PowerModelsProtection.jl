@@ -817,7 +817,6 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
         gen_bus = data_math["bus_lookup"][connectivity_node]
         math_obj["gen_bus"] = gen_bus
         bus_conn = data_math["bus"][string(gen_bus)]
-        bus_conn["bus_type"] = 3  # Set bus type to PV bus
 
         # Handle phase-specific or three-phase connection
         connections = Vector{Int64}()
@@ -853,6 +852,10 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
         # Generator status and configuration
         math_obj["gen_status"] = haskey(ravens_obj, "Equipment.inService") ? ravens_obj["Equipment.inService"] : true
         math_obj["gen_status"] = math_obj["gen_status"] == true ? 1 : 0
+
+        if(math_obj["gen_status"] == 1)
+            bus_conn["bus_type"] = 3
+        end
 
         math_obj["configuration"] = get(ravens_obj, "EnergySource.connectionKind", _PMD.WYE)
 
