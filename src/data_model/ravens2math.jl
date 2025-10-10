@@ -994,6 +994,7 @@ function _map_ravens2math_pmp_power_electronics!(data_math::Dict{String,<:Any}, 
         storage_bus["index"] = bus_indx
         storage_bus["bus_i"] = bus_indx
         storage_bus["name"] = storage["name"] * "_virtual"
+        storage_bus["source_id"] = storage["source_id"] * "_virtual"    # TODO: added _virtual to remove the possiblility of being duplicated when searching a bus by source_id.
         storage["switch"] = switch_indx
         data_math["bus"]["$(bus_indx)"] = storage_bus
         switch = Dict{String, Any}(
