@@ -69,13 +69,14 @@ function build_mc_llg_gf(model::AdmittanceModel, terminals; phase_resistance=.01
 end
 
 
-function build_mc_lg_gf(model::AdmittanceModel, terminals; ground_resistance=.01)
-    Gf = zeros(Real, 3, 3)
+function build_mc_lg_gf(terminals; ground_resistance=.01)
+    n = length(terminals)
+    Gf = zeros(Real, n, n)
     gf = 1 / ground_resistance
-    for i in terminals
-        for j in terminals
+    for (_i, i) in enumerate(terminals)
+        for (_j, j) in enumerate(terminals)
             if i == j
-                Gf[i, j] = gf
+                Gf[_i, _j] = gf
             end
         end
     end
@@ -85,11 +86,13 @@ end
 
 function add_mc_fault_gf(model, bus, fault)
     y = deepcopy(model.y)
-    for (_n, n) in enumerate(fault["terminals"])
-        for (_m, m) in enumerate(fault["terminals"])
-            i = model.data["admittance_map"][(bus["bus_i"],n)]
-            j = model.data["admittance_map"][(bus["bus_i"],m)]
-            y[i,j] += fault["Gf"][n,m]
+    for (_n, n) in enumerate(fault["connections"])
+        for (_m, m) in enumerate(fault["connections"])
+            if haskey(model.data["admittance_map"], (bus["bus_i"], n)) && haskey(model.data["admittance_map"], (bus["bus_i"], m))
+                i = model.data["admittance_map"][(bus["bus_i"],n)]
+                j = model.data["admittance_map"][(bus["bus_i"],m)]
+                y[i,j] += fault["GF"][_n,_m]
+            end
         end
     end
     return y

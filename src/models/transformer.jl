@@ -365,6 +365,9 @@ function _map_ravens2math_mc_admittance_2w_transformer_delta_high_wye_low_lag!(t
     end
     y_w = n * y1 * transpose(n)
     p_matrix = a * y_w * transpose(a)
+    for i = 1:3
+        p_matrix[i,i] += 1im* 1e-6
+    end
     transformer["p_matrix"] = p_matrix
 end
 

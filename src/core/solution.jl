@@ -349,7 +349,8 @@ function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, i
     if !(haskey(results[sol["bus"][i]["name"]], fault_type))
         results[sol["bus"][i]["name"]][fault_type] = Dict{String,Any}()
     end
-    i_f = [NaN for i = 1:length(fault["terminals"])]
+    println(fault)
+    i_f = [NaN for i = 1:length(fault["connections"])]
     if sol["solver"]["it"] < 100
         v = zeros(Complex{Float64}, 3, 1)
         for (_j, j) in enumerate(bus["terminals"])
@@ -357,15 +358,15 @@ function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, i
                 v[j] = sol["bus"][i]["vm"][_j] * exp(1im*pi/180*sol["bus"][i]["va"][_j])
             end
         end
-        i_f = fault["Gf"]*v
+        i_f = fault["GF"]*v
         results[sol["bus"][i]["name"]][fault_type][indx] = Dict(
             "currents" => abs.(i_f),
-            "terminals" => fault["terminals"]
+            "terminals" => fault["connections"]
         )
     end
     results[sol["bus"][i]["name"]][fault_type][indx] = Dict(
         "currents" => abs.(i_f),
-        "terminals" => fault["terminals"]
+        "terminals" => fault["connections"]
     )
 end
 

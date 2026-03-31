@@ -6,7 +6,7 @@ function _map_mc_admittance_voltage_source!(data_math::Dict{String,<:Any}; pass_
     if haskey(data_math, "gen")
         for (name, gen) in data_math["gen"]
             if haskey(gen, "admit_model")
-                if gen["admit_model"] == VoltageSource
+                if gen["admit_model"] == VoltageSourceElement
                     # add check 
                     if haskey(gen, "z")
                         z = gen["z"]

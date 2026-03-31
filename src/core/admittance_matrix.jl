@@ -1,15 +1,32 @@
 
 function build_mc_admittance_matrix(data::Dict{String,<:Any}; loading=loading, )
+    # add_mc_admittance_map!(data)
+    # admit_matrix = Dict{Tuple,Complex{Float64}}()
+    # add_mc_branch_p_matrix!(data, admit_matrix)
+    # add_mc_switch_p_matrix!(data, admit_matrix)
+    # add_mc_generator_p_matrix!(data, admit_matrix)
+    # add_mc_transformer_p_matrix!(data, admit_matrix)
+    # add_mc_storage_p_matrix!(data, admit_matrix)
+    # loading ? add_mc_load_p_matrix!(data, admit_matrix) : nothing
+    # add_mc_shunt_p_matrix!(data, admit_matrix)
+    # # --> need to finish other devices
     add_mc_admittance_map!(data)
     admit_matrix = Dict{Tuple,Complex{Float64}}()
     add_mc_branch_p_matrix!(data, admit_matrix)
-    add_mc_switch_p_matrix!(data, admit_matrix)
-    add_mc_generator_p_matrix!(data, admit_matrix)
+    println("Y matrix (@branches) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
     add_mc_transformer_p_matrix!(data, admit_matrix)
+    println("Y matrix (@transformers) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
     add_mc_storage_p_matrix!(data, admit_matrix)
-    loading ? add_mc_load_p_matrix!(data, admit_matrix) : nothing
+    println("Y matrix (@storage) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
+    add_mc_switch_p_matrix!(data, admit_matrix)
+    println("Y matrix (@switches) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
+    add_mc_generator_p_matrix!(data, admit_matrix)
+    println("Y matrix (@generators) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
+    # loading ? add_mc_load_p_matrix!(data, admit_matrix) : nothing
+    add_mc_load_p_matrix!(data, admit_matrix)
+    println("Y matrix (@loads) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
     add_mc_shunt_p_matrix!(data, admit_matrix)
-    # --> need to finish other devices
+    println("Y matrix (@shunts) condition : ", LA.cond(Array(_convert_sparse_matrix(admit_matrix)), 2))
     return _convert_sparse_matrix(admit_matrix)
 end
 
@@ -53,10 +70,12 @@ end
 
 function add_mc_generator_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
     for (_, gen) in data["gen"]
-        if gen["admit_model"] == VoltageSource
-            # add_mc_voltage_source_p_matrix!(data, admit_matrix, gen)
+        if gen["admit_model"] == VoltageSourceElement
+            add_mc_voltage_source_p_matrix!(data, admit_matrix, gen)
         elseif gen["admit_model"] == PVSystem
-            # add_mc_solar_p_matrix!(data, admit_matrix, gen)
+            add_mc_solar_p_matrix!(data, admit_matrix, gen)
+        elseif gen["admit_model"] == RotatingMachineElement
+            add_mc_rotating_machine_p_matrix!(data, admit_matrix, gen)
         end
     end
 end
@@ -65,15 +84,21 @@ end
 function build_mc_voltage_vector(data::Dict{String,<:Any})
     v = zeros(Complex{Float64}, length(keys(data["admittance_type"])), 1)
     for (indx, bus) in data["bus"]
-        length(bus["terminals"]) == 3 ? m = 1/sqrt(3) : m = 1
+        println(bus)
+        terminals = copy(bus["terminals"])
+        4 in terminals ? terminals = terminals[1:end-1] : nothing
+        terminals == 3 ? m = 1/sqrt(3) : m = 1
+        println(m)
         if haskey(bus, "vm")
-            for (_j, j) in enumerate(bus["terminals"])
+            println(bus["vm"][1] * data["settings"]["voltage_scale_factor"])
+            for (_j, j) in enumerate(terminals)
                 if haskey(data["admittance_map"], (bus["bus_i"], j))
                     v[data["admittance_map"][(bus["bus_i"], j)],1] = bus["vm"][_j] * data["settings"]["voltage_scale_factor"] * exp(1im*bus["va"][_j]*pi/180)
                 end
             end
         else
-            for (_j, j) in enumerate(bus["terminals"])
+            println(bus["vnom_kv"][1] * data["settings"]["voltage_scale_factor"])
+            for (_j, j) in enumerate(terminals)
                 if haskey(data["admittance_map"], (bus["bus_i"], j))
                     v[data["admittance_map"][(bus["bus_i"], j)],1] = bus["vnom_kv"][_j] * data["settings"]["voltage_scale_factor"] * m * exp(1im*-2/3*pi*(j-1))
                 end
@@ -90,8 +115,8 @@ end
 function build_mc_current_vector(data::Dict{String,<:Any}, v::Matrix{ComplexF64})
     i = zeros(Complex{Float64}, length(keys(data["admittance_type"])), 1)
     for (_, gen) in data["gen"]
-        if gen["admit_model"] == VoltageSource
-            # build_mc_current_vector_voltage_source!(data, gen, v, i)
+        if gen["admit_model"] == VoltageSourceElement
+            build_mc_current_vector_voltage_source!(data, gen, v, i)
         elseif gen["admit_model"] == PVSystem
             # build_mc_current_vector_solar!(data, gen, v, i)
         end
@@ -106,7 +131,7 @@ end
 
 
 " defines i based on setting reg points vs setting current based on voltage"
-function build_mc_delta_current_control_vector(data, v, y)
+function build_mc_delta_current_control_vector(data::Dict{String,<:Any}, v::Matrix{ComplexF64}, y)
     (n, m) = size(v)
     delta_i = zeros(Complex{Float64}, n, 1)
     return _SP.sparse(delta_i)
@@ -125,6 +150,15 @@ function update_mc_delta_current_vector(model, v)
     (n, m) = size(v)
     delta_i = zeros(Complex{Float64}, n, 1)
     update_mc_delta_current_load!(delta_i, v, model.data)
+    update_mc_delta_current_gen!(delta_i, v, model.data)
+    return delta_i
+end
+
+
+function update_mc_fault_delta_current_vector(model, v)
+    (n, m) = size(v)
+    delta_i = zeros(Complex{Float64}, n, 1)
+    update_mc_fault_delta_current_gen!(delta_i, v, model.data)
     return delta_i
 end
 
@@ -143,13 +177,39 @@ function update_mc_delta_current_inverter!(delta_i, v, data, y)
             if gen["grid_forming"]
                 # calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
             else
-                # calc_mc_delta_current_gfli!(data, gen, v, delta_i)
+                calc_mc_delta_current_gfli!(data, gen, v, delta_i)
             end
         end
     end
     for (_, storage) in data["storage"]
         if storage["grid_forming"]
             calc_mc_delta_current_gfmi!(data, storage, v, delta_i, y)
+        end
+    end
+end
+
+
+function update_mc_fault_delta_current_control_vector(model, v, y)
+    (n, m) = size(v)
+    delta_i = zeros(Complex{Float64}, n, 1)
+    update_mc_fault_delta_current_inverter!(delta_i, v, model.data, y)
+    return delta_i, y
+end
+
+
+function update_mc_fault_delta_current_inverter!(delta_i, v, data, y)
+    for (_, gen) in data["gen"]
+        if gen["admit_model"] == PVSystem
+            if gen["grid_forming"]
+                # calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
+            else
+                calc_mc_fault_delta_current_gfli!(data, gen, v, delta_i)
+            end
+        end
+    end
+    for (_, storage) in data["storage"]
+        if storage["grid_forming"]
+            calc_mc_fault_delta_current_gfmi!(data, storage, v, delta_i, y)
         end
     end
 end

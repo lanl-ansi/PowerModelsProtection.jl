@@ -9,9 +9,9 @@ end
 
 @enum ResponseCharateristic ConstantPQ ConstantZ ConstantI ConstantZIP ConstantPAtPF ConstantPV ConstantPFixedQ ConstantPXFixedQ ConstantPQCurrentLimited ConstantV ConstantVCurrentLimited 
 
-@enum Element VoltageSource CurrentSourceElement LoadElement Transformer2WElement Transformer3WElement TransformerCenterTapElement PVSystem GeneratorElement StorageElement
+@enum Element VoltageSourceElement CurrentSourceElement LoadElement Transformer2WElement Transformer3WElement TransformerCenterTapElement PVSystem GeneratorElement StorageElement RotatingMachineElement
 
-@enum Standard IEEE2800 KFactor
+@enum Standard IEEE2800 KFactor TESTV
 
 
 

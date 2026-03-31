@@ -79,7 +79,7 @@ const pmp_dss_connection_edge_elements = String[
 
 "admittance model"
 const _mc_admittance_asset_types = String[
-    "line", "voltage_source", "load", "transformer", "shunt", "solar", "storage", "switch", 
+    "line", "voltage_source", "load", "transformer", "shunt", "solar", "storage", "switch", "rotating_machine"
 ]
 
 

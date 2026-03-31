@@ -307,40 +307,40 @@ function correct_network_data!(data::Dict{String,Any})
     end
 end
 
-function populate_bus_voltages!(data::Dict{String,Any})
-    for (i, transformer) in data["transformer"]
-        f_bus = transformer["f_bus"]
-        t_bus = transformer["t_bus"]
-        if haskey(transformer, "tm_nom")
-            transformer["phases"] == 3 ? multi = 1 / sqrt(3) : multi = 1
-            if !haskey(data["bus"][string(f_bus)], "vbase")
-                data["bus"][string(f_bus)]["vbase"] = transformer["tm_nom"][1] * multi
-            end
-            # Vector{Vector{Int}}
-            if typeof(t_bus) == Vector{Int64}
-                for (indx, bus) in enumerate(t_bus)
-                    if !haskey(data["bus"][string(bus)], "vbase")
-                        data["bus"][string(bus)]["vbase"] = transformer["tm_nom"][indx+1] * multi
-                    end
-                end
-            else
-                if !haskey(data["bus"][string(t_bus)], "vbase")
-                    data["bus"][string(t_bus)]["vbase"] = transformer["tm_nom"][2] * multi
-                end
-            end
-        end
-    end
+# function populate_bus_voltages!(data::Dict{String,Any})
+#     for (i, transformer) in data["transformer"]
+#         f_bus = transformer["f_bus"]
+#         t_bus = transformer["t_bus"]
+#         if haskey(transformer, "tm_nom")
+#             transformer["phases"] == 3 ? multi = 1 / sqrt(3) : multi = 1
+#             if !haskey(data["bus"][string(f_bus)], "vbase")
+#                 data["bus"][string(f_bus)]["vbase"] = transformer["tm_nom"][1] * multi
+#             end
+#             # Vector{Vector{Int}}
+#             if typeof(t_bus) == Vector{Int64}
+#                 for (indx, bus) in enumerate(t_bus)
+#                     if !haskey(data["bus"][string(bus)], "vbase")
+#                         data["bus"][string(bus)]["vbase"] = transformer["tm_nom"][indx+1] * multi
+#                     end
+#                 end
+#             else
+#                 if !haskey(data["bus"][string(t_bus)], "vbase")
+#                     data["bus"][string(t_bus)]["vbase"] = transformer["tm_nom"][2] * multi
+#                 end
+#             end
+#         end
+#     end
 
-    propagate_voltages!(data)
+#     propagate_voltages!(data)
 
-    for (i, gen) in data["gen"]
-        if !haskey(data["bus"][string(gen["gen_bus"])], "vbase")
-            if gen["element"] == VoltageSourceElement
-                data["bus"][string(gen["gen_bus"])]["vbase"] = gen["vg"][1]
-            end
-        end
-    end
-    propagate_voltages!(data)
+#     for (i, gen) in data["gen"]
+#         if !haskey(data["bus"][string(gen["gen_bus"])], "vbase")
+#             if gen["element"] == VoltageSourceElement
+#                 data["bus"][string(gen["gen_bus"])]["vbase"] = gen["vg"][1]
+#             end
+#         end
+#     end
+#     propagate_voltages!(data)
 
 end
 

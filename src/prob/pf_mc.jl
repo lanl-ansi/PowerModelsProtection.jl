@@ -188,6 +188,24 @@ function build_mc_dg_pf(pm::_PMD.AbstractUnbalancedPowerModel)
 end
 
 
+function get_pre_solve!(model::AdmittanceModel)
+    _v, y, i, delta_i_control, delta_i, model, it_control, it_current, _delta_v = compute_mc_pf(model; return_solution=false)
+    for (i, gen) in model.data["gen"]
+        if gen["admit_model"] == RotatingMachineElement
+            n = length(gen["pg"])
+            v_gen = zeros(Complex{Float64}, n, 1)
+            bus = gen["gen_bus"]
+            for (_j, j) in enumerate(gen["connections"])
+                if haskey(model.data["admittance_map"], (bus, j))
+                    v_gen[_j,1] = _v[model.data["admittance_map"][(bus, j)], 1]
+                end
+            end
+            gen["v_gen"] = v_gen
+        end
+    end
+end
+
+
 function compute_mc_pf(model::AdmittanceModel; return_solution=true)
     y = _SP.sparse(model.y)
     i = model.i
@@ -200,10 +218,8 @@ function compute_mc_pf(model::AdmittanceModel; return_solution=true)
     _v = deepcopy(model.v)
     last_v = deepcopy(model.v)
     while it_control != max_it
-        println(it_control)
         _v = y \ _i
-        a = maximum((abs.(_v-last_v)))
-        if maximum((abs.(_v-last_v))) < .0001
+        if maximum((abs.(_v-last_v))) < .5
             break
         else
             delta_i = update_mc_delta_current_vector(model, _v)
@@ -211,7 +227,7 @@ function compute_mc_pf(model::AdmittanceModel; return_solution=true)
             _i += delta_i
             while it_pf != max_it
                 __v = y \ _i
-                if maximum((abs.(__v - _v))) < 0.0001
+                if maximum((abs.(__v - _v))) < .5
                     _v = __v
                     break
                 else
@@ -249,34 +265,35 @@ function compute_mc_pf(model::AdmittanceModel, y; return_solution=true)
     last_v = deepcopy(model.v)
     while it_control != max_it
         _v = y \ _i
-        a = maximum((abs.(_v-last_v)))
-        if maximum((abs.(_v-last_v))) < 0.1 && it_control > 2
+        if maximum((abs.(_v-last_v))) < .5
             break
         else
-            delta_i = update_mc_delta_current_vector(model, _v)
+            delta_i = update_mc_fault_delta_current_vector(model, _v)
             it_pf = 0
             _i += delta_i
             while it_pf != max_it
                 __v = y \ _i
-                if maximum((abs.(__v-_v))) < 0.1
+                if maximum((abs.(__v-_v))) < .5
                     _v = __v
                     break
                 else
-                    delta_i = update_mc_delta_current_vector(model, _v)
+                    delta_i = update_mc_fault_delta_current_vector(model, _v)
                     _i += delta_i
                     _v = __v
                     it_pf += 1
                 end
             end
-            delta_i_control, y = update_mc_delta_current_control_vector(model, _v, y)
+            delta_i_control, y = update_mc_fault_delta_current_control_vector(model, _v, y)
             _i += delta_i_control
-            # println(maximum(abs.(_i)))
             append!(it_current, it_pf)
             last_v = _v
             it_control += 1
         end
     end
     println(it_control)
+    println(maximum((abs.(_v-last_v))))
+    println(it_current)
+    println(abs.(_v))
     if return_solution 
         return solution_mc_pf(_v, it_control, it_current, maximum((abs.(_v-last_v))), i + delta_i_control + delta_i, model), _v
     else

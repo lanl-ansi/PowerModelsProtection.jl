@@ -29,7 +29,7 @@ function transform_data_model_mc_ravens(
     )
 
     correct_network_data && correct_network_data!(data_math; make_pu=make_pu, make_pu_extensions=make_pu_extensions)
-    data_math["m"] = data["m"]
+    # data_math["m"] = data["m"]
     _apply_ravens_mc_admittance!(_map_ravens2math_mc_admittance_nw!, data_math, ravens2math_passthrough=ravens2math_passthrough, ravens2math_extensions=ravens2math_extensions)
 
     return data_math
@@ -62,8 +62,11 @@ function _map_ravens2math_mc_admittance(
     )::Dict{String,Any}
 
     _data_ravens = deepcopy(data_ravens)
+    println(keys(_data_ravens))
 
     _PMD.add_base_voltages!(_data_ravens; overwrite=false)
+
+    println(keys(_data_ravens))
 
     basemva = 1
     _settings = Dict("sbase_default" => basemva * 1e3,
@@ -880,7 +883,7 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
         # Control mode and source ID
         math_obj["control_mode"] = Int(get(ravens_obj, "EnergySource.connectionKind", _PMD.ISOCHRONOUS))
         math_obj["source_id"] = "EnergySource.$name"
-        math_obj["admit_model"] = VoltageSource
+        math_obj["admit_model"] = VoltageSourceElement
         
         # Add generator cost model
         _PMD._add_gen_cost_model!(math_obj, ravens_obj)
@@ -961,12 +964,27 @@ end
 "straight call to pmd"
 function _map_ravens2math_pmp_rotating_machine!(data_math::Dict{String,<:Any}, data_ravens::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
     _PMD._map_ravens2math_rotating_machine!(data_math, data_ravens; pass_props,)
+    for (name, gen) in data_math["gen"]
+        if occursin("RotatingMachine", gen["source_id"])
+            gen["admit_model"] = RotatingMachineElement
+            if gen["model"] == 2
+                if !haskey(gen, "xp")
+                    gen["xp"] = 1.0
+                end
+                if !haskey(gen, "xdp")
+                    gen["xdp"] = .27
+                end
+                if !haskey(gen, "xdpp")
+                    gen["xdpp"] = .20
+                end
+            end
+        end
+    end
 end
 
 
 "straight call to pmd"
 function _map_ravens2math_pmp_power_electronics!(data_math::Dict{String,<:Any}, data_ravens::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
-    println(data_math["storage"])
     _PMD._map_ravens2math_power_electronics!(data_math, data_ravens; pass_props,)
     for (name, gen) in data_math["gen"]
         if occursin("PhotoVoltaicUnit", gen["source_id"])

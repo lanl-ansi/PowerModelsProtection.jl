@@ -262,19 +262,22 @@ function perform_mc_fault_study(model::AdmittanceModel, faults_dict::Dict{String
             for (i, fault) in faults
                 _model = deepcopy(model)
                 y = add_mc_fault_gf(_model, bus, fault)
-                if haskey(model.data, "solar")
-                    for (i, solar) in _model.data["solar"]
-                        solar["i+"] = 0.0
-                        solar["i-"] = 0.0
-                        solar["ir1"] = 0.0
-                        solar["ir2"] = 0.0
-                        solar["delta_ir1"] = 0.0
-                        solar["delta_ir2"] = 0.0
-                    end
-                end
-                sol = compute_mc_pf(_model, y)
+                # if haskey(model.data, "solar")
+                #     for (i, solar) in _model.data["solar"]
+                #         solar["i+"] = 0.0
+                #         solar["i-"] = 0.0
+                #         solar["ir1"] = 0.0
+                #         solar["ir2"] = 0.0
+                #         solar["delta_ir1"] = 0.0
+                #         solar["delta_ir2"] = 0.0
+                #     end
+                # end
+                sol, __v = compute_mc_pf(_model, y)
+                # println(sol)
                 add_mc_fault_solution!(results, fault_type, i, fault, sol, bus)
                 # sol = compute_mc_fault(model, y, i, Gf, indx)
+                println(result)
+                oppo
             end
         end
     end

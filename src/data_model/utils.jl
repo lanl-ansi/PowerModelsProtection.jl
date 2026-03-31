@@ -209,14 +209,24 @@ function add_voltages_through_graph!(data)
                 if j in keys(vnom)
                     # fix
                     for (_c, c) in enumerate(gen["connections"])
-                        if vnom[j][c] != gen["vg"][_c]
-                            vnom[j][c] = gen["vg"][_c]
+                        if haskey(gen, "vg")
+                            if haskey(vnom[j], c)
+                                if vnom[j][c] > .10
+                                    if vnom[j][c] != gen["vg"][_c]
+                                        vnom[j][c] = gen["vg"][_c]
+                                    end
+                                end
+                            else
+                                vnom[j][c] = gen["vg"][_c]
+                            end
                         end
                     end
                 else
                     vnom[j] = Dict{Int, Any}()
                     for (_c, c) in enumerate(gen["connections"])
-                        vnom[j][c] = gen["vg"][_c]
+                        if haskey(gen, "vg")
+                            vnom[j][c] = gen["vg"][_c]
+                        end
                     end
                 end
             end
@@ -239,7 +249,7 @@ function add_voltages_through_graph!(data)
 end
 
 
-function populate_bus_voltages!(data::Dict{String,Any})
+function populate_bus_voltages!(data)
     add_voltages_through_graph!(data)
 end
 
@@ -495,4 +505,29 @@ function get_source_graph!(data, source_name)
         push!(buses, reverse_nodes[node])
     end
     data["microgrid_buses"] = buses
+end
+
+
+function _add_model_types!(data)
+    println(keys(data))
+    for (name, gen) in data["gen"]
+        if occursin("generator", gen["source_id"])
+            gen["admit_model"] = RotatingMachineElement
+        elseif occursin("solar", gen["source_id"])
+            gen["admit_model"] = PVSystem
+        else
+            println(gen)
+        end
+    #     if occursin("RotatingMachine", gen["source_id"])
+    #         gen["admit_model"] = RotatingMachineElement
+    # ["admit_model"] = VoltageSourceElement
+    # if occursin("PhotoVoltaicUnit", gen["source_id"])
+    #         gen["grid_forming"] = false
+    #         sum(gen["pg"]) == 0.0 ? gen["pg"] = gen["pmax"] : nothing 
+    #         gen["admit_model"] = PVSystem
+    # for (name, storage) in data_math["storage"]
+    #     storage["grid_forming"] = true
+    #     storage["admit_model"] = StorageElement
+    end
+    ddd
 end

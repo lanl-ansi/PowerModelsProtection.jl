@@ -8,8 +8,18 @@ function correct_network_data!(data::Dict{String,Any}; make_pu::Bool=true, make_
 
         _PMD.correct_branch_directions!(data)
         _PMD.check_branch_loops(data)
-
-        _PMD.correct_bus_types!(data)
+        # println(keys(data["gen"]))
+        # for (i, gen) in data["gen"]
+        #     println(gen)
+        # end
+        # for (i, bus) in data["bus"]
+        #     println(bus)
+        # end
+        # println(keys(data["bus"]))
+        # println(data["switch"])
+        # # println(data["gen"])
+        # oooo
+        # _PMD.correct_bus_types!(data)
 
         # add function to remove unconnected components
         _PMD.propagate_network_topology!(data)
