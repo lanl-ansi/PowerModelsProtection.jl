@@ -222,7 +222,7 @@ function compute_mc_pf(model::AdmittanceModel; return_solution=true)
         if maximum((abs.(_v-last_v))) < .5
             break
         else
-            delta_i = update_mc_delta_current_vector(model, _v)
+            delta_i = update_mc_delta_current_vector(model, _v) 
             it_pf = 0
             _i += delta_i
             while it_pf != max_it
@@ -231,7 +231,7 @@ function compute_mc_pf(model::AdmittanceModel; return_solution=true)
                     _v = __v
                     break
                 else
-                    delta_i = update_mc_delta_current_vector(model, _v)
+                    delta_i = update_mc_delta_current_vector(model, _v) 
                     _i += delta_i
                     _v = __v
                     it_pf += 1
@@ -268,7 +268,7 @@ function compute_mc_pf(model::AdmittanceModel, y; return_solution=true)
         if maximum((abs.(_v-last_v))) < .5
             break
         else
-            delta_i = update_mc_fault_delta_current_vector(model, _v)
+            delta_i = update_mc_delta_current_vector(model, _v)
             it_pf = 0
             _i += delta_i
             while it_pf != max_it
@@ -277,23 +277,19 @@ function compute_mc_pf(model::AdmittanceModel, y; return_solution=true)
                     _v = __v
                     break
                 else
-                    delta_i = update_mc_fault_delta_current_vector(model, _v)
+                    delta_i = update_mc_current_vector(model, _v)
                     _i += delta_i
                     _v = __v
                     it_pf += 1
                 end
             end
-            delta_i_control, y = update_mc_fault_delta_current_control_vector(model, _v, y)
+            delta_i_control, y = update_mc_delta_current_control_vector(model, _v, y)
             _i += delta_i_control
             append!(it_current, it_pf)
             last_v = _v
             it_control += 1
         end
     end
-    println(it_control)
-    println(maximum((abs.(_v-last_v))))
-    println(it_current)
-    println(abs.(_v))
     if return_solution 
         return solution_mc_pf(_v, it_control, it_current, maximum((abs.(_v-last_v))), i + delta_i_control + delta_i, model), _v
     else

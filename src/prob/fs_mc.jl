@@ -261,58 +261,78 @@ function perform_mc_fault_study(model::AdmittanceModel, faults_dict::Dict{String
         for (fault_type, faults) in bus_faults
             for (i, fault) in faults
                 _model = deepcopy(model)
+                for type in pmp_current_types
+                    getfield(PowerModelsProtection, Symbol("_setup_currents_pmp_$(type)!"))(_model.data)
+                end
                 y = add_mc_fault_gf(_model, bus, fault)
-                # if haskey(model.data, "solar")
-                #     for (i, solar) in _model.data["solar"]
-                #         solar["i+"] = 0.0
-                #         solar["i-"] = 0.0
-                #         solar["ir1"] = 0.0
-                #         solar["ir2"] = 0.0
-                #         solar["delta_ir1"] = 0.0
-                #         solar["delta_ir2"] = 0.0
-                #     end
-                # end
-                sol, __v = compute_mc_pf(_model, y)
-                # println(sol)
-                add_mc_fault_solution!(results, fault_type, i, fault, sol, bus)
-                # sol = compute_mc_fault(model, y, i, Gf, indx)
-                println(result)
-                oppo
+                sol, v = compute_mc_pf_fault(_model, y)
+                add_mc_fault_solution!(results, fault_type, i, fault, sol, bus, v)
             end
         end
     end
     return results
-    # for (i, bus) in model.data["bus"]
-    #     fault = faults[bus["name"]] = Dict{String,Any}()
-    #     if length(bus["terminals"]) >= 3
-    #        y, Gf = add_mc_3p_fault!(model, bus)
-    #        indx = [1, 2, 3]
-    #        fault["lll"] = compute_mc_fault(model, y, i, Gf, indx)
-    #     end
-    #     for n in bus["terminals"]
-    #         if n in 
-    # end
-    # println(faults)
-    # println(oooo)
 end
 
 
-function compute_mc_fault(model::AdmittanceModel,  y::Matrix{ComplexF64}, i::String, Gf, indx)
-    _model = deepcopy(model)
-    v = deepcopy(_model.y)
-    sol = compute_mc_pf(model, y)
-    # println(sol["solver"]["delta"])
-    if sol["solver"]["delta"] < .01
-        # println(sol["bus"][i])
-        v_b = sol["bus"][i]
-        v_f = [v_b["vm"][i]*exp(1im*pi/180*v_b["va"][i]) for i in indx]
-        i_f = Gf*v_f
-        return i_f
+# function compute_mc_fault(model::AdmittanceModel,  y::Matrix{ComplexF64}, i::String, Gf, indx)
+#     _model = deepcopy(model)
+#     v = deepcopy(_model.y)
+#     sol = compute_mc_pf(model, y)
+#     # println(sol["solver"]["delta"])
+#     if sol["solver"]["delta"] < .01
+#         # println(sol["bus"][i])
+#         v_b = sol["bus"][i]
+#         v_f = [v_b["vm"][i]*exp(1im*pi/180*v_b["va"][i]) for i in indx]
+#         i_f = Gf*v_f
+#         return i_f
+#     else
+#         i_f = [NaN for i in indx]
+#         return i_f
+#     end
+# end
+
+
+function compute_mc_pf_fault(model::AdmittanceModel, y; return_solution=true)
+    y = _SP.sparse(y)
+    i = model.i
+    delta_i_control = model.delta_i_control
+    delta_i = model.delta_i
+    max_it = 100
+    it_control = 0
+    it_current = []
+    _i = i + delta_i_control + delta_i
+    _v = deepcopy(model.v)
+    last_v = deepcopy(model.v)
+    while it_control != max_it
+        _v = y \ _i
+        if maximum((abs.(_v-last_v))) < .5
+            break
+        else
+            delta_i = update_mc_fault_delta_current_vector(model, _v)
+            it_pf = 0
+            _i += delta_i
+            while it_pf != max_it
+                __v = y \ _i
+                if maximum((abs.(__v-_v))) < .5
+                    _v = __v
+                    break
+                else
+                    delta_i = update_mc_fault_delta_current_vector(model, _v)
+                    _i += delta_i
+                    _v = __v
+                    it_pf += 1
+                end
+            end
+            delta_i_control, y = update_mc_fault_delta_current_control_vector(model, _v, y)
+            _i += delta_i_control
+            append!(it_current, it_pf)
+            last_v = _v
+            it_control += 1
+        end
+    end
+    if return_solution 
+        return solution_mc_pf(_v, it_control, it_current, maximum((abs.(_v-last_v))), i + delta_i_control + delta_i, model), _v
     else
-        i_f = [NaN for i in indx]
-        return i_f
+        return _v, y, i, delta_i_control, delta_i, model
     end
 end
-
-
-

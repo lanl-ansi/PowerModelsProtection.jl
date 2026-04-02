@@ -1,25 +1,38 @@
 
+function _setup_currents_pmp_rotating_machine!(data_math::Dict{String,<:Any})
+    if haskey(data_math, "gen")
+        for (name, gen) in data_math["gen"]if haskey(gen, "admit_model")
+                if gen["admit_model"] == RotatingMachineElement
+                    gen["i_inj"] = fill(0.0+1im*0.0, gen["phases"])
+                    gen["s_inj"] = fill(0.0+1im*0.0, gen["phases"])
+                end
+            end
+        end
+    end
+end
+
+
 function _map_mc_admittance_rotating_machine!(data_math::Dict{String,<:Any}; pass_props::Vector{String}=String[])
     if haskey(data_math, "gen")
         for (name, gen) in data_math["gen"]
             if haskey(gen, "admit_model")
                 if gen["admit_model"] == RotatingMachineElement
+                    z = 1e6
                     n = length(gen["connections"])
-                    y = zeros(Complex{Float64}, n, n)
-                    if gen["configuration"] == _PMD.WYE
-                        if haskey(gen, "pg") && haskey(gen, "qg")
-                            for (i, _i) in enumerate(gen["connections"])
-                                if _i != 4 
-                                    s = -(conj.(gen["pg"][i] + 1im .* gen["qg"][i]))
-                                    _y = (s * data_math["settings"]["power_scale_factor"]) / (gen["vnom_kv"][i] * data_math["settings"]["voltage_scale_factor"])^2
-                                    y[i, i] += _y
+                    p_matrix = zeros(Complex{Float64}, n, n)
+                    for (i, j) in enumerate(gen["connections"])
+                        if j != 4
+                            p_matrix[i,i] = 1/z
+                        else
+                            for (m, k) in enumerate(gen["connections"])
+                                if k != 4
+                                    p_matrix[i,i] += 1/z 
+                                    p_matrix[i,m] = -1/z 
                                 end
                             end
                         end
-                    elseif gen["configuration"] == _PMD.DELTA            
-                        Nothing
                     end
-                    gen["p_matrix"] = y
+                    gen["p_matrix"] = p_matrix
                 end
             end
         end
@@ -43,7 +56,6 @@ end
 
 function calc_mc_delta_current_rotating_machine!(data::Dict{String,<:Any}, gen::Dict{String,<:Any}, v::Matrix{ComplexF64}, i::Matrix{ComplexF64})
     if gen["gen_status"] == 1
-        println(gen)
         bus = data["bus"][string(gen["gen_bus"])]
         s = -(gen["pg"] + 1im * gen["qg"]) * data["settings"]["power_scale_factor"] 
         for (_j, j) in enumerate(gen["connections"])
@@ -89,21 +101,35 @@ function update_mc_delta_current_gen!(delta_i, v, data)
 end
 
 function calc_delta_current_gen_constantpq!(gen, delta_i, v, data)
-    bus = gen["gen_bus"]
+    bus = data["bus"][string(gen["gen_bus"])]
+    n = gen["phases"]
     if gen["configuration"] == _PMD.WYE
-        n = length(gen["connections"])
-        for (_j, j) in enumerate(gen["connections"])
-            if haskey(data["admittance_map"], (bus, j))
-                s = -(gen["pg"][_j] + 1im .* gen["qg"][_j])
-                y = gen["p_matrix"][_j,_j]
-                delta_i[data["admittance_map"][(bus, j)], 1] -= conj(s * data["settings"]["power_scale_factor"] / v[data["admittance_map"][(bus, j)], 1])  - y * v[data["admittance_map"][(bus, j)], 1] 
+        if gen["phases"] == 1
+            s = (gen["pg"][1] + 1im * gen["qg"][1]) * data["settings"]["power_scale_factor"]
+            _v = v[data["admittance_map"][(bus["bus_i"], gen["connections"][1])], 1]
+            delta_s = s - _v * conj(gen["i_inj"][1])
+            i_update = conj(delta_s/_v)
+            delta_i[data["admittance_map"][(gen["gen_bus"], gen["connections"][1])],1] += i_update
+            gen["i_inj"][1] += i_update
+            gen["s_inj"][1] = conj(gen["i_inj"][1]) * _v
+        else
+            for (_j, j) in enumerate(gen["connections"])
+                if haskey(data["admittance_map"], (bus, j))
+                    s = (gen["pg"][_j] + 1im .* gen["qg"][_j]) * data["settings"]["power_scale_factor"]
+                    _v = v[data["admittance_map"][(bus["bus_i"], gen["connections"][_j])], 1]
+                    delta_s = s - _v * conj(gen["i_inj"][_j])
+                    i_update = conj(delta_s/_v)
+                    delta_i[data["admittance_map"][(gen["gen_bus"], gen["connections"][_j])],1] += i_update
+                    gen["i_inj"][_j] += i_update
+                    gen["s_inj"][_j] = conj(gen["i_inj"][1]) * _v
+                end
             end
         end
     elseif gen["configuration"] == _PMD.DELTA
         nothing
     end
 end
-
+    
 
 function update_mc_fault_delta_current_gen!(delta_i, v, data)
     for (_, gen) in data["gen"]
@@ -117,47 +143,35 @@ end
 
 function calc_fault_delta_current_gen_constantpq!(gen, delta_i, v, data)
     bus = gen["gen_bus"]
+    n = gen["phases"]
     if gen["configuration"] == _PMD.WYE
-        n = length(gen["connections"])
-        y = gen["p_matrix"][1:n,1:n]
-        _v = zeros(ComplexF64, n, 1)
-        _vg = zeros(ComplexF64, n, 1)
-        for (_j, j) in enumerate(gen["connections"])
-            if haskey(data["admittance_map"], (bus, j))
-                _v[_j,1] = v[data["admittance_map"][(bus, j)], 1]
-                _vg[_j,1] = gen["v_gen"][_j]
-            end
-        end
         if gen["phases"] == 1
-            if abs(_vg[1,1] - _v[1,1]) > .5
-                delta_i[data["admittance_map"][(bus, gen["connections"][1])], 1] -= ((_vg[1,1] - _v[1,1])/(1im*gen["xdp"])  - gen["i"][1]) *.1
-                gen["i"][1] -= delta_i[data["admittance_map"][(bus, gen["connections"][1])], 1]
-                println(abs(gen["i"][1]))
-                # println((_vg[1,1] - _v[1,1])/(1im*gen["xdp"]) - y[1,1] * _v[1,1] )
+            _v = v[data["admittance_map"][(bus, gen["connections"][1])], 1]
+            _vg = gen["v_gen"][1]
+            if abs(_vg - _v) > .5
+                i_update = (_vg - _v)/(1im*gen["xdp"]) - gen["i_inj"][1]
+                delta_i[data["admittance_map"][(bus, gen["connections"][1])],1] += i_update
+                gen["i_inj"][1] += i_update
             end
         else
-             if !(haskey(gen, "i12"))
-                gen["i12"] = zeros(ComplexF64, 2, 1)
-            end
-            _v = zeros(Complex{Float64}, 3, 1)
-            for i in gen["connections"]
-                if i != 4
-                    for i in gen["connections"]
-                        if i != 4
-                            _v[i,1] = v[data["admittance_map"][(bus, gen["connections"][i])], 1]
-                        end
-                    end
+            _v = zeros(ComplexF64, n, 1)
+            for (_j, j) in enumerate(gen["connections"])
+                if haskey(data["admittance_map"], (bus, j))
+                    _v[_j,1] = v[data["admittance_map"][(bus, j)], 1]
                 end
             end
-            v012 = inv(_A) * _v
-            i1_delta = ((_vg[1,1] - v012[2,1])/(1im*gen["xdp"])  - gen["i12"][1]) *.1
-            i2_delta = (v012[3,1]/(1im*gen["xdpp"])  - gen["i12"][2]) *.1
-            gen["i12"][1] -= i1_delta
-            gen["i12"][2] += i2_delta
-            i_abc = _A*[0.0;i1_delta;i2_delta] 
-            for (_i, i) in enumerate(gen["connections"])
-                if i != 4
-                    delta_i[data["admittance_map"][(bus, gen["connections"][1])], 1] -=  i_abc[_i]
+            v012 = inv(_A) * _v  
+            vg012 = inv(_A) * gen["v_gen"]
+            i012 = inv(A) * [gen["i_inj"][1];gen["i_inj"][2];gen["i_inj"][3]]
+            if abs(vg012[2,1] - v012[2,1]) > .5
+                i1_delta = (vg012[2,1] - v012[2,1])/(1im*gen["xdp"]) - i012[2]
+                i2_delta = -v012[3,1]/(1im*gen["xdpp"]) - i012[3]
+                i_abc = _A*[0.0;i1_delta;i2_delta] 
+                for (_j, j) in enumerate(gen["connections"])
+                    if haskey(data["admittance_map"], (bus, j))
+                        delta_i[data["admittance_map"][(bus, gen["connections"][1])], 1] +=  i_abc[_j]
+                        gen["i_inj"][_j] += i_abc[_j]
+                    end
                 end
             end
         end

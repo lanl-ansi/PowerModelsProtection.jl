@@ -62,11 +62,8 @@ function _map_ravens2math_mc_admittance(
     )::Dict{String,Any}
 
     _data_ravens = deepcopy(data_ravens)
-    println(keys(_data_ravens))
 
     _PMD.add_base_voltages!(_data_ravens; overwrite=false)
-
-    println(keys(_data_ravens))
 
     basemva = 1
     _settings = Dict("sbase_default" => basemva * 1e3,
@@ -800,6 +797,27 @@ end
 "straight call to pmd"
 function _map_ravens2math_pmp_switch!(data_math::Dict{String,<:Any}, data_ravens::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
     _PMD._map_ravens2math_switch!(data_math, data_ravens; pass_props,)
+    for (i, switch) in data_math["switch"]
+        if !(haskey(switch, "br_r"))
+            n = length(switch["t_connections"])
+            br_r = zeros(Float64, n, n)
+            br_x = zeros(Float64, n, n)
+            g_fr = zeros(Float64, n, n)
+            b_fr = zeros(Float64, n, n)
+            g_to = zeros(Float64, n, n)
+            b_to = zeros(Float64, n, n)
+            for j=1:n
+                br_r[j,j] = 0.001
+                br_x[j,j] = 0.001
+            end
+            switch["br_r"] = br_r
+            switch["br_x"] = br_x
+            switch["g_fr"] = g_fr
+            switch["b_fr"] = b_fr
+            switch["g_to"] = g_to
+            switch["b_to"] = b_to
+        end
+    end
 end
 
 
@@ -888,14 +906,15 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
         # Add generator cost model
         _PMD._add_gen_cost_model!(math_obj, ravens_obj)
 
-        a = 1*exp(120im*pi/180)
-        A = [1 1 1;1 a a^2;1 a^2 a]
+        # a = 1*exp(120im*pi/180)
+        # A = [1 1 1;1 a a^2;1 a^2 a]
         r1 = get(ravens_obj, "EnergySource.r", zeros(1, 1))
         x1 = get(ravens_obj, "EnergySource.x", zeros(1, 1))
         r0 = get(ravens_obj, "EnergySource.r0", zeros(1, 1))
         x0 = get(ravens_obj, "EnergySource.x0", zeros(1, 1))
         rs = zeros(nconductors, nconductors)
         xs = zeros(nconductors, nconductors)
+
         if r0 == 0 && x0 == 0
             for n in 1:nconductors
                 rs[n,n] = r1
@@ -905,7 +924,7 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
             z_012 = zeros(Complex{Float64}, nconductors, nconductors)
             z_012[1,1] = r0 + x0 * 1im
             z_012[2,2] = z_012[3,3] = r1 + x1 * 1im
-            z_abc = inv(_A) * z_012 * _A
+            z_abc = _A * z_012 * inv(_A)
             rs = real.(z_abc)
             xs = imag.(z_abc)
         end
@@ -933,6 +952,7 @@ function _map_ravens2math_pmp_energy_source!(data_math::Dict{String,<:Any}, data
             "to" => map_to,
             "unmap_function" => "_map_math2eng_voltage_source!",
         ))
+
     end
 end
 
@@ -941,6 +961,7 @@ end
 function _map_ravens2math_pmp_energy_consumer!(data_math::Dict{String,<:Any}, data_ravens::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
     _PMD._map_ravens2math_energy_consumer!(data_math, data_ravens; pass_props,)
     for (i, load) in data_math["load"]
+        load["phases"] = length(load["pd"])
         if !(haskey(load, "vlowpu"))
             load["vlowpu"] =  .50
         end
@@ -965,17 +986,23 @@ end
 function _map_ravens2math_pmp_rotating_machine!(data_math::Dict{String,<:Any}, data_ravens::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
     _PMD._map_ravens2math_rotating_machine!(data_math, data_ravens; pass_props,)
     for (name, gen) in data_math["gen"]
+        gen["phases"] = length(gen["pg"])
+        if haskey(gen, "vbase")
+            kv = gen["vbase"]/sqrt(3)
+            gen["vnom_kv"] = fill(kv, length(gen["pg"]))
+        end
         if occursin("RotatingMachine", gen["source_id"])
+            zbase = (gen["vnom_kv"][1] * data_math["settings"]["voltage_scale_factor"])^2/(abs(gen["pmax"][1] + 1im*gen["qmax"][1]) *data_math["settings"]["power_scale_factor"])
             gen["admit_model"] = RotatingMachineElement
             if gen["model"] == 2
                 if !haskey(gen, "xp")
-                    gen["xp"] = 1.0
+                    gen["xp"] = 1.0 * zbase
                 end
                 if !haskey(gen, "xdp")
-                    gen["xdp"] = .27
+                    gen["xdp"] = .27 * zbase
                 end
                 if !haskey(gen, "xdpp")
-                    gen["xdpp"] = .20
+                    gen["xdpp"] = .20 * zbase
                 end
             end
         end
@@ -988,9 +1015,12 @@ function _map_ravens2math_pmp_power_electronics!(data_math::Dict{String,<:Any}, 
     _PMD._map_ravens2math_power_electronics!(data_math, data_ravens; pass_props,)
     for (name, gen) in data_math["gen"]
         if occursin("PhotoVoltaicUnit", gen["source_id"])
+            if length(gen["vg"]) == 1
+                gen["vg"] = gen["vg"] .* 1/sqrt(3)
+            end
             gen["grid_forming"] = false
             sum(gen["pg"]) == 0.0 ? gen["pg"] = gen["pmax"] : nothing 
-            gen["admit_model"] = PVSystem
+            gen["admit_model"] = PVSystemElement
             4 in gen["connections"] ? gen["phases"] = length(gen["connections"]) - 1 : gen["phases"] = length(gen["connections"])
             gen["balanced"] = "true"
             gen["vminpu"] = 1/1.5

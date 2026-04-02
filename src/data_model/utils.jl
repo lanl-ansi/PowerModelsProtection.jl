@@ -509,14 +509,13 @@ end
 
 
 function _add_model_types!(data)
-    println(keys(data))
     for (name, gen) in data["gen"]
         if occursin("generator", gen["source_id"])
             gen["admit_model"] = RotatingMachineElement
         elseif occursin("solar", gen["source_id"])
             gen["admit_model"] = PVSystem
         else
-            println(gen)
+            nothing
         end
     #     if occursin("RotatingMachine", gen["source_id"])
     #         gen["admit_model"] = RotatingMachineElement

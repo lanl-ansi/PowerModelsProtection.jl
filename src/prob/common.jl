@@ -47,6 +47,10 @@ function instantiate_mc_admittance_model(
 
     data_math["settings"]["loading"] = loading
 
+    for type in pmp_current_types
+        getfield(PowerModelsProtection, Symbol("_setup_currents_pmp_$(type)!"))(data_math)
+    end
+
     y_matrix = build_mc_admittance_matrix(data_math;loading=loading)
     v = build_mc_voltage_vector(data_math)
     i = build_mc_current_vector(data_math, v)

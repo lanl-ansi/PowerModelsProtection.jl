@@ -4,19 +4,13 @@ function _map_mc_admittance_switch!(data_math::Dict{String,<:Any}; pass_props::V
     if haskey(data_math, "switch")
         for (name, switch) in data_math["switch"]
             if switch["state"] == 1
-                z012 = [1.0+1.0im 0.0 0.0;0.0 1.0+1.0im 0.0;0.0 0.0 1.0+1.0im] .* .1
-                c012 = -2*pi*data_math["settings"]["base_frequency"]*1im.*[1.0 0.0 0.0;0.0 1.1 0.0;0.0 0.0 1.1] .* .1
-                zabc = A^-1*z012*A
-                cabc = A^-1*c012*A
-                n = length(switch["f_connections"])
-                z = zeros(Complex{Float64}, n, n)
-                for (i, j) in enumerate(switch["f_connections"])
-                    z[i,i] = zabc[j,j] 
-                end
-                z1 = inv(z)
+                z = switch["br_r"] + 1im .* switch["br_x"]
+                y_from = switch["g_fr"] + 1im .* switch["b_fr"]
+                y_to = switch["g_to"] + 1im .* switch["b_to"]
+                z1 = inv(z) + y_from 
                 z2 = -inv(z)
                 z3 = z2
-                z4 = inv(z)
+                z4 = inv(z) + y_to 
                 switch["p_matrix"] = [z1 z2; z3 z4]
             else
                 n = length(switch["f_connections"])

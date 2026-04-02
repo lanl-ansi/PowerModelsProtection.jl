@@ -1,4 +1,13 @@
 
+function _setup_currents_pmp_load!(data_math::Dict{String,<:Any})
+    if haskey(data_math, "load")
+        for (name, load) in data_math["load"]
+            load["i_inj"] = fill(0.0+1im*0.0, load["phases"])
+            load["s_inj"] = fill(0.0+1im*0.0, load["phases"])
+        end
+    end
+end
+
 function _map_mc_admittance_load!(data_math::Dict{String,<:Any}; pass_props::Vector{String}=String[])
     if haskey(data_math, "load")
         for (name, load) in data_math["load"]
@@ -72,19 +81,23 @@ function calc_delta_current_load_constantpq!(load, delta_i, v, data)
         n = length(load["connections"])
         for (_j, j) in enumerate(load["connections"])
             if haskey(data["admittance_map"], (bus, j))
-                s = load["pd"][_j] + 1im .* load["qd"][_j]
+                s = (load["pd"][_j] + 1im .* load["qd"][_j]) * data["settings"]["power_scale_factor"]
                 y = load["p_matrix"][_j,_j]
                 if abs(v[data["admittance_map"][(bus, j)], 1]) < load["vlowpu"] * load["vnom_kv"][_j]*data["settings"]["voltage_scale_factor"]
-                    y_vmin = conj(s*data["settings"]["power_scale_factor"]) / (load["vnom_kv"][_j]*load["vlowpu"]*data["settings"]["voltage_scale_factor"])^2
-                    delta_i[data["admittance_map"][(bus, j)], 1] -= v[data["admittance_map"][(bus, j)], 1] * (y_vmin - y) - load["i_last"][_j]
-                    load["i_last"][_j] = v[data["admittance_map"][(bus, j)], 1] * (y_vmin - y)
+                    y_vmin = conj(s) / (load["vnom_kv"][_j]*load["vlowpu"]*data["settings"]["voltage_scale_factor"])^2
+                    delta_i[data["admittance_map"][(bus, j)], 1] -= v[data["admittance_map"][(bus, j)], 1] * (y_vmin - y) - load["i_inj"][_j]
+                    load["i_inj"][_j] = v[data["admittance_map"][(bus, j)], 1] * (y_vmin - y)
+                    load["s_inj"][_j] = conj(load["i_inj"][_j]) * v[data["admittance_map"][(bus, j)], 1] + conj(y) * abs(v[data["admittance_map"][(bus, j)], 1])^2
                 elseif abs(v[data["admittance_map"][(bus, j)], 1]) > load["vmaxpu"] * load["vnom_kv"][_j]*data["settings"]["voltage_scale_factor"]
-                    y_vmax = conj(s*data["settings"]["power_scale_factor"]) / (load["vnom_kv"][_j]*load["vmaxpu"]*data["settings"]["voltage_scale_factor"])^2 
-                    delta_i[data["admittance_map"][(bus, j)], 1] -= v[data["admittance_map"][(bus, j)], 1] * (y_vmax - y) - load["i_last"][_j]
-                    load["i_last"][_j] = v[data["admittance_map"][(bus, j)], 1] * (y_vmax - y)
+                    y_vmax = conj(s) / (load["vnom_kv"][_j]*load["vmaxpu"]*data["settings"]["voltage_scale_factor"])^2 
+                    delta_i[data["admittance_map"][(bus, j)], 1] -= v[data["admittance_map"][(bus, j)], 1] * (y_vmax - y) - load["i_inj"][_j]
+                    load["i_inj"][_j] = v[data["admittance_map"][(bus, j)], 1] * (y_vmax - y)
+                    load["s_inj"][_j] = conj(load["i_inj"][_j]) * v[data["admittance_map"][(bus, j)], 1] + conj(y) * abs(v[data["admittance_map"][(bus, j)], 1])^2
                 else
-                    delta_i[data["admittance_map"][(bus, j)], 1] -= conj(s * data["settings"]["power_scale_factor"] / v[data["admittance_map"][(bus, j)], 1])  - y * v[data["admittance_map"][(bus, j)], 1] - load["i_last"][_j]
-                    load["i_last"][_j] = conj(s * data["settings"]["power_scale_factor"] / v[data["admittance_map"][(bus, j)], 1])  - y * v[data["admittance_map"][(bus, j)], 1] 
+                    delta_s = s - conj(y) * abs(v[data["admittance_map"][(bus, j)], 1])^2 - conj(load["i_inj"][_j]) * v[data["admittance_map"][(bus, j)], 1]
+                    delta_i[data["admittance_map"][(bus, j)], 1] -= conj(delta_s) / conj(v[data["admittance_map"][(bus, j)], 1])
+                    load["i_inj"][_j] += conj(delta_s) / conj(v[data["admittance_map"][(bus, j)], 1]) 
+                    load["s_inj"][_j] = conj(load["i_inj"][_j]) * v[data["admittance_map"][(bus, j)], 1] + conj(y) * abs(v[data["admittance_map"][(bus, j)], 1])^2
                 end
             end
         end

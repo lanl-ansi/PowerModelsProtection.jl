@@ -341,7 +341,7 @@ function solution_mc_fs(data::Dict{String,Any})
 end
 
 
-function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, indx::String, fault, sol::Dict{String,Any}, bus::Dict{String,Any})
+function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, indx::String, fault, sol::Dict{String,Any}, bus::Dict{String,Any}, v_sol)
     i = "$(bus["bus_i"])"
     if !(haskey(results, sol["bus"][i]["name"]))
         results[sol["bus"][i]["name"]] = Dict{String,Any}()
@@ -349,7 +349,6 @@ function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, i
     if !(haskey(results[sol["bus"][i]["name"]], fault_type))
         results[sol["bus"][i]["name"]][fault_type] = Dict{String,Any}()
     end
-    println(fault)
     i_f = [NaN for i = 1:length(fault["connections"])]
     if sol["solver"]["it"] < 100
         v = zeros(Complex{Float64}, 3, 1)
@@ -359,15 +358,60 @@ function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, i
             end
         end
         i_f = fault["GF"]*v
+        branch_currents = Dict{String,Any}()
+        for (indx, branch) in sol["model"].data["branch"]
+            _v = zeros(ComplexF64, size(branch["p_matrix"])[1])
+            for (_c, c) in enumerate(branch["t_connections"])
+                if (branch["t_bus"], c) in keys(sol["model"].data["admittance_map"])
+                    _v[_c] = v_sol[sol["model"].data["admittance_map"][(branch["t_bus"], c)]]
+                end
+            end
+            for (_c, c) in enumerate(branch["f_connections"])
+                if (branch["f_bus"], c) in keys(sol["model"].data["admittance_map"])
+                    _v[_c+length(branch["t_connections"])] = v_sol[sol["model"].data["admittance_map"][(branch["f_bus"], c)]]
+                end
+            end
+            current = branch["p_matrix"]*_v
+            branch_currents[branch["source_id"]] = Dict{String, Any}(
+                "to_mag" => abs.(current[1:length(branch["t_connections"])]),
+                "to_ang" => angle.(current[1:length(branch["t_connections"])]) .* 180/pi,
+                "fr_mag" => abs.(current[length(branch["t_connections"])+1:end]),
+                "fr_ang" => angle.(current[length(branch["t_connections"])+1:end]) .* 180/pi,
+            )
+        end
+        switch_currents = Dict{String,Any}()
+        for (indx, switch) in sol["model"].data["switch"]
+            _v = zeros(ComplexF64, size(switch["p_matrix"])[1])
+            for (_c, c) in enumerate(switch["t_connections"])
+                if (switch["t_bus"], c) in keys(sol["model"].data["admittance_map"])
+                    _v[_c] = v_sol[sol["model"].data["admittance_map"][(switch["t_bus"], c)]]
+                end
+            end
+            for (_c, c) in enumerate(switch["f_connections"])
+                if (switch["f_bus"], c) in keys(sol["model"].data["admittance_map"])
+                    _v[_c+length(switch["t_connections"])] = v_sol[sol["model"].data["admittance_map"][(switch["f_bus"], c)]]
+                end
+            end
+            current = switch["p_matrix"]*_v
+            switch_currents[switch["source_id"]] = Dict{String, Any}(
+                "to_mag" => abs.(current[1:length(switch["t_connections"])]),
+                "to_ang" => angle.(current[1:length(switch["t_connections"])]) .* 180/pi,
+                "fr_mag" => abs.(current[length(switch["t_connections"])+1:end]),
+                "fr_ang" => angle.(current[length(switch["t_connections"])+1:end]) .* 180/pi,
+            )
+        end
         results[sol["bus"][i]["name"]][fault_type][indx] = Dict(
             "currents" => abs.(i_f),
-            "terminals" => fault["connections"]
+            "terminals" => fault["connections"],
+            "branch" => branch_currents,
+            "switch" => switch_currents,
         )
-    end
-    results[sol["bus"][i]["name"]][fault_type][indx] = Dict(
+    else
+        results[sol["bus"][i]["name"]][fault_type][indx] = Dict(
         "currents" => abs.(i_f),
         "terminals" => fault["connections"]
-    )
+        )
+    end
 end
 
 

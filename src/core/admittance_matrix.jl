@@ -72,8 +72,8 @@ function add_mc_generator_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict
     for (_, gen) in data["gen"]
         if gen["admit_model"] == VoltageSourceElement
             add_mc_voltage_source_p_matrix!(data, admit_matrix, gen)
-        elseif gen["admit_model"] == PVSystem
-            add_mc_solar_p_matrix!(data, admit_matrix, gen)
+        elseif gen["admit_model"] == PVSystemElement
+            # add_mc_solar_p_matrix!(data, admit_matrix, gen)
         elseif gen["admit_model"] == RotatingMachineElement
             add_mc_rotating_machine_p_matrix!(data, admit_matrix, gen)
         end
@@ -84,20 +84,16 @@ end
 function build_mc_voltage_vector(data::Dict{String,<:Any})
     v = zeros(Complex{Float64}, length(keys(data["admittance_type"])), 1)
     for (indx, bus) in data["bus"]
-        println(bus)
         terminals = copy(bus["terminals"])
         4 in terminals ? terminals = terminals[1:end-1] : nothing
         terminals == 3 ? m = 1/sqrt(3) : m = 1
-        println(m)
         if haskey(bus, "vm")
-            println(bus["vm"][1] * data["settings"]["voltage_scale_factor"])
             for (_j, j) in enumerate(terminals)
                 if haskey(data["admittance_map"], (bus["bus_i"], j))
                     v[data["admittance_map"][(bus["bus_i"], j)],1] = bus["vm"][_j] * data["settings"]["voltage_scale_factor"] * exp(1im*bus["va"][_j]*pi/180)
                 end
             end
         else
-            println(bus["vnom_kv"][1] * data["settings"]["voltage_scale_factor"])
             for (_j, j) in enumerate(terminals)
                 if haskey(data["admittance_map"], (bus["bus_i"], j))
                     v[data["admittance_map"][(bus["bus_i"], j)],1] = bus["vnom_kv"][_j] * data["settings"]["voltage_scale_factor"] * m * exp(1im*-2/3*pi*(j-1))
@@ -117,7 +113,7 @@ function build_mc_current_vector(data::Dict{String,<:Any}, v::Matrix{ComplexF64}
     for (_, gen) in data["gen"]
         if gen["admit_model"] == VoltageSourceElement
             build_mc_current_vector_voltage_source!(data, gen, v, i)
-        elseif gen["admit_model"] == PVSystem
+        elseif gen["admit_model"] == PVSystemElement
             # build_mc_current_vector_solar!(data, gen, v, i)
         end
     end
@@ -173,7 +169,7 @@ end
 
 function update_mc_delta_current_inverter!(delta_i, v, data, y)
     for (_, gen) in data["gen"]
-        if gen["admit_model"] == PVSystem
+        if gen["admit_model"] == PVSystemElement
             if gen["grid_forming"]
                 # calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
             else
@@ -199,7 +195,7 @@ end
 
 function update_mc_fault_delta_current_inverter!(delta_i, v, data, y)
     for (_, gen) in data["gen"]
-        if gen["admit_model"] == PVSystem
+        if gen["admit_model"] == PVSystemElement
             if gen["grid_forming"]
                 # calc_mc_delta_current_gfmi!(gen, delta_i, v, data)
             else

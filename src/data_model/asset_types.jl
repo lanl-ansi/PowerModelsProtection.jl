@@ -17,7 +17,7 @@ const _pmp_dss_node_elements = String[
 
 
 const _pmp_dss_edge_elements = String[
-    "transformer", "switch",
+    "transformer", "switch", 
 ]
 
 
@@ -82,4 +82,8 @@ const _mc_admittance_asset_types = String[
     "line", "voltage_source", "load", "transformer", "shunt", "solar", "storage", "switch", "rotating_machine"
 ]
 
+
+const pmp_current_types = String[
+    "load", "solar", "rotating_machine",
+]
 

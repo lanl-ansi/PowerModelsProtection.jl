@@ -53,17 +53,17 @@ function transform_data_model_mc_dss(
         global_keys=global_keys,
     )
 
-        correct_network_data && correct_network_data!(data_math; make_pu=make_pu, make_pu_extensions=make_pu_extensions)
+    correct_network_data && correct_network_data!(data_math; make_pu=make_pu, make_pu_extensions=make_pu_extensions)
 
-         _apply_dss_mc_admittance!(_map_dss2math_mc_admittance_nw!, data_math, dss2math_passthrough=dss2math_passthrough, dss2math_extensions=dss2math_extensions)
+    _apply_dss_mc_admittance!(_map_dss2math_mc_admittance_nw!, data_math, dss2math_passthrough=dss2math_passthrough, dss2math_extensions=dss2math_extensions)
 
-        correct_grounds!(data_math)
+    correct_grounds!(data_math)
 
-        # populate_bus_voltages!(data_math)
+    # populate_bus_voltages!(data_math)
 
-        add_mc_last_current_keys!(data_math)
+    add_mc_last_current_keys!(data_math)
 
-        return data_math
+    return data_math
 end
 
 
@@ -122,7 +122,7 @@ function _map_dss2math_mc_admittance(
         )
     end
     data_math["controls"] = Dict{String, Any}()
-    # 
+
     _PMD.apply_pmd!(_map_dss2math_nw!, data_math, _data_dss; dss2math_passthrough=dss2math_passthrough, dss2math_extensions=dss2math_extensions)
 
     return data_math
@@ -221,7 +221,7 @@ function _map_dss2math_pmp_generator!(data_math::Dict{String,<:Any}, data_dss::D
         end
         if occursin("generator.", gen["source_id"])
             gen["admit_model"] = RotatingMachineElement
-            zbase = (gen["vnom_kv"][1] * data_math["settings"]["voltage_scale_factor"])^2/(abs(gen["pg"][1] + 1im*gen["qg"][1]) *data_math["settings"]["power_scale_factor"])
+            zbase = (gen["vnom_kv"][1] * data_math["settings"]["voltage_scale_factor"])^2/(abs(gen["pmax"][1] + 1im*gen["qmax"][1]) *data_math["settings"]["power_scale_factor"])
             if gen["model"] == 2
                 if !haskey(gen, "xp")
                     gen["xp"] = 1.0 * zbase
@@ -243,7 +243,7 @@ function _map_dss2math_pmp_solar!(data_math::Dict{String,<:Any}, data_dss::Dict{
      for (name, gen) in data_math["gen"]
         if occursin("solar.", gen["source_id"])
             gen["grid_forming"] = false
-            gen["admit_model"] = PVSystem
+            gen["admit_model"] = PVSystemElement
             4 in gen["connections"] ? gen["phases"] = length(gen["connections"]) - 1 : gen["phases"] = length(gen["connections"])
             haskey(gen["dss"], "balanced") ? gen["balanced"] = gen["dss"]["balanced"] : gen["balanced"] = true
             haskey(gen["dss"], "vminpu") ? gen["vminpu"] = parse(Float64, gen["dss"]["vminpu"]) : gen["vminpu"] = 1/1.5
@@ -262,6 +262,7 @@ end
 function _map_dss2math_pmp_transformer!(data_math::Dict{String,<:Any}, data_dss::Dict{String,<:Any}; pass_props::Vector{String}=String[], nw::Int=nw_id_default)
     "alternate to pmd transformer TODO work on 3 winding"
     for (name, dss_obj) in get(data_dss, "transformer", Dict{Any,Dict{String,Any}}())
+        pop!(dss_obj, "bank1", nothing)
         push!(data_math["map"], Dict{String,Any}(
             "from" => name,
             "to" => String[],
