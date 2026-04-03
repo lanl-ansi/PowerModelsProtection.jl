@@ -198,28 +198,30 @@ function solution_mc_pf(v::Matrix{ComplexF64}, it::Int64, it_current, last_delta
     solution = Dict{String, Any}()
     solution["bus"] = Dict{String, Any}()
     for (indx,bus) in model.data["bus"]
-        solution["bus"][indx] = Dict{String, Any}(
-            "vm" => [0.0 for t in bus["terminals"]],
-            "va" => [0.0 for t in bus["terminals"]],
-            "name" => bus["source_id"],
-            "vbase" => bus["vnom_kv"],
-        )
-        if haskey(model.data, "microgrid_buses")
-            if indx in model.data["microgrid_buses"]
+        if bus["bus_type"] != 4
+            solution["bus"][indx] = Dict{String, Any}(
+                "vm" => [0.0 for t in bus["terminals"]],
+                "va" => [0.0 for t in bus["terminals"]],
+                "name" => bus["source_id"],
+                "vbase" => bus["vnom_kv"],
+            )
+            if haskey(model.data, "microgrid_buses")
+                if indx in model.data["microgrid_buses"]
+                    for (j, grounded) in enumerate(bus["grounded"])
+                        if grounded == 0
+                            t = bus["terminals"][j]
+                            solution["bus"][indx]["vm"][j] = abs(v[model.data["admittance_map"][(bus["index"], t)]])
+                            solution["bus"][indx]["va"][j] = angle(v[model.data["admittance_map"][(bus["index"], t)]]) * 180/pi
+                        end
+                    end
+                end
+            else
                 for (j, grounded) in enumerate(bus["grounded"])
                     if grounded == 0
                         t = bus["terminals"][j]
                         solution["bus"][indx]["vm"][j] = abs(v[model.data["admittance_map"][(bus["index"], t)]])
                         solution["bus"][indx]["va"][j] = angle(v[model.data["admittance_map"][(bus["index"], t)]]) * 180/pi
                     end
-                end
-            end
-        else
-            for (j, grounded) in enumerate(bus["grounded"])
-                if grounded == 0
-                    t = bus["terminals"][j]
-                    solution["bus"][indx]["vm"][j] = abs(v[model.data["admittance_map"][(bus["index"], t)]])
-                    solution["bus"][indx]["va"][j] = angle(v[model.data["admittance_map"][(bus["index"], t)]]) * 180/pi
                 end
             end
         end
@@ -256,10 +258,30 @@ end
 
 function solution_mc_pf_branches!(solution, v, data)
     for (indx,branch) in data["branch"]
-        f_bus = branch["f_bus"]
-        t_bus = branch["t_bus"]
-        if haskey(data, "microgrid_buses")
-            if "$(f_bus)" in data["microgrid_buses"] && "$(t_bus)" in data["microgrid_buses"]
+        if branch["br_status"] == 1
+            f_bus = branch["f_bus"]
+            t_bus = branch["t_bus"]
+            if haskey(data, "microgrid_buses")
+                if "$(f_bus)" in data["microgrid_buses"] && "$(t_bus)" in data["microgrid_buses"]
+                    _y = branch["p_matrix"]
+                    v_size = size(_y)[1]
+                    v_t = zeros(Complex{Float64}, v_size, 1)
+                    indx = 1
+                    for (_i, i) in enumerate(branch["f_connections"])
+                        if haskey(data["admittance_map"], (f_bus, i))
+                            v_t[indx,1] = v[data["admittance_map"][(f_bus, i)], 1]
+                        end
+                        indx += 1
+                    end
+                    for (_i, i) in enumerate(branch["t_connections"])
+                        if haskey(data["admittance_map"], (t_bus, i))
+                            v_t[indx,1] = v[data["admittance_map"][(t_bus, i)], 1]
+                        end
+                        indx += 1
+                    end
+                    branch["i"] = _y*v_t
+                end
+            else
                 _y = branch["p_matrix"]
                 v_size = size(_y)[1]
                 v_t = zeros(Complex{Float64}, v_size, 1)
@@ -278,24 +300,6 @@ function solution_mc_pf_branches!(solution, v, data)
                 end
                 branch["i"] = _y*v_t
             end
-        else
-            _y = branch["p_matrix"]
-            v_size = size(_y)[1]
-            v_t = zeros(Complex{Float64}, v_size, 1)
-            indx = 1
-            for (_i, i) in enumerate(branch["f_connections"])
-                if haskey(data["admittance_map"], (f_bus, i))
-                    v_t[indx,1] = v[data["admittance_map"][(f_bus, i)], 1]
-                end
-                indx += 1
-            end
-            for (_i, i) in enumerate(branch["t_connections"])
-                if haskey(data["admittance_map"], (t_bus, i))
-                    v_t[indx,1] = v[data["admittance_map"][(t_bus, i)], 1]
-                end
-                indx += 1
-            end
-            branch["i"] = _y*v_t
         end
     end
 end
@@ -330,12 +334,14 @@ function solution_mc_fs(data::Dict{String,Any})
     buses = Dict{String,Any}()
     for (name,indx) in data["bus_lookup"]
         bus = data["bus"][string(indx)]
-        buses[name] = Dict{String, Any}(
-            "grounded" => bus["terminals"],
-            "3pg" => haskey(bus,"3pg") ? bus["3pg"] : nothing,
-            "ll" => haskey(bus,"ll") ? bus["ll"] : nothing,
-            "lg" => bus["lg"],
-        )
+        if bus["bus_type"] != 4
+            buses[name] = Dict{String, Any}(
+                "grounded" => bus["terminals"],
+                "3pg" => haskey(bus,"3pg") ? bus["3pg"] : nothing,
+                "ll" => haskey(bus,"ll") ? bus["ll"] : nothing,
+                "lg" => bus["lg"],
+            )
+        end
     end
     return buses
 end
@@ -360,45 +366,49 @@ function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, i
         i_f = fault["GF"]*v
         branch_currents = Dict{String,Any}()
         for (indx, branch) in sol["model"].data["branch"]
-            _v = zeros(ComplexF64, size(branch["p_matrix"])[1])
-            for (_c, c) in enumerate(branch["t_connections"])
-                if (branch["t_bus"], c) in keys(sol["model"].data["admittance_map"])
-                    _v[_c] = v_sol[sol["model"].data["admittance_map"][(branch["t_bus"], c)]]
+            if branch["br_status"] == 1
+                _v = zeros(ComplexF64, size(branch["p_matrix"])[1])
+                for (_c, c) in enumerate(branch["t_connections"])
+                    if (branch["t_bus"], c) in keys(sol["model"].data["admittance_map"])
+                        _v[_c] = v_sol[sol["model"].data["admittance_map"][(branch["t_bus"], c)]]
+                    end
                 end
-            end
-            for (_c, c) in enumerate(branch["f_connections"])
-                if (branch["f_bus"], c) in keys(sol["model"].data["admittance_map"])
-                    _v[_c+length(branch["t_connections"])] = v_sol[sol["model"].data["admittance_map"][(branch["f_bus"], c)]]
+                for (_c, c) in enumerate(branch["f_connections"])
+                    if (branch["f_bus"], c) in keys(sol["model"].data["admittance_map"])
+                        _v[_c+length(branch["t_connections"])] = v_sol[sol["model"].data["admittance_map"][(branch["f_bus"], c)]]
+                    end
                 end
+                current = branch["p_matrix"]*_v
+                branch_currents[branch["source_id"]] = Dict{String, Any}(
+                    "to_mag" => abs.(current[1:length(branch["t_connections"])]),
+                    "to_ang" => angle.(current[1:length(branch["t_connections"])]) .* 180/pi,
+                    "fr_mag" => abs.(current[length(branch["t_connections"])+1:end]),
+                    "fr_ang" => angle.(current[length(branch["t_connections"])+1:end]) .* 180/pi,
+                )
             end
-            current = branch["p_matrix"]*_v
-            branch_currents[branch["source_id"]] = Dict{String, Any}(
-                "to_mag" => abs.(current[1:length(branch["t_connections"])]),
-                "to_ang" => angle.(current[1:length(branch["t_connections"])]) .* 180/pi,
-                "fr_mag" => abs.(current[length(branch["t_connections"])+1:end]),
-                "fr_ang" => angle.(current[length(branch["t_connections"])+1:end]) .* 180/pi,
-            )
         end
         switch_currents = Dict{String,Any}()
         for (indx, switch) in sol["model"].data["switch"]
-            _v = zeros(ComplexF64, size(switch["p_matrix"])[1])
-            for (_c, c) in enumerate(switch["t_connections"])
-                if (switch["t_bus"], c) in keys(sol["model"].data["admittance_map"])
-                    _v[_c] = v_sol[sol["model"].data["admittance_map"][(switch["t_bus"], c)]]
+            if switch["status"] == 1
+                _v = zeros(ComplexF64, size(switch["p_matrix"])[1])
+                for (_c, c) in enumerate(switch["t_connections"])
+                    if (switch["t_bus"], c) in keys(sol["model"].data["admittance_map"])
+                        _v[_c] = v_sol[sol["model"].data["admittance_map"][(switch["t_bus"], c)]]
+                    end
                 end
-            end
-            for (_c, c) in enumerate(switch["f_connections"])
-                if (switch["f_bus"], c) in keys(sol["model"].data["admittance_map"])
-                    _v[_c+length(switch["t_connections"])] = v_sol[sol["model"].data["admittance_map"][(switch["f_bus"], c)]]
+                for (_c, c) in enumerate(switch["f_connections"])
+                    if (switch["f_bus"], c) in keys(sol["model"].data["admittance_map"])
+                        _v[_c+length(switch["t_connections"])] = v_sol[sol["model"].data["admittance_map"][(switch["f_bus"], c)]]
+                    end
                 end
+                current = switch["p_matrix"]*_v
+                switch_currents[switch["source_id"]] = Dict{String, Any}(
+                    "to_mag" => abs.(current[1:length(switch["t_connections"])]),
+                    "to_ang" => angle.(current[1:length(switch["t_connections"])]) .* 180/pi,
+                    "fr_mag" => abs.(current[length(switch["t_connections"])+1:end]),
+                    "fr_ang" => angle.(current[length(switch["t_connections"])+1:end]) .* 180/pi,
+                )
             end
-            current = switch["p_matrix"]*_v
-            switch_currents[switch["source_id"]] = Dict{String, Any}(
-                "to_mag" => abs.(current[1:length(switch["t_connections"])]),
-                "to_ang" => angle.(current[1:length(switch["t_connections"])]) .* 180/pi,
-                "fr_mag" => abs.(current[length(switch["t_connections"])+1:end]),
-                "fr_ang" => angle.(current[length(switch["t_connections"])+1:end]) .* 180/pi,
-            )
         end
         results[sol["bus"][i]["name"]][fault_type][indx] = Dict(
             "currents" => abs.(i_f),

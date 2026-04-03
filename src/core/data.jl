@@ -597,51 +597,52 @@ function update_build_mc_fault_study(data::Dict{String,<:Any}; resistance::Real=
     vsource_buses = Set([vsource["bus"] for (_,vsource) in get(data, "voltage_source", Dict())])
 
     for (id, bus) in get(data, "bus", Dict())
-        if !(id in vsource_buses)
-            fault_studies[id] = Dict{String,Any}(
-                "lg" => Dict{String,Any}(),
-                "ll" => Dict{String,Any}(),
-                "llg" => Dict{String,Any}(),
-                "3p" => Dict{String,Any}(),
-                "3pg" => Dict{String,Any}(),
-            )
+        if bus["bus_type"] != 4
+            if !(id in vsource_buses)
+                fault_studies[id] = Dict{String,Any}(
+                    "lg" => Dict{String,Any}(),
+                    "ll" => Dict{String,Any}(),
+                    "llg" => Dict{String,Any}(),
+                    "3p" => Dict{String,Any}(),
+                    "3pg" => Dict{String,Any}(),
+                )
 
-            i = 1
-            idx = findfirst(bus["grounded"])
-            idx != nothing ? ground_terminal = bus["terminals"][idx] : ground_terminal = 4
-            for (_t, t) in enumerate(bus["terminals"])
-                if t != ground_terminal 
-                    fault_studies[id]["lg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "lg", id, [t, ground_terminal], resistance)
-                    fault_studies[id]["lg"]["$i"]["GF"] = build_mc_lg_gf([t]; ground_resistance=resistance)
-                    i += 1
+                i = 1
+                idx = findfirst(bus["grounded"])
+                idx != nothing ? ground_terminal = bus["terminals"][idx] : ground_terminal = 4
+                for (_t, t) in enumerate(bus["terminals"])
+                    if t != ground_terminal 
+                        fault_studies[id]["lg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "lg", id, [t, ground_terminal], resistance)
+                        fault_studies[id]["lg"]["$i"]["GF"] = build_mc_lg_gf([t]; ground_resistance=resistance)
+                        i += 1
+                    end
                 end
-            end
-            i = 1
-            for (_t, t) in enumerate(bus["terminals"])
-                if t != ground_terminal
-                    for u in bus["terminals"]
-                        if u != ground_terminal && t != u && t < u
-                            fault_studies[id]["ll"]["$i"] = add_fault!(Dict{String,Any}(), "1", "ll", id, [t, u], phase_resistance)
-                            fault_studies[id]["ll"]["$i"]["GF"] = build_mc_ll_gf([t, u])
-                            fault_studies[id]["llg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "llg", id, [t, u, ground_terminal], resistance, phase_resistance)
-                            fault_studies[id]["llg"]["$i"]["GF"] = build_mc_llg_gf([t, u])
-                            i += 1
+                i = 1
+                for (_t, t) in enumerate(bus["terminals"])
+                    if t != ground_terminal
+                        for u in bus["terminals"]
+                            if u != ground_terminal && t != u && t < u
+                                fault_studies[id]["ll"]["$i"] = add_fault!(Dict{String,Any}(), "1", "ll", id, [t, u], phase_resistance)
+                                fault_studies[id]["ll"]["$i"]["GF"] = build_mc_ll_gf([t, u])
+                                fault_studies[id]["llg"]["$i"] = add_fault!(Dict{String,Any}(), "1", "llg", id, [t, u, ground_terminal], resistance, phase_resistance)
+                                fault_studies[id]["llg"]["$i"]["GF"] = build_mc_llg_gf([t, u])
+                                i += 1
+                            end
                         end
                     end
                 end
-            end
-            if bus["phases"] == 3
-                fault_studies[id]["3p"]["1"] = add_fault!(Dict{String,Any}(), "1", "3p", id, bus["terminals"][1:3], phase_resistance)
-                fault_studies[id]["3p"]["1"]["GF"] = build_mc_3p_gf(bus["terminals"][1:3])
-                if length(bus["terminals"]) >= 4
-                    fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, bus["terminals"][1:4], resistance, phase_resistance)
-                    fault_studies[id]["3pg"]["1"]["GF"] = build_mc_3pg_gf(bus["terminals"][1:3])
-                else
-                    fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, [bus["terminals"][1:3]; 4], resistance, phase_resistance)
-                    fault_studies[id]["3pg"]["1"]["GF"] = build_mc_3pg_gf(bus["terminals"][1:3])
+                if bus["phases"] == 3
+                    fault_studies[id]["3p"]["1"] = add_fault!(Dict{String,Any}(), "1", "3p", id, bus["terminals"][1:3], phase_resistance)
+                    fault_studies[id]["3p"]["1"]["GF"] = build_mc_3p_gf(bus["terminals"][1:3])
+                    if length(bus["terminals"]) >= 4
+                        fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, bus["terminals"][1:4], resistance, phase_resistance)
+                        fault_studies[id]["3pg"]["1"]["GF"] = build_mc_3pg_gf(bus["terminals"][1:3])
+                    else
+                        fault_studies[id]["3pg"]["1"] = add_fault!(Dict{String,Any}(), "1", "3pg", id, [bus["terminals"][1:3]; 4], resistance, phase_resistance)
+                        fault_studies[id]["3pg"]["1"]["GF"] = build_mc_3pg_gf(bus["terminals"][1:3])
+                    end
                 end
             end
-
         end
     end
 

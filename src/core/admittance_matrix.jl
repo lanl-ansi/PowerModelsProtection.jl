@@ -70,12 +70,14 @@ end
 
 function add_mc_generator_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
     for (_, gen) in data["gen"]
-        if gen["admit_model"] == VoltageSourceElement
-            add_mc_voltage_source_p_matrix!(data, admit_matrix, gen)
-        elseif gen["admit_model"] == PVSystemElement
-            # add_mc_solar_p_matrix!(data, admit_matrix, gen)
-        elseif gen["admit_model"] == RotatingMachineElement
-            add_mc_rotating_machine_p_matrix!(data, admit_matrix, gen)
+        if gen["gen_status"] == 1
+            if gen["admit_model"] == VoltageSourceElement
+                add_mc_voltage_source_p_matrix!(data, admit_matrix, gen)
+            elseif gen["admit_model"] == PVSystemElement
+                # add_mc_solar_p_matrix!(data, admit_matrix, gen)
+            elseif gen["admit_model"] == RotatingMachineElement
+                add_mc_rotating_machine_p_matrix!(data, admit_matrix, gen)
+            end
         end
     end
 end

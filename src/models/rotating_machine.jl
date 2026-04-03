@@ -92,9 +92,11 @@ end
 
 function update_mc_delta_current_gen!(delta_i, v, data)
     for (_, gen) in data["gen"]
-        if haskey(gen, "admit_model")
-            if gen["admit_model"] == RotatingMachineElement
-                calc_delta_current_gen_constantpq!(gen, delta_i, v, data)
+        if gen["gen_status"] == 1
+            if haskey(gen, "admit_model")
+                if gen["admit_model"] == RotatingMachineElement
+                    calc_delta_current_gen_constantpq!(gen, delta_i, v, data)
+                end
             end
         end
     end
@@ -133,9 +135,11 @@ end
 
 function update_mc_fault_delta_current_gen!(delta_i, v, data)
     for (_, gen) in data["gen"]
-        if haskey(gen, "admit_model")
-            if gen["admit_model"] == RotatingMachineElement
-                calc_fault_delta_current_gen_constantpq!(gen, delta_i, v, data)
+        if gen["gen_status"] == 1
+            if haskey(gen, "admit_model")
+                if gen["admit_model"] == RotatingMachineElement
+                    calc_fault_delta_current_gen_constantpq!(gen, delta_i, v, data)
+                end
             end
         end
     end
