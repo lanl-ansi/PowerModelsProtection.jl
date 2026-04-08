@@ -971,6 +971,10 @@ function _map_ravens2math_pmp_energy_consumer!(data_math::Dict{String,<:Any}, da
         load["i_last"] = zeros(Complex{Float64}, 1, length(load["connections"]))
         if load["model"] == _PMD.POWER
             load["response"] = ConstantPQ
+        elseif load["model"] == _PMD.IMPEDANCE
+            load["response"] = ConstantZ
+        elseif load["model"] == _PMD.CURRENT
+            load["response"] = ConstantI
         end
     end
 end

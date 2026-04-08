@@ -363,6 +363,35 @@ function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, i
                 v[j] = sol["bus"][i]["vm"][_j] * exp(1im*pi/180*sol["bus"][i]["va"][_j])
             end
         end
+        buses = Dict{String, Any}()
+        for (indx,bus) in sol["model"].data["bus"]
+            if bus["bus_type"] != 4
+                buses[bus["source_id"]] = Dict{String, Any}(
+                    "vm" => [0.0 for t in bus["terminals"]],
+                    "va" => [0.0 for t in bus["terminals"]],
+                    "name" => bus["source_id"],
+                    "vbase" => bus["vnom_kv"],
+                )
+                if haskey(sol["model"].data, "microgrid_buses")
+                    if indx in sol["model"].data["microgrid_buses"]
+                        for (j, grounded) in enumerate(bus["grounded"])
+                            if grounded == 0
+                                t = bus["terminals"][j]
+                                buses[bus["source_id"]]["vm"][j] = abs(v[sol["model"].data["admittance_map"][(bus["index"], t)]])
+                                buses[bus["source_id"]]["va"][j] = angle(v[sol["model"].data["admittance_map"][(bus["index"], t)]]) * 180/pi
+                            end
+                        end
+                    end
+                else
+                    for (_j, j) in enumerate(bus["terminals"])
+                        if haskey(sol["model"].data["admittance_map"], (bus["index"], j))
+                            buses[bus["source_id"]]["vm"][_j] = abs(v_sol[sol["model"].data["admittance_map"][(bus["index"], j)]])
+                            buses[bus["source_id"]]["va"][_j] = angle(v_sol[sol["model"].data["admittance_map"][(bus["index"], j)]]) * 180/pi
+                        end
+                    end
+                end
+            end
+        end
         i_f = fault["GF"]*v
         branch_currents = Dict{String,Any}()
         for (indx, branch) in sol["model"].data["branch"]
@@ -415,6 +444,7 @@ function add_mc_fault_solution!(results::Dict{String,Any}, fault_type::String, i
             "terminals" => fault["connections"],
             "branch" => branch_currents,
             "switch" => switch_currents,
+            "bus" => buses,
         )
     else
         results[sol["bus"][i]["name"]][fault_type][indx] = Dict(

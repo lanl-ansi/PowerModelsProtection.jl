@@ -124,6 +124,11 @@ function build_mc_current_vector(data::Dict{String,<:Any}, v::Matrix{ComplexF64}
             build_mc_current_vector_gfmi_storage!(data, storage, v, i)
         end
     end
+    for (_, load) in data["load"]
+        if load["response"] == ConstantI
+            build_mc_current_vector_current!(data, load, v, i)
+        end
+    end
     return i
 end
 

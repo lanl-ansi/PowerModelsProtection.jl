@@ -176,3 +176,16 @@ function update_mc_delta_current_load!(delta_i, v, data)
         end
     end
 end
+
+
+function build_mc_current_vector_current!(data, load, v, i)
+    for (_j, j) in enumerate(load["connections"])
+        if load["status"] == 1
+            if haskey(data["admittance_map"], (load["load_bus"], j))
+                s = (load["pd"][_j] + load["qd"][_j] * 1im) * data["settings"]["power_scale_factor"]
+                v = load["vnom_kv"] * data["settings"]["voltage_scale_factor"] * exp(1im*2/3*pi*(1-j))
+                i[data["admittance_map"][(load["load_bus"], i)], 1] -= conj(s/v)
+            end
+        end
+    end
+end
