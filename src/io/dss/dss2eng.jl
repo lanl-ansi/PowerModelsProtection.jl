@@ -1,4 +1,4 @@
-if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].version < v"0.15.0"
+# if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].version < v"0.15.0"
 
     "helper function to build extra dynamics information for pvsystem objects
         model = 1:P Q gen  2: constant z  3: P V gen  4: balance Voltage
@@ -10,7 +10,7 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
             for (id, solar) in data_eng["solar"]
                 dss_obj = data_dss["pvsystem"][id]
                 _PMD._apply_like!(dss_obj, data_dss, "pvsystem")
-                defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
+                defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj) #where tf does this function come from? not in ref ravens schema
                 if haskey(dss_obj, "irradiance")
                     irradiance = dss_obj["irradiance"]
                 else
@@ -80,43 +80,39 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
     end
 
 
-    "helper function to build extra dynamics information for load objects"
-    function _dss2eng_load_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
-        if haskey(data_eng, "load")
-            for (id, load) in data_eng["load"]
-                dss_obj = data_dss["load"][id]
-                defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
-                if haskey(dss_obj, "vminpu")
-                    vminpu = dss_obj["vminpu"]
-                else
-                    vminpu = defaults["vminpu"]
-                end
-                if haskey(dss_obj, "vmaxpu")
-                    vmaxpu = dss_obj["vmaxpu"]
-                else
-                    vmaxpu = defaults["vmaxpu"]
-                end
-                if haskey(dss_obj, "phases")
-                    phases = dss_obj["phases"]
-                else
-                    phases = defaults["phases"]
-                end
-                load["vminpu"] = vminpu
-                load["vmaxpu"] = vmaxpu
-                load["phases"] = phases
-                if load["model"] == _PMD.IMPEDANCE
-                    load["response"] = ConstantZ
-                elseif load["model"] == _PMD.POWER
-                    load["response"] = ConstantPQ
-                elseif load["model"] == _PMD.CURRENT
-                    load["response"] = ConstantI
-                elseif load["model"] == _PMD.ZIP
-                    load["response"] = ConstantZIP
-                end
-                load["element"] = LoadElement
+"helper function to build extra dynamics information for load objects"
+function _dss2eng_load_dynamics!(data_eng, data_dss)
+    if haskey(data_eng, "load")
+        for (id, load) in data_eng["load"]
+            dss_obj = data_dss["load"][id]
+
+            defaults = _PMD._apply_ordered_properties(
+                _PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...),
+                dss_obj
+            )
+
+            vminpu = get(dss_obj, "vminpu", defaults["vminpu"])
+            vmaxpu = get(dss_obj, "vmaxpu", defaults["vmaxpu"])
+            phases = get(dss_obj, "phases", defaults["phases"])
+
+            load["vminpu"] = vminpu
+            load["vmaxpu"] = vmaxpu
+            load["phases"] = phases
+
+            if load["model"] == _PMD.IMPEDANCE
+                load["response"] = ConstantZ
+            elseif load["model"] == _PMD.POWER
+                load["response"] = ConstantPQ
+            elseif load["model"] == _PMD.CURRENT
+                load["response"] = ConstantI
+            elseif load["model"] == _PMD.ZIP
+                load["response"] = ConstantZIP
             end
+
+            load["element"] = LoadElement
         end
     end
+end
 
 
     "helper function to build extra dynamics information for transfomer objects"
@@ -544,7 +540,67 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
     function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
         nothing
     end
-else
+
+    "helper function to build extra dynamics information for pvsystem objects"
+    function _dss2eng_solar_dynamics!(
+        data_eng, 
+        data_dss::_PMD.OpenDssDataModel
+    )
+        if haskey(data_eng, "solar")
+            for (id, solar) in data_eng["solar"]
+                dss_obj = data_dss["pvsystem"][id]
+
+                irradiance = dss_obj["irradiance"]
+                vminpu = dss_obj["vminpu"]
+                kva = dss_obj["kva"]
+                pmpp = dss_obj["pmpp"]
+                pf = dss_obj["pf"]
+
+                if abs(sum(solar["pg"]) + 1im * sum(solar["qg"])) > kva
+                    solar["pg"] = [
+                        kva / length(solar["pg"]) * pf
+                        for _ in solar["pg"]
+                    ]
+                    solar["qg"] = [
+                        kva / length(solar["qg"]) * sqrt(1 - pf^2)
+                        for _ in solar["qg"]
+                    ]
+                end
+
+                balanced = dss_obj["balanced"]
+                model = dss_obj["model"]
+                phases = dss_obj["phases"]
+
+                ncnd = length(solar["connections"]) >= 3 ? 3 : 1
+
+                solar["i_max"] = fill(
+                    1 / vminpu * kva / (ncnd / sqrt(3) * dss_obj["kv"]),
+                    ncnd
+                )
+
+                solar["i_nom"] = kva / (ncnd / sqrt(3) * dss_obj["kv"])
+                solar["solar_max"] = irradiance * pmpp
+                solar["pf"] = pf
+                solar["kva"] = kva
+                solar["balanced"] = balanced
+                solar["vminpu"] = vminpu
+                solar["type"] = "solar"
+                solar["pv_model"] = model
+                solar["grid_forming"] = false
+
+                if model == 1
+                    solar["response"] = ConstantPAtPF
+                elseif model == 2
+                    solar["response"] = ConstantI
+                elseif model == 3
+                    solar["response"] = ConstantPQ
+                end
+
+                solar["phases"] = phases
+                solar["element"] = SolarElement
+            end
+        end
+    end
 
     "helper function to build extra dynamics information for pvsystem objects"
     function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -886,4 +942,4 @@ else
     function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
         nothing
     end
-end
+# end
