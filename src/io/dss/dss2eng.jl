@@ -10,41 +10,20 @@
             for (id, solar) in data_eng["solar"]
                 dss_obj = data_dss["pvsystem"][id]
                 _PMD._apply_like!(dss_obj, data_dss, "pvsystem")
-                defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj) #where tf does this function come from? not in ref ravens schema
-                if haskey(dss_obj, "irradiance")
-                    irradiance = dss_obj["irradiance"]
-                else
-                    irradiance = defaults["irradiance"]
-                end
+                irradiance = dss_obj["irradiance"]
                 if haskey(dss_obj, "vminpu")
                     vminpu = dss_obj["vminpu"]
                 else
                     vminpu = defaults["vminpu"]
                 end
-                if haskey(dss_obj, "kva")
-                    kva = dss_obj["kva"]
-                else
-                    kva = defaults["kva"]
+                kva = dss_obj["kva"]
+                pmpp = dss_obj["pmpp"]
+                pf = dss_obj["pf"]
+                if abs(sum(solar["pg"]) + 1im * sum(solar["qg"])) > kva
+                    solar["pg"] = [kva / length(solar["pg"]) * pf for i in solar["pg"]]
+                    solar["qg"] = [kva / length(solar["qg"]) * sqrt(1 - pf^2) for i in solar["qg"]]
                 end
-                if haskey(dss_obj, "pmpp")
-                    pmpp = dss_obj["pmpp"]
-                else
-                    pmpp = defaults["pmpp"]
-                end
-                if haskey(dss_obj, "pf")
-                    pf = dss_obj["pf"]
-                    if abs(sum(solar["pg"]) + 1im * sum(solar["qg"])) > kva
-                        solar["pg"] = [kva / length(solar["pg"]) * pf for i in solar["pg"]]
-                        solar["qg"] = [kva / length(solar["qg"]) * sqrt(1 - pf^2) for i in solar["qg"]]
-                    end
-                else
-                    pf = defaults["pf"]
-                end
-                if haskey(dss_obj, "balanced")
                     balanced = dss_obj["balanced"]
-                else
-                    balanced = defaults["balanced"]
-                end
                 if haskey(dss_obj, "pv_model")
                     model = dss_obj["model"]
                 else
@@ -86,14 +65,9 @@ function _dss2eng_load_dynamics!(data_eng, data_dss)
         for (id, load) in data_eng["load"]
             dss_obj = data_dss["load"][id]
 
-            defaults = _PMD._apply_ordered_properties(
-                _PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...),
-                dss_obj
-            )
-
-            vminpu = get(dss_obj, "vminpu", defaults["vminpu"])
-            vmaxpu = get(dss_obj, "vmaxpu", defaults["vmaxpu"])
-            phases = get(dss_obj, "phases", defaults["phases"])
+            vminpu = dss_obj["vminpu"]
+            vmaxpu = dss_obj["vmaxpu"]
+            phases = dss_obj["phases"]
 
             load["vminpu"] = vminpu
             load["vmaxpu"] = vmaxpu
@@ -120,44 +94,54 @@ end
         if haskey(data_eng, "transformer")
             for (id, transformer) in data_eng["transformer"]
                 dss_obj = data_dss["transformer"][id]
-                defaults = _PMD._apply_ordered_properties(_PMD._create_pvsystem(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
-                if haskey(dss_obj, "leadlag")
-                    leadlag = dss_obj["leadlag"]
-                else
-                    if haskey(defaults, "leadlag")
-                        leadlag = defaults["leadlag"]
-                    else
-                        leadlag = "lag"
-                    end
-                end
-                if haskey(dss_obj, "phases")
-                    phases = dss_obj["phases"]
-                else
-                    phases = defaults["phases"]
-                end
-                transformer["leadlag"] = leadlag
+                phases = dss_obj["phases"]
+                transformer["leadlag"] = dss_obj["leadlag"]
                 transformer["phases"] = phases
                 if length(transformer["connections"]) == 2
                     transformer["element"] = Transformer2WElement
-                else
-                    Nothing
                 end
             end
         end
     end
 
-
     "helper function to fix voltage source objects"
-    function _dss2eng_voltage_source_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
+    function _dss2eng_voltage_source_dynamics!(
+        data_eng::_PMD.EngineeringModel{_PMD.NetworkModel},
+        data_dss::_PMD.OpenDssDataModel
+    )
         if haskey(data_eng, "voltage_source")
             for (id, voltage_source) in data_eng["voltage_source"]
                 dss_obj = data_dss["vsource"][id]
-                defaults = _PMD._apply_ordered_properties(_PMD._create_vsource(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
-                if haskey(dss_obj, "phases")
-                    phases = dss_obj["phases"]
-                else
-                    phases = defaults["phases"]
+
+                phases = dss_obj["phases"]
+                voltage_source["phases"] = phases
+                voltage_source["element"] = VoltageSourceElement
+
+                if haskey(dss_obj, "r1") && haskey(dss_obj, "x1")
+                    r1 = dss_obj["r1"]
+                    x1 = dss_obj["x1"]
+                    r0 = get(dss_obj, "r0", 1.796)
+                    x0 = get(dss_obj, "x0", 5.3881)
+
+                    zabc = _A * [
+                        r0 + x0 * 1im  0.0             0.0
+                        0.0             r1 + x1 * 1im  0.0
+                        0.0             0.0             r1 + x1 * 1im
+                    ] * inv(_A)
+
+                    voltage_source["rs"] = real(zabc)
+                    voltage_source["xs"] = imag(zabc)
                 end
+            end
+        end
+    end
+
+    "helper function to fix voltage source objects"
+    function _dss2eng_voltage_source_dynamics!(data_eng, data_dss::Dict{String,<:Any})
+        if haskey(data_eng, "voltage_source")
+            for (id, voltage_source) in data_eng["voltage_source"]
+                dss_obj = data_dss["vsource"][id]
+                phases = dss_obj["phases"]
                 voltage_source["phases"] = phases
                 voltage_source["element"] = VoltageSourceElement
                 if haskey(dss_obj, "r1") && haskey(dss_obj, "x1")
@@ -181,48 +165,37 @@ end
     "
 
     "helper function to build extra dynamics information for generator or vsource objects"
-    function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::Dict{String,<:Any})
-        if haskey(data_eng, "generator")
+    function _dss2eng_gen_dynamics!(
+        data_eng::_PMD.EngineeringModel{_PMD.NetworkModel},
+        data_dss::_PMD.OpenDssDataModel
+    )
+        if haskey(data_eng, "generator") #this fails: haskey -> collect -> grow_to! -> iterate
             for (id, generator) in data_eng["generator"]
                 dss_obj = data_dss["generator"][id]
-                _PMD._apply_like!(dss_obj, data_dss, "generator")
-                defaults = _PMD._apply_ordered_properties(_PMD._create_generator(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
-                zbase = defaults["kv"]^2 / defaults["kva"] * 1000
-                xdp = defaults["xdp"] * zbase
-                rp = xdp / defaults["xrdp"]
-                xdpp = defaults["xdpp"] * zbase
+
+                zbase = dss_obj["kv"]^2 / dss_obj["kva"] * 1000
+                xdp = dss_obj["xdp"] * zbase
+                rp = xdp / dss_obj["xrdp"]
+                xdpp = dss_obj["xdpp"] * zbase
+
                 generator["xdp"] = fill(xdp, length(generator["connections"]))
                 generator["rp"] = fill(rp, length(generator["connections"]))
                 generator["xdpp"] = fill(xdpp, length(generator["connections"]))
-                if haskey(generator["dss"], "model")
-                    model = generator["dss"]["model"]
-                else
-                    model = 1
-                end
-                generator["gen_model"] = model
-                if model == 1
-                    if haskey(generator["dss"], "kvar")
-                        generator["qg"] = fill(generator["dss"]["kvar"] / length(generator["pg"]), length(generator["pg"]))
-                    else
-                        generator["qg"] = fill(0.0, length(generator["pg"]))
-                    end
-                    if haskey(generator["dss"], "kv")
 
-                        generator["vnom_kv"] = generator["dss"]["kv"] / sqrt(3)
+                model = get(dss_obj, "model", 1)
+                generator["gen_model"] = model
+
+                if model == 1
+                    generator["qg"] = fill(
+                        get(dss_obj, "kvar", 0.0) / length(generator["pg"]),
+                        length(generator["pg"])
+                    )
+
+                    if haskey(dss_obj, "kv")
+                        generator["vnom_kv"] = dss_obj["kv"] / sqrt(3)
                     end
+
                     generator["element"] = GeneratorElement
-                    # if generator["dss"]["model"] == 3
-                    #         dss_obj = data_dss["generator"][id]
-                    #         _PMD._apply_like!(dss_obj, data_dss, "generator")
-                    #         defaults = _PMD._apply_ordered_properties(_PMD._create_generator(id; _PMD._to_kwargs(dss_obj)...), dss_obj)
-                    #         zbase = defaults["kv"]^2/defaults["kva"]*1000
-                    #         xdp = defaults["xdp"] * zbase
-                    #         rp = xdp/defaults["xrdp"]
-                    #         xdpp = defaults["xdpp"] * zbase
-                    #         generator["xdp"] = fill(xdp, length(generator["connections"]))
-                    #         generator["rp"] = fill(rp, length(generator["connections"]))
-                    #         generator["xdpp"] = fill(xdpp, length(generator["connections"]))
-                    #     end
                 end
             end
         end
@@ -542,6 +515,7 @@ end
     end
 
     "helper function to build extra dynamics information for pvsystem objects"
+    #sneaky multiple dispatch version for EngineeringModel?
     function _dss2eng_solar_dynamics!(
         data_eng, 
         data_dss::_PMD.OpenDssDataModel
@@ -718,7 +692,7 @@ end
 
 
     "helper function to build extra dynamics information for transfomer objects"
-    function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+    function _dss2eng_transformer_dynamics!(data_eng::Union{Dict{String,<:Any}, _PMD.EngineeringModel{_PMD.NetworkModel}}, data_dss::_PMD.OpenDssDataModel)
         if haskey(data_eng, "transformer")
             for (id, transformer) in data_eng["transformer"]
                 dss_obj = data_dss["transformer"][id]
