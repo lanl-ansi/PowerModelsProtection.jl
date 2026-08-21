@@ -913,7 +913,7 @@ end
         end
     end
 
-    function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+    function _dss2eng_issues!(data_eng::Union{Dict{String,<:Any}, _PMD.EngineeringModel{_PMD.NetworkModel}}, data_dss::_PMD.OpenDssDataModel)
         nothing
     end
 # end
