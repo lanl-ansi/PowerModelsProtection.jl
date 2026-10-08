@@ -241,17 +241,19 @@ end
 
 function solution_mc_pf_loads!(solution, v, data)
     for (indx,load) in data["load"]
-        bus = load["load_bus"]
-        current = Dict{Int,Any}()
-        if load["configuration"] == _PMD.WYE
-            n = length(load["connections"])
-            for (_j, j) in enumerate(load["connections"])
-                if haskey(data["admittance_map"], (bus, j))
-                    current[j] = load["p_matrix"][_j,_j] * v[data["admittance_map"][(bus, j)], 1] + load["i_last"][_j]
+        if load["status"] != 0
+            bus = load["load_bus"]
+            current = Dict{Int,Any}()
+            if load["configuration"] == _PMD.WYE
+                n = length(load["connections"])
+                for (_j, j) in enumerate(load["connections"])
+                    if haskey(data["admittance_map"], (bus, j))
+                        current[j] = load["p_matrix"][_j,_j] * v[data["admittance_map"][(bus, j)], 1] + load["i_last"][_j]
+                    end
                 end
             end
+            load["i"] = current
         end
-        load["i"] = current
     end
 end
 

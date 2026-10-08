@@ -17,7 +17,7 @@ function _map_mc_admittance_load!(data_math::Dict{String,<:Any}; pass_props::Vec
                 if load["configuration"] == _PMD.WYE
                     if haskey(load, "pd") && haskey(load, "qd")
                         for (i, _i) in enumerate(load["connections"])
-                            if _i != 4 
+                            if _i != 4
                                 s = conj.(load["pd"][i] + 1im .* load["qd"][i])
                                 _y = (s * data_math["settings"]["power_scale_factor"]) / (load["vnom_kv"][i] * data_math["settings"]["voltage_scale_factor"])^2
                                 y[i, i] += _y
@@ -51,6 +51,7 @@ end
 function add_mc_load_p_matrix!(data::Dict{String,<:Any}, admit_matrix::Dict{Tuple,Complex{Float64}})
     for (_, load) in data["load"]
         bus = load["load_bus"]
+        # @warn load["source_id"] load["index"] load["model"]
         for (_i, i) in enumerate(load["connections"])
             if haskey(data["admittance_map"], (bus, i))
                 for (_j, j) in enumerate(load["connections"])
@@ -89,14 +90,14 @@ function calc_delta_current_load_constantpq!(load, delta_i, v, data)
                     load["i_inj"][_j] = v[data["admittance_map"][(bus, j)], 1] * (y_vmin - y)
                     load["s_inj"][_j] = conj(load["i_inj"][_j]) * v[data["admittance_map"][(bus, j)], 1] + conj(y) * abs(v[data["admittance_map"][(bus, j)], 1])^2
                 elseif abs(v[data["admittance_map"][(bus, j)], 1]) > load["vmaxpu"] * load["vnom_kv"][_j]*data["settings"]["voltage_scale_factor"]
-                    y_vmax = conj(s) / (load["vnom_kv"][_j]*load["vmaxpu"]*data["settings"]["voltage_scale_factor"])^2 
+                    y_vmax = conj(s) / (load["vnom_kv"][_j]*load["vmaxpu"]*data["settings"]["voltage_scale_factor"])^2
                     delta_i[data["admittance_map"][(bus, j)], 1] -= v[data["admittance_map"][(bus, j)], 1] * (y_vmax - y) - load["i_inj"][_j]
                     load["i_inj"][_j] = v[data["admittance_map"][(bus, j)], 1] * (y_vmax - y)
                     load["s_inj"][_j] = conj(load["i_inj"][_j]) * v[data["admittance_map"][(bus, j)], 1] + conj(y) * abs(v[data["admittance_map"][(bus, j)], 1])^2
                 else
                     delta_s = s - conj(y) * abs(v[data["admittance_map"][(bus, j)], 1])^2 - conj(load["i_inj"][_j]) * v[data["admittance_map"][(bus, j)], 1]
                     delta_i[data["admittance_map"][(bus, j)], 1] -= conj(delta_s) / conj(v[data["admittance_map"][(bus, j)], 1])
-                    load["i_inj"][_j] += conj(delta_s) / conj(v[data["admittance_map"][(bus, j)], 1]) 
+                    load["i_inj"][_j] += conj(delta_s) / conj(v[data["admittance_map"][(bus, j)], 1])
                     load["s_inj"][_j] = conj(load["i_inj"][_j]) * v[data["admittance_map"][(bus, j)], 1] + conj(y) * abs(v[data["admittance_map"][(bus, j)], 1])^2
                 end
             end

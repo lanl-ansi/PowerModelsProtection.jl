@@ -427,17 +427,17 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
                     if length(c_array) > npts
                         @warn "c_array is longer than the npts. Truncating array."
                         cut_points = length(c_array) - npts
-                        c_array = c_array[cut_points+1:length(c_array)]
+                        c_array = c_array[(cut_points+1):length(c_array)]
                     end
                     if length(t_array) > npts
                         @warn "t_array is longer than the npts. Truncating array."
                         cut_points = length(t_array) - npts
-                        t_array = t_array[cut_points+1:length(t_array)]
+                        t_array = t_array[(cut_points+1):length(t_array)]
                     end
                     if length(t_array) < npts
                         @warn "t_array is shorter than npts. Adding time values."
                         t_len = length(t_array)
-                        for i = 0:npts-t_len-1
+                        for i = 0:(npts-t_len-1)
                             push!(t_array, t_array[t_len+i] / 2)
                         end
                     end
@@ -445,7 +445,7 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
                         @warn "c_array is shorter than npts. Adding current values."
                         c_len = length(c_array)
                         (a, b) = _bisection(c_array[c_len], t_array[c_len], c_array[c_len-1], t_array[c_len-1])
-                        for i = 1:npts-c_len
+                        for i = 1:(npts-c_len)
                             push!(c_array, round((a / t_array[c_len+i] + 1)^(1 / b)))
                         end
                     end
@@ -458,12 +458,12 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
                         @warn "c_array is shorter than t_array. Adding current values."
                         c_len = length(c_array)
                         (a, b) = _bisection(c_array[c_len], t_array[c_len], c_array[c_len-1], t_array[c_len-1])
-                        for i = 1:npts-c_len
+                        for i = 1:(npts-c_len)
                             push!(c_array, round((a / t_array[c_len+i] + 1)^(1 / b)))
                         end
                     else
                         @warn "t_array is shorter than c_array. Adding time values."
-                        for i = 0:c_len-t_len-1
+                        for i = 0:(c_len-t_len-1)
                             push!(t_array, t_array[t_len+i] / 2)
                         end
                     end
@@ -568,6 +568,7 @@ else
         end
     end
 
+    # _dss2eng_solar_dynamics!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_solar_dynamics!(data.data, data_dss)
 
     "helper function to build extra dynamics information for load objects"
     function _dss2eng_load_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -594,6 +595,7 @@ else
         end
     end
 
+    # _dss2eng_load_dynamics!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_load_dynamics!(data.data, data_dss)
 
     "helper function to build extra dynamics information for generator or vsource objects"
     function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -616,6 +618,7 @@ else
         end
     end
 
+    # _dss2eng_gen_dynamics!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_gen_dynamics!(data.data, data_dss)
 
     "helper function to fix voltage source objects"
     function _dss2eng_voltage_source_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -636,6 +639,7 @@ else
         end
     end
 
+    # _dss2eng_voltage_source_dynamics!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_voltage_source_dynamics!(data.data, data_dss)
 
     "helper function to build extra dynamics information for transfomer objects"
     function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -655,6 +659,7 @@ else
         end
     end
 
+    # _dss2eng_transformer_dynamics!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_transformer_dynamics!(data.data, data_dss)
 
     "Helper function to convert dss data for monitors to engineering current transformer model."
     function _dss2eng_ct!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -672,6 +677,7 @@ else
         end
     end
 
+    # _dss2eng_ct!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_ct!(data.data, data_dss)
 
     "Helper function for converting dss relay to engineering relay model."
     function _dss2eng_relay!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -720,6 +726,8 @@ else
         end
     end
 
+    # _dss2eng_relay!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_relay!(data.data, data_dss)
+
 
     "Helper function for converting dss fuse to engineering fuse"
     function _dss2eng_fuse!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -763,6 +771,7 @@ else
         end
     end
 
+    # _dss2eng_fuse!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_fuse!(data.data, data_dss)
 
     "Helper function for converting dss tcc_curves to engineering model"
     function _dss2eng_curve!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -797,17 +806,17 @@ else
                     if length(c_array) > npts
                         @warn "c_array is longer than the npts. Truncating array."
                         cut_points = length(c_array) - npts
-                        c_array = c_array[cut_points+1:length(c_array)]
+                        c_array = c_array[(cut_points+1):length(c_array)]
                     end
                     if length(t_array) > npts
                         @warn "t_array is longer than the npts. Truncating array."
                         cut_points = length(t_array) - npts
-                        t_array = t_array[cut_points+1:length(t_array)]
+                        t_array = t_array[(cut_points+1):length(t_array)]
                     end
                     if length(t_array) < npts
                         @warn "t_array is shorter than npts. Adding time values."
                         t_len = length(t_array)
-                        for i = 0:npts-t_len-1
+                        for i = 0:(npts-t_len-1)
                             push!(t_array, t_array[t_len+i] / 2)
                         end
                     end
@@ -815,7 +824,7 @@ else
                         @warn "c_array is shorter than npts. Adding current values."
                         c_len = length(c_array)
                         (a, b) = _bisection(c_array[c_len], t_array[c_len], c_array[c_len-1], t_array[c_len-1])
-                        for i = 1:npts-c_len
+                        for i = 1:(npts-c_len)
                             push!(c_array, round((a / t_array[c_len+i] + 1)^(1 / b)))
                         end
                     end
@@ -828,12 +837,12 @@ else
                         @warn "c_array is shorter than t_array. Adding current values."
                         c_len = length(c_array)
                         (a, b) = _bisection(c_array[c_len], t_array[c_len], c_array[c_len-1], t_array[c_len-1])
-                        for i = 1:npts-c_len
+                        for i = 1:(npts-c_len)
                             push!(c_array, round((a / t_array[c_len+i] + 1)^(1 / b)))
                         end
                     else
                         @warn "t_array is shorter than c_array. Adding time values."
-                        for i = 0:c_len-t_len-1
+                        for i = 0:(c_len-t_len-1)
                             push!(t_array, t_array[t_len+i] / 2)
                         end
                     end
@@ -845,6 +854,7 @@ else
         end
     end
 
+    # _dss2eng_curve!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_curve!(data.data, data_dss)
 
     "helper function to define generator typr from opendss models"
     function _dss2eng_gen_model!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
@@ -859,7 +869,12 @@ else
         end
     end
 
+    # _dss2eng_gen_model!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_gen_model!(data.data, data_dss)
+
     function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
         nothing
     end
+
+    # _dss2eng_issues!(data::_PMD.EngineeringModel{_PMD.NetworkModel}, data_dss::_PMD.OpenDssDataModel) = _dss2eng_issues!(data.data, data_dss)
+
 end
