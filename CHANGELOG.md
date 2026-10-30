@@ -2,7 +2,7 @@
 
 ## staged
 
-- none
+- Update Julia and JSON versions to 1.10 (current LTS) and 1 (to allow modern versions of JSON). 
 
 ## v0.7.1
 
