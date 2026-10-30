@@ -24,7 +24,7 @@ Ipopt = "1"
 JSON = "0.21, 1"
 JuMP = "1.23.2"
 PowerModels = "0.21"
-PowerModelsDistribution = "0.16"
+PowerModelsDistribution = "0.16, 0.17"
 julia = "^1.10"
 
 [extras]
