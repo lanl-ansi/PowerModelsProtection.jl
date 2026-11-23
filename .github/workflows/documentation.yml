@@ -16,7 +16,8 @@ jobs:
         with:
           version: '1'
       - name: Install Dependencies
-        run: julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+        # PowerModelsDistribution v0.17 is not yet registered; use the branch that carries the ONM compatibility fixes
+        run: julia --project=docs -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/lanl-ansi/PowerModelsDistribution.jl", rev="onm-compat-fixes")); Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and Deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
