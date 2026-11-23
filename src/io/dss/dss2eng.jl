@@ -547,7 +547,7 @@ if Pkg.dependencies()[UUIDs.UUID("d7431456-977f-11e9-2de3-97ff7677985e")].versio
 else
 
     "helper function to build extra dynamics information for pvsystem objects"
-    function _dss2eng_solar_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+    function _dss2eng_solar_dynamics!(data_eng::Union{Dict{String,<:Any},_PMD.EngineeringModel}, data_dss::_PMD.OpenDssDataModel)
         if haskey(data_eng, "solar")
             for (id, solar) in data_eng["solar"]
                 dss_obj = data_dss["pvsystem"][id]
@@ -591,7 +591,7 @@ else
 
 
     "helper function to build extra dynamics information for load objects"
-    function _dss2eng_load_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+    function _dss2eng_load_dynamics!(data_eng::Union{Dict{String,<:Any},_PMD.EngineeringModel}, data_dss::_PMD.OpenDssDataModel)
         if haskey(data_eng, "load")
             for (id, load) in data_eng["load"]
                 dss_obj = data_dss["load"][id]
@@ -617,7 +617,7 @@ else
 
 
     "helper function to build extra dynamics information for generator or vsource objects"
-    function _dss2eng_gen_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+    function _dss2eng_gen_dynamics!(data_eng::Union{Dict{String,<:Any},_PMD.EngineeringModel}, data_dss::_PMD.OpenDssDataModel)
         if haskey(data_eng, "generator")
             for (id, generator) in data_eng["generator"]
                 dss_obj = data_dss["generator"][id]
@@ -642,7 +642,7 @@ else
 
 
     "helper function to fix voltage source objects"
-    function _dss2eng_voltage_source_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+    function _dss2eng_voltage_source_dynamics!(data_eng::Union{Dict{String,<:Any},_PMD.EngineeringModel}, data_dss::_PMD.OpenDssDataModel)
         if haskey(data_eng, "voltage_source")
             for (id, voltage_source) in data_eng["voltage_source"]
                 dss_obj = data_dss["vsource"][id]
@@ -662,7 +662,7 @@ else
 
 
     "helper function to build extra dynamics information for transfomer objects"
-    function _dss2eng_transformer_dynamics!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+    function _dss2eng_transformer_dynamics!(data_eng::Union{Dict{String,<:Any},_PMD.EngineeringModel}, data_dss::_PMD.OpenDssDataModel)
         if haskey(data_eng, "transformer")
             for (id, transformer) in data_eng["transformer"]
                 dss_obj = data_dss["transformer"][id]
@@ -883,7 +883,7 @@ else
         end
     end
 
-    function _dss2eng_issues!(data_eng::Dict{String,<:Any}, data_dss::_PMD.OpenDssDataModel)
+    function _dss2eng_issues!(data_eng::Union{Dict{String,<:Any},_PMD.EngineeringModel}, data_dss::_PMD.OpenDssDataModel)
         nothing
     end
 end
