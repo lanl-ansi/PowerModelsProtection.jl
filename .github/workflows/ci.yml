@@ -34,6 +34,10 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v3
+      # PowerModelsDistribution v0.17 is not yet registered; test against the branch that carries the ONM compatibility fixes.
+      # Done here rather than via [sources] in Project.toml, which Julia 1.10 ignores.
+      - name: Use PowerModelsDistribution onm-compat-fixes
+        run: julia --project=. -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/lanl-ansi/PowerModelsDistribution.jl", rev="onm-compat-fixes"))'
       - uses: julia-actions/julia-buildpkg@latest
         continue-on-error: ${{ matrix.version == 'nightly' }}
       - uses: julia-actions/julia-runtest@latest
