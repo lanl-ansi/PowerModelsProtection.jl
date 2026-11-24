@@ -15,6 +15,7 @@ makedocs(
         collapselevel=1,
     ),
     sitename = "PowerModelsProtection",
+    warnonly = [:missing_docs, :cross_references],
     authors = "Arthur Barnes, Jose Tabarez, and contributors.",
     pages = [
         "Introduction" => "index.md",
